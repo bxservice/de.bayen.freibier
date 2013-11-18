@@ -1,21 +1,11 @@
 package de.bayen.freibier.bank;
 
-import java.util.Properties;
 import java.util.logging.Level;
 
-import org.adempiere.exceptions.AdempiereException;
-import org.compiere.impexp.BankStatementMatchInfo;
-import org.compiere.impexp.BankStatementMatcherInterface;
-import org.compiere.model.MAcctSchema;
-import org.compiere.model.MAcctSchemaElement;
-import org.compiere.model.MBankStatementLine;
-import org.compiere.model.MTable;
-import org.compiere.model.X_C_AcctSchema_Element;
 import org.compiere.model.X_I_BankStatement;
 import org.compiere.process.ProcessInfoParameter;
 import org.compiere.process.SvrProcess;
 import org.compiere.util.AdempiereSystemError;
-import org.compiere.util.Env;
 
 public class BankStatementContainerUnfolding extends SvrProcess {
 
