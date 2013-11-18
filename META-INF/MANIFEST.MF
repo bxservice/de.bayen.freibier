@@ -6,10 +6,12 @@ Bundle-Version: 1.0.0.qualifier
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Require-Bundle: org.adempiere.base;bundle-version="1.0.0",
  org.adempiere.plugin.utils;bundle-version="0.0.0",
- org.eclipse.osgi;bundle-version="3.7.2"
+ org.eclipse.osgi;bundle-version="3.7.2",
+ org.adempiere.base.process;bundle-version="1.0.0"
 Bundle-Activator: de.bayen.freibier.plugin.FreiBierActivator
 Import-Package: org.adempiere.plugin.utils
 Bundle-ActivationPolicy: lazy
-Bundle-ClassPath: .
-Service-Component: OSGI-INF/calloutfactory.xml
-Eclipse-Registerbuddy: org.adempiere.base
+Bundle-ClassPath: .,
+ lib/commons-io.jar,
+ lib/postgresql-9.3-1100.jdbc4.jar
+Service-Component: OSGI-INF/calloutfactory.xml,OSGI-INF/modelvalidatorfactory.xml

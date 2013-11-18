@@ -265,6 +265,9 @@ public class BankStatementCreatePayments extends SvrProcess {
 					payment.setPayAmt(PayAmt);
 				else	//	payment is likely to be negative
 					payment.setPayAmt(PayAmt.negate());
+				// TODO - besseres logging
+				if(!invoice.getGrandTotal(true).subtract(payment.getPayAmt()).equals(BigDecimal.ZERO))
+					System.out.println("OverUnderAmt: "+invoice.getGrandTotal(true).subtract(payment.getPayAmt()).toString());
 				payment.setOverUnderAmt(invoice.getGrandTotal(true).subtract(payment.getPayAmt()));
 			}
 			else	// set Pay Amout from Invoice
