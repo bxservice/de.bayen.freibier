@@ -8,7 +8,6 @@ Require-Bundle: org.adempiere.base;bundle-version="1.0.0",
  org.adempiere.plugin.utils;bundle-version="0.0.0",
  org.eclipse.osgi;bundle-version="3.7.2",
  org.adempiere.base.process;bundle-version="1.0.0"
-Bundle-Activator: de.bayen.freibier.plugin.FreiBierActivator
 Import-Package: org.adempiere.plugin.utils
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .,
