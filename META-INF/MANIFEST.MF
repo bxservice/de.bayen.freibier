@@ -11,6 +11,5 @@ Require-Bundle: org.adempiere.base;bundle-version="1.0.0",
 Import-Package: org.adempiere.plugin.utils
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .,
- lib/commons-io.jar,
- lib/postgresql-9.3-1100.jdbc4.jar
+ lib/commons-io.jar
 Service-Component: OSGI-INF/calloutfactory.xml,OSGI-INF/modelvalidatorfactory.xml
