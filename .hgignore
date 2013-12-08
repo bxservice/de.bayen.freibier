@@ -1,3 +1,2 @@
-
 syntax: regexp
-^bin$
+^de.bayen.freibier/bin$
