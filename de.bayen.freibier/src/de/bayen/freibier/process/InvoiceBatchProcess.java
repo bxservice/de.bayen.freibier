@@ -18,13 +18,19 @@ package de.bayen.freibier.process;
 
 import java.util.logging.Level;
 
+import org.adempiere.exceptions.AdempiereException;
+import org.compiere.model.MAcctSchema;
+import org.compiere.model.MAcctSchemaElement;
 import org.compiere.model.MInvoice;
 import org.compiere.model.MInvoiceBatch;
 import org.compiere.model.MInvoiceBatchLine;
 import org.compiere.model.MInvoiceLine;
+import org.compiere.model.MSalesRegion;
+import org.compiere.model.X_C_AcctSchema_Element;
 import org.compiere.process.ProcessInfoParameter;
 import org.compiere.process.SvrProcess;
 import org.compiere.util.AdempiereUserError;
+import org.compiere.util.Env;
 import org.compiere.util.Msg;
 
 
@@ -110,6 +116,49 @@ public class InvoiceBatchProcess extends SvrProcess
 			if (m_invoice == null)
 			{
 				m_invoice = new MInvoice (batch, line);
+				{
+					/*
+					 * changes for FreiBier -TB-
+					 * 
+					 * these changes are implemented in an FreiBier-independent
+					 * way. They could be included in trunk. If you want to do
+					 * that you should decide if the thrown Exceptions should be
+					 * thrown or suppressed.
+					 */
+					
+					if ("Y".equals(Env.getContext(getCtx(), "Element_SR"))) {
+						// Sales Region Reference
+						String sr_colName = MSalesRegion.COLUMNNAME_C_SalesRegion_ID;
+						Object salesRegion = line.get_Value(sr_colName);
+						if (!m_invoice.set_ValueOfColumnReturningBoolean(
+								sr_colName, salesRegion)) {
+							throw new AdempiereException(
+									"Can not write SalesRegion to Invoice. Is this database adapted to FreiBier?");
+						}
+					}
+					//
+					if ("Y".equals(Env.getContext(getCtx(), "Element_X1"))) {
+						// User Defined Reference.
+						// In FreiBier used for BAY_Contract
+						MAcctSchema[] ass = MAcctSchema.getClientAcctSchema(getCtx(), getAD_Client_ID());
+						if (ass.length != 1)
+							throw new AdempiereException(
+									"Not implemented for more than one Accounting Schema.");
+						MAcctSchemaElement ud1 = ass[0]
+								.getAcctSchemaElement(X_C_AcctSchema_Element.ELEMENTTYPE_UserElement1);
+						String userElement1ColumnName;
+						if (ud1 != null) {
+							userElement1ColumnName = ud1.getDisplayColumnName();
+							Object userElement = line
+									.get_Value(userElement1ColumnName);
+							if (!m_invoice.set_ValueOfColumnReturningBoolean(
+									userElement1ColumnName, userElement)) {
+								throw new AdempiereException(
+										"Can not write UserElement1 to Invoice. Is this database adapted to FreiBier?");
+							}
+						}
+					}
+				}
 				if (!m_invoice.save())
 					throw new AdempiereUserError("Cannot save Invoice");
 				//
