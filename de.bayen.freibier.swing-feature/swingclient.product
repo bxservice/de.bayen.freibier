@@ -26,11 +26,8 @@
    </plugins>
 
    <features>
-      <feature id="org.adempiere.base" version="1.0.0.qualifier"/>
-      <feature id="org.adempiere.ui.swing" version="1.0.0.qualifier"/>
-      <feature id="org.idempiere.hazelcast.service" version="1.0.0.qualifier"/>
-      <feature id="org.adempiere.pipo" version="1.0.0.qualifier"/>
       <feature id="de.bayen.freibier.swing" version="1.0.0.qualifier"/>
+      <feature id="org.adempiere.ui.swing" version="2.0.0.qualifier"/>
    </features>
 
    <configurations>
