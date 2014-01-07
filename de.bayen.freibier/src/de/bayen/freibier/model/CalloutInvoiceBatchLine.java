@@ -12,6 +12,12 @@ import org.compiere.model.I_C_InvoiceBatchLine;
 public class CalloutInvoiceBatchLine extends CalloutEngine implements
 		IColumnCallout {
 
+	/**
+	 * Wenn ein Vertrag ausgewählt wird, wird automatisch der passende
+	 * Geschäftspartner dazugenommen.
+	 * 
+	 * TODO das kann man auch in anderen Belegen machen und nicht nur im Stapel
+	 */
 	@Override
 	public String start(Properties ctx, int WindowNo, GridTab mTab,
 			GridField mField, Object value, Object oldValue) {
