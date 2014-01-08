@@ -21,18 +21,18 @@ import java.sql.Timestamp;
 import org.compiere.model.*;
 import org.compiere.util.KeyNamePair;
 
-/** Generated Interface for BAY_StatAdjust
+/** Generated Interface for BAY_InterestCalculation
  *  @author iDempiere (generated) 
  *  @version Release 2.0
  */
 @SuppressWarnings("all")
-public interface I_BAY_StatAdjust 
+public interface I_BAY_InterestCalculation 
 {
 
-    /** TableName=BAY_StatAdjust */
-    public static final String Table_Name = "BAY_StatAdjust";
+    /** TableName=BAY_InterestCalculation */
+    public static final String Table_Name = "BAY_InterestCalculation";
 
-    /** AD_Table_ID=1000007 */
+    /** AD_Table_ID=1000008 */
     public static final int Table_ID = MTable.getTable_ID(Table_Name);
 
     KeyNamePair Model = new KeyNamePair(Table_ID, Table_Name);
@@ -64,69 +64,49 @@ public interface I_BAY_StatAdjust
 	  */
 	public int getAD_Org_ID();
 
-    /** Column name Amount */
-    public static final String COLUMNNAME_Amount = "Amount";
+    /** Column name BAY_Contract_ID */
+    public static final String COLUMNNAME_BAY_Contract_ID = "BAY_Contract_ID";
 
-	/** Set Amount.
-	  * Amount in a defined currency
+	/** Set Vertrag	  */
+	public void setBAY_Contract_ID (int BAY_Contract_ID);
+
+	/** Get Vertrag	  */
+	public int getBAY_Contract_ID();
+
+	public I_BAY_Contract getBAY_Contract() throws RuntimeException;
+
+    /** Column name BAY_InterestCalculation_ID */
+    public static final String COLUMNNAME_BAY_InterestCalculation_ID = "BAY_InterestCalculation_ID";
+
+	/** Set Zinsberechnung	  */
+	public void setBAY_InterestCalculation_ID (int BAY_InterestCalculation_ID);
+
+	/** Get Zinsberechnung	  */
+	public int getBAY_InterestCalculation_ID();
+
+    /** Column name BAY_InterestCalculation_UU */
+    public static final String COLUMNNAME_BAY_InterestCalculation_UU = "BAY_InterestCalculation_UU";
+
+	/** Set BAY_InterestCalculation_UU	  */
+	public void setBAY_InterestCalculation_UU (String BAY_InterestCalculation_UU);
+
+	/** Get BAY_InterestCalculation_UU	  */
+	public String getBAY_InterestCalculation_UU();
+
+    /** Column name C_BPartner_ID */
+    public static final String COLUMNNAME_C_BPartner_ID = "C_BPartner_ID";
+
+	/** Set Business Partner .
+	  * Identifies a Business Partner
 	  */
-	public void setAmount (BigDecimal Amount);
+	public void setC_BPartner_ID (int C_BPartner_ID);
 
-	/** Get Amount.
-	  * Amount in a defined currency
+	/** Get Business Partner .
+	  * Identifies a Business Partner
 	  */
-	public BigDecimal getAmount();
+	public int getC_BPartner_ID();
 
-    /** Column name BAY_StatAdjust_ID */
-    public static final String COLUMNNAME_BAY_StatAdjust_ID = "BAY_StatAdjust_ID";
-
-	/** Set Statistik-Anpassung	  */
-	public void setBAY_StatAdjust_ID (int BAY_StatAdjust_ID);
-
-	/** Get Statistik-Anpassung	  */
-	public int getBAY_StatAdjust_ID();
-
-    /** Column name BAY_StatAdjust_UU */
-    public static final String COLUMNNAME_BAY_StatAdjust_UU = "BAY_StatAdjust_UU";
-
-	/** Set BAY_StatAdjust_UU	  */
-	public void setBAY_StatAdjust_UU (String BAY_StatAdjust_UU);
-
-	/** Get BAY_StatAdjust_UU	  */
-	public String getBAY_StatAdjust_UU();
-
-    /** Column name C_BP_Group_ID */
-    public static final String COLUMNNAME_C_BP_Group_ID = "C_BP_Group_ID";
-
-	/** Set Business Partner Group.
-	  * Business Partner Group
-	  */
-	public void setC_BP_Group_ID (int C_BP_Group_ID);
-
-	/** Get Business Partner Group.
-	  * Business Partner Group
-	  */
-	public int getC_BP_Group_ID();
-
-	public org.compiere.model.I_C_BP_Group getC_BP_Group() throws RuntimeException;
-
-    /** Column name Command */
-    public static final String COLUMNNAME_Command = "Command";
-
-	/** Set Command	  */
-	public void setCommand (String Command);
-
-	/** Get Command	  */
-	public String getCommand();
-
-    /** Column name CommandUom */
-    public static final String COLUMNNAME_CommandUom = "CommandUom";
-
-	/** Set Maßeinheit für Anweisung	  */
-	public void setCommandUom (String CommandUom);
-
-	/** Get Maßeinheit für Anweisung	  */
-	public String getCommandUom();
+	public org.compiere.model.I_C_BPartner getC_BPartner() throws RuntimeException;
 
     /** Column name Created */
     public static final String COLUMNNAME_Created = "Created";
@@ -144,16 +124,18 @@ public interface I_BAY_StatAdjust
 	  */
 	public int getCreatedBy();
 
-    /** Column name Customer_ID */
-    public static final String COLUMNNAME_Customer_ID = "Customer_ID";
+    /** Column name DateDoc */
+    public static final String COLUMNNAME_DateDoc = "DateDoc";
 
-	/** Set Customer	  */
-	public void setCustomer_ID (int Customer_ID);
+	/** Set Document Date.
+	  * Date of the Document
+	  */
+	public void setDateDoc (Timestamp DateDoc);
 
-	/** Get Customer	  */
-	public int getCustomer_ID();
-
-	public org.compiere.model.I_C_BPartner getCustomer() throws RuntimeException;
+	/** Get Document Date.
+	  * Date of the Document
+	  */
+	public Timestamp getDateDoc();
 
     /** Column name Description */
     public static final String COLUMNNAME_Description = "Description";
@@ -168,18 +150,18 @@ public interface I_BAY_StatAdjust
 	  */
 	public String getDescription();
 
-    /** Column name EndDate */
-    public static final String COLUMNNAME_EndDate = "EndDate";
+    /** Column name DocumentNo */
+    public static final String COLUMNNAME_DocumentNo = "DocumentNo";
 
-	/** Set End Date.
-	  * Last effective date (inclusive)
+	/** Set Document No.
+	  * Document sequence number of the document
 	  */
-	public void setEndDate (Timestamp EndDate);
+	public void setDocumentNo (String DocumentNo);
 
-	/** Get End Date.
-	  * Last effective date (inclusive)
+	/** Get Document No.
+	  * Document sequence number of the document
 	  */
-	public Timestamp getEndDate();
+	public String getDocumentNo();
 
     /** Column name Help */
     public static final String COLUMNNAME_Help = "Help";
@@ -194,6 +176,19 @@ public interface I_BAY_StatAdjust
 	  */
 	public String getHelp();
 
+    /** Column name InterestAmt */
+    public static final String COLUMNNAME_InterestAmt = "InterestAmt";
+
+	/** Set Interest Amount.
+	  * Interest Amount
+	  */
+	public void setInterestAmt (BigDecimal InterestAmt);
+
+	/** Get Interest Amount.
+	  * Interest Amount
+	  */
+	public BigDecimal getInterestAmt();
+
     /** Column name IsActive */
     public static final String COLUMNNAME_IsActive = "IsActive";
 
@@ -206,36 +201,6 @@ public interface I_BAY_StatAdjust
 	  * The record is active in the system
 	  */
 	public boolean isActive();
-
-    /** Column name M_Product_Category_ID */
-    public static final String COLUMNNAME_M_Product_Category_ID = "M_Product_Category_ID";
-
-	/** Set Product Category.
-	  * Category of a Product
-	  */
-	public void setM_Product_Category_ID (int M_Product_Category_ID);
-
-	/** Get Product Category.
-	  * Category of a Product
-	  */
-	public int getM_Product_Category_ID();
-
-	public org.compiere.model.I_M_Product_Category getM_Product_Category() throws RuntimeException;
-
-    /** Column name M_Product_ID */
-    public static final String COLUMNNAME_M_Product_ID = "M_Product_ID";
-
-	/** Set Product.
-	  * Product, Service, Item
-	  */
-	public void setM_Product_ID (int M_Product_ID);
-
-	/** Get Product.
-	  * Product, Service, Item
-	  */
-	public int getM_Product_ID();
-
-	public org.compiere.model.I_M_Product getM_Product() throws RuntimeException;
 
     /** Column name Name */
     public static final String COLUMNNAME_Name = "Name";
@@ -250,29 +215,31 @@ public interface I_BAY_StatAdjust
 	  */
 	public String getName();
 
-    /** Column name StartDate */
-    public static final String COLUMNNAME_StartDate = "StartDate";
+    /** Column name TotalAmt */
+    public static final String COLUMNNAME_TotalAmt = "TotalAmt";
 
-	/** Set Start Date.
-	  * First effective day (inclusive)
+	/** Set Total Amount.
+	  * Total Amount
 	  */
-	public void setStartDate (Timestamp StartDate);
+	public void setTotalAmt (BigDecimal TotalAmt);
 
-	/** Get Start Date.
-	  * First effective day (inclusive)
+	/** Get Total Amount.
+	  * Total Amount
 	  */
-	public Timestamp getStartDate();
+	public BigDecimal getTotalAmt();
 
-    /** Column name TargetCustomer_ID */
-    public static final String COLUMNNAME_TargetCustomer_ID = "TargetCustomer_ID";
+    /** Column name TotalLines */
+    public static final String COLUMNNAME_TotalLines = "TotalLines";
 
-	/** Set Target Customer	  */
-	public void setTargetCustomer_ID (int TargetCustomer_ID);
+	/** Set Total Lines.
+	  * Total of all document lines
+	  */
+	public void setTotalLines (BigDecimal TotalLines);
 
-	/** Get Target Customer	  */
-	public int getTargetCustomer_ID();
-
-	public org.compiere.model.I_C_BPartner getTargetCustomer() throws RuntimeException;
+	/** Get Total Lines.
+	  * Total of all document lines
+	  */
+	public BigDecimal getTotalLines();
 
     /** Column name Updated */
     public static final String COLUMNNAME_Updated = "Updated";
@@ -302,19 +269,4 @@ public interface I_BAY_StatAdjust
 	  * Search key for the record in the format required - must be unique
 	  */
 	public String getValue();
-
-    /** Column name Vendor_ID */
-    public static final String COLUMNNAME_Vendor_ID = "Vendor_ID";
-
-	/** Set Vendor.
-	  * The Vendor of the product/service
-	  */
-	public void setVendor_ID (int Vendor_ID);
-
-	/** Get Vendor.
-	  * The Vendor of the product/service
-	  */
-	public int getVendor_ID();
-
-	public org.compiere.model.I_C_BPartner getVendor() throws RuntimeException;
 }

@@ -27,14 +27,14 @@ import org.compiere.util.KeyNamePair;
 
 /** Generated Model for BAY_StatAdjust
  *  @author iDempiere (generated) 
- *  @version Release 1.0c - $Id$ */
+ *  @version Release 2.0 - $Id$ */
 public class X_BAY_StatAdjust extends PO implements I_BAY_StatAdjust, I_Persistent 
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20131109L;
+	private static final long serialVersionUID = 20140108L;
 
     /** Standard Constructor */
     public X_BAY_StatAdjust (Properties ctx, int BAY_StatAdjust_ID, String trxName)
@@ -291,9 +291,9 @@ public class X_BAY_StatAdjust extends PO implements I_BAY_StatAdjust, I_Persiste
 	public void setM_Product_Category_ID (int M_Product_Category_ID)
 	{
 		if (M_Product_Category_ID < 1) 
-			set_ValueNoCheck (COLUMNNAME_M_Product_Category_ID, null);
+			set_Value (COLUMNNAME_M_Product_Category_ID, null);
 		else 
-			set_ValueNoCheck (COLUMNNAME_M_Product_Category_ID, Integer.valueOf(M_Product_Category_ID));
+			set_Value (COLUMNNAME_M_Product_Category_ID, Integer.valueOf(M_Product_Category_ID));
 	}
 
 	/** Get Product Category.

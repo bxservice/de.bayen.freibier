@@ -21,18 +21,18 @@ import java.sql.Timestamp;
 import org.compiere.model.*;
 import org.compiere.util.KeyNamePair;
 
-/** Generated Interface for BAY_Contract
+/** Generated Interface for BAY_InterestCalculationLine
  *  @author iDempiere (generated) 
  *  @version Release 2.0
  */
 @SuppressWarnings("all")
-public interface I_BAY_Contract 
+public interface I_BAY_InterestCalculationLine 
 {
 
-    /** TableName=BAY_Contract */
-    public static final String Table_Name = "BAY_Contract";
+    /** TableName=BAY_InterestCalculationLine */
+    public static final String Table_Name = "BAY_InterestCalculationLine";
 
-    /** AD_Table_ID=1000000 */
+    /** AD_Table_ID=1000009 */
     public static final int Table_ID = MTable.getTable_ID(Table_Name);
 
     KeyNamePair Model = new KeyNamePair(Table_ID, Table_Name);
@@ -64,38 +64,47 @@ public interface I_BAY_Contract
 	  */
 	public int getAD_Org_ID();
 
-    /** Column name BAY_Contract_ID */
-    public static final String COLUMNNAME_BAY_Contract_ID = "BAY_Contract_ID";
+    /** Column name Amount */
+    public static final String COLUMNNAME_Amount = "Amount";
 
-	/** Set Vertrag	  */
-	public void setBAY_Contract_ID (int BAY_Contract_ID);
-
-	/** Get Vertrag	  */
-	public int getBAY_Contract_ID();
-
-    /** Column name BAY_Contract_UU */
-    public static final String COLUMNNAME_BAY_Contract_UU = "BAY_Contract_UU";
-
-	/** Set BAY_Contract_UU	  */
-	public void setBAY_Contract_UU (String BAY_Contract_UU);
-
-	/** Get BAY_Contract_UU	  */
-	public String getBAY_Contract_UU();
-
-    /** Column name C_BPartner_ID */
-    public static final String COLUMNNAME_C_BPartner_ID = "C_BPartner_ID";
-
-	/** Set Business Partner .
-	  * Identifies a Business Partner
+	/** Set Amount.
+	  * Amount in a defined currency
 	  */
-	public void setC_BPartner_ID (int C_BPartner_ID);
+	public void setAmount (BigDecimal Amount);
 
-	/** Get Business Partner .
-	  * Identifies a Business Partner
+	/** Get Amount.
+	  * Amount in a defined currency
 	  */
-	public int getC_BPartner_ID();
+	public BigDecimal getAmount();
 
-	public org.compiere.model.I_C_BPartner getC_BPartner() throws RuntimeException;
+    /** Column name BAY_InterestCalculation_ID */
+    public static final String COLUMNNAME_BAY_InterestCalculation_ID = "BAY_InterestCalculation_ID";
+
+	/** Set Zinsberechnung	  */
+	public void setBAY_InterestCalculation_ID (int BAY_InterestCalculation_ID);
+
+	/** Get Zinsberechnung	  */
+	public int getBAY_InterestCalculation_ID();
+
+	public I_BAY_InterestCalculation getBAY_InterestCalculation() throws RuntimeException;
+
+    /** Column name BAY_InterestCalculationLine_ID */
+    public static final String COLUMNNAME_BAY_InterestCalculationLine_ID = "BAY_InterestCalculationLine_ID";
+
+	/** Set Zinsabrechnung Zeile	  */
+	public void setBAY_InterestCalculationLine_ID (int BAY_InterestCalculationLine_ID);
+
+	/** Get Zinsabrechnung Zeile	  */
+	public int getBAY_InterestCalculationLine_ID();
+
+    /** Column name BAY_InterestCalculationLine_UU */
+    public static final String COLUMNNAME_BAY_InterestCalculationLine_UU = "BAY_InterestCalculationLine_UU";
+
+	/** Set BAY_InterestCalculationLine_UU	  */
+	public void setBAY_InterestCalculationLine_UU (String BAY_InterestCalculationLine_UU);
+
+	/** Get BAY_InterestCalculationLine_UU	  */
+	public String getBAY_InterestCalculationLine_UU();
 
     /** Column name Created */
     public static final String COLUMNNAME_Created = "Created";
@@ -113,20 +122,27 @@ public interface I_BAY_Contract
 	  */
 	public int getCreatedBy();
 
-    /** Column name C_SalesRegion_ID */
-    public static final String COLUMNNAME_C_SalesRegion_ID = "C_SalesRegion_ID";
+    /** Column name DateTrx */
+    public static final String COLUMNNAME_DateTrx = "DateTrx";
 
-	/** Set Sales Region.
-	  * Sales coverage region
+	/** Set Transaction Date.
+	  * Transaction Date
 	  */
-	public void setC_SalesRegion_ID (int C_SalesRegion_ID);
+	public void setDateTrx (Timestamp DateTrx);
 
-	/** Get Sales Region.
-	  * Sales coverage region
+	/** Get Transaction Date.
+	  * Transaction Date
 	  */
-	public int getC_SalesRegion_ID();
+	public Timestamp getDateTrx();
 
-	public org.compiere.model.I_C_SalesRegion getC_SalesRegion() throws RuntimeException;
+    /** Column name Days */
+    public static final String COLUMNNAME_Days = "Days";
+
+	/** Set Days	  */
+	public void setDays (int Days);
+
+	/** Get Days	  */
+	public int getDays();
 
     /** Column name Description */
     public static final String COLUMNNAME_Description = "Description";
@@ -140,19 +156,6 @@ public interface I_BAY_Contract
 	  * Optional short description of the record
 	  */
 	public String getDescription();
-
-    /** Column name Help */
-    public static final String COLUMNNAME_Help = "Help";
-
-	/** Set Comment/Help.
-	  * Comment or Hint
-	  */
-	public void setHelp (String Help);
-
-	/** Get Comment/Help.
-	  * Comment or Hint
-	  */
-	public String getHelp();
 
     /** Column name InterestPercent */
     public static final String COLUMNNAME_InterestPercent = "InterestPercent";
@@ -180,27 +183,31 @@ public interface I_BAY_Contract
 	  */
 	public boolean isActive();
 
-    /** Column name Name */
-    public static final String COLUMNNAME_Name = "Name";
+    /** Column name Line */
+    public static final String COLUMNNAME_Line = "Line";
 
-	/** Set Name.
-	  * Alphanumeric identifier of the entity
+	/** Set Line No.
+	  * Unique line for this document
 	  */
-	public void setName (String Name);
+	public void setLine (int Line);
 
-	/** Get Name.
-	  * Alphanumeric identifier of the entity
+	/** Get Line No.
+	  * Unique line for this document
 	  */
-	public String getName();
+	public int getLine();
 
-    /** Column name StatusCode */
-    public static final String COLUMNNAME_StatusCode = "StatusCode";
+    /** Column name LineTotalAmt */
+    public static final String COLUMNNAME_LineTotalAmt = "LineTotalAmt";
 
-	/** Set Status Code	  */
-	public void setStatusCode (String StatusCode);
+	/** Set Line Total.
+	  * Total line amount incl. Tax
+	  */
+	public void setLineTotalAmt (BigDecimal LineTotalAmt);
 
-	/** Get Status Code	  */
-	public String getStatusCode();
+	/** Get Line Total.
+	  * Total line amount incl. Tax
+	  */
+	public BigDecimal getLineTotalAmt();
 
     /** Column name Updated */
     public static final String COLUMNNAME_Updated = "Updated";
@@ -217,17 +224,4 @@ public interface I_BAY_Contract
 	  * User who updated this records
 	  */
 	public int getUpdatedBy();
-
-    /** Column name Value */
-    public static final String COLUMNNAME_Value = "Value";
-
-	/** Set Search Key.
-	  * Search key for the record in the format required - must be unique
-	  */
-	public void setValue (String Value);
-
-	/** Get Search Key.
-	  * Search key for the record in the format required - must be unique
-	  */
-	public String getValue();
 }

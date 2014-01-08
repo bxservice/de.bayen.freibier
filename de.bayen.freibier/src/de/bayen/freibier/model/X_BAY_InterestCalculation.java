@@ -19,15 +19,16 @@ package de.bayen.freibier.model;
 
 import java.math.BigDecimal;
 import java.sql.ResultSet;
+import java.sql.Timestamp;
 import java.util.Properties;
 import org.compiere.model.*;
 import org.compiere.util.Env;
 import org.compiere.util.KeyNamePair;
 
-/** Generated Model for BAY_Contract
+/** Generated Model for BAY_InterestCalculation
  *  @author iDempiere (generated) 
  *  @version Release 2.0 - $Id$ */
-public class X_BAY_Contract extends PO implements I_BAY_Contract, I_Persistent 
+public class X_BAY_InterestCalculation extends PO implements I_BAY_InterestCalculation, I_Persistent 
 {
 
 	/**
@@ -36,19 +37,20 @@ public class X_BAY_Contract extends PO implements I_BAY_Contract, I_Persistent
 	private static final long serialVersionUID = 20140108L;
 
     /** Standard Constructor */
-    public X_BAY_Contract (Properties ctx, int BAY_Contract_ID, String trxName)
+    public X_BAY_InterestCalculation (Properties ctx, int BAY_InterestCalculation_ID, String trxName)
     {
-      super (ctx, BAY_Contract_ID, trxName);
-      /** if (BAY_Contract_ID == 0)
+      super (ctx, BAY_InterestCalculation_ID, trxName);
+      /** if (BAY_InterestCalculation_ID == 0)
         {
-			setBAY_Contract_ID (0);
+			setBAY_InterestCalculation_ID (0);
+			setDocumentNo (null);
 			setName (null);
 			setValue (null);
         } */
     }
 
     /** Load Constructor */
-    public X_BAY_Contract (Properties ctx, ResultSet rs, String trxName)
+    public X_BAY_InterestCalculation (Properties ctx, ResultSet rs, String trxName)
     {
       super (ctx, rs, trxName);
     }
@@ -70,19 +72,24 @@ public class X_BAY_Contract extends PO implements I_BAY_Contract, I_Persistent
 
     public String toString()
     {
-      StringBuffer sb = new StringBuffer ("X_BAY_Contract[")
+      StringBuffer sb = new StringBuffer ("X_BAY_InterestCalculation[")
         .append(get_ID()).append("]");
       return sb.toString();
     }
+
+	public I_BAY_Contract getBAY_Contract() throws RuntimeException
+    {
+		return (I_BAY_Contract)MTable.get(getCtx(), I_BAY_Contract.Table_Name)
+			.getPO(getBAY_Contract_ID(), get_TrxName());	}
 
 	/** Set Vertrag.
 		@param BAY_Contract_ID Vertrag	  */
 	public void setBAY_Contract_ID (int BAY_Contract_ID)
 	{
 		if (BAY_Contract_ID < 1) 
-			set_ValueNoCheck (COLUMNNAME_BAY_Contract_ID, null);
+			set_Value (COLUMNNAME_BAY_Contract_ID, null);
 		else 
-			set_ValueNoCheck (COLUMNNAME_BAY_Contract_ID, Integer.valueOf(BAY_Contract_ID));
+			set_Value (COLUMNNAME_BAY_Contract_ID, Integer.valueOf(BAY_Contract_ID));
 	}
 
 	/** Get Vertrag.
@@ -95,18 +102,38 @@ public class X_BAY_Contract extends PO implements I_BAY_Contract, I_Persistent
 		return ii.intValue();
 	}
 
-	/** Set BAY_Contract_UU.
-		@param BAY_Contract_UU BAY_Contract_UU	  */
-	public void setBAY_Contract_UU (String BAY_Contract_UU)
+	/** Set Zinsberechnung.
+		@param BAY_InterestCalculation_ID Zinsberechnung	  */
+	public void setBAY_InterestCalculation_ID (int BAY_InterestCalculation_ID)
 	{
-		set_Value (COLUMNNAME_BAY_Contract_UU, BAY_Contract_UU);
+		if (BAY_InterestCalculation_ID < 1) 
+			set_ValueNoCheck (COLUMNNAME_BAY_InterestCalculation_ID, null);
+		else 
+			set_ValueNoCheck (COLUMNNAME_BAY_InterestCalculation_ID, Integer.valueOf(BAY_InterestCalculation_ID));
 	}
 
-	/** Get BAY_Contract_UU.
-		@return BAY_Contract_UU	  */
-	public String getBAY_Contract_UU () 
+	/** Get Zinsberechnung.
+		@return Zinsberechnung	  */
+	public int getBAY_InterestCalculation_ID () 
 	{
-		return (String)get_Value(COLUMNNAME_BAY_Contract_UU);
+		Integer ii = (Integer)get_Value(COLUMNNAME_BAY_InterestCalculation_ID);
+		if (ii == null)
+			 return 0;
+		return ii.intValue();
+	}
+
+	/** Set BAY_InterestCalculation_UU.
+		@param BAY_InterestCalculation_UU BAY_InterestCalculation_UU	  */
+	public void setBAY_InterestCalculation_UU (String BAY_InterestCalculation_UU)
+	{
+		set_Value (COLUMNNAME_BAY_InterestCalculation_UU, BAY_InterestCalculation_UU);
+	}
+
+	/** Get BAY_InterestCalculation_UU.
+		@return BAY_InterestCalculation_UU	  */
+	public String getBAY_InterestCalculation_UU () 
+	{
+		return (String)get_Value(COLUMNNAME_BAY_InterestCalculation_UU);
 	}
 
 	public org.compiere.model.I_C_BPartner getC_BPartner() throws RuntimeException
@@ -137,32 +164,21 @@ public class X_BAY_Contract extends PO implements I_BAY_Contract, I_Persistent
 		return ii.intValue();
 	}
 
-	public org.compiere.model.I_C_SalesRegion getC_SalesRegion() throws RuntimeException
-    {
-		return (org.compiere.model.I_C_SalesRegion)MTable.get(getCtx(), org.compiere.model.I_C_SalesRegion.Table_Name)
-			.getPO(getC_SalesRegion_ID(), get_TrxName());	}
-
-	/** Set Sales Region.
-		@param C_SalesRegion_ID 
-		Sales coverage region
+	/** Set Document Date.
+		@param DateDoc 
+		Date of the Document
 	  */
-	public void setC_SalesRegion_ID (int C_SalesRegion_ID)
+	public void setDateDoc (Timestamp DateDoc)
 	{
-		if (C_SalesRegion_ID < 1) 
-			set_Value (COLUMNNAME_C_SalesRegion_ID, null);
-		else 
-			set_Value (COLUMNNAME_C_SalesRegion_ID, Integer.valueOf(C_SalesRegion_ID));
+		set_Value (COLUMNNAME_DateDoc, DateDoc);
 	}
 
-	/** Get Sales Region.
-		@return Sales coverage region
+	/** Get Document Date.
+		@return Date of the Document
 	  */
-	public int getC_SalesRegion_ID () 
+	public Timestamp getDateDoc () 
 	{
-		Integer ii = (Integer)get_Value(COLUMNNAME_C_SalesRegion_ID);
-		if (ii == null)
-			 return 0;
-		return ii.intValue();
+		return (Timestamp)get_Value(COLUMNNAME_DateDoc);
 	}
 
 	/** Set Description.
@@ -182,6 +198,23 @@ public class X_BAY_Contract extends PO implements I_BAY_Contract, I_Persistent
 		return (String)get_Value(COLUMNNAME_Description);
 	}
 
+	/** Set Document No.
+		@param DocumentNo 
+		Document sequence number of the document
+	  */
+	public void setDocumentNo (String DocumentNo)
+	{
+		set_ValueNoCheck (COLUMNNAME_DocumentNo, DocumentNo);
+	}
+
+	/** Get Document No.
+		@return Document sequence number of the document
+	  */
+	public String getDocumentNo () 
+	{
+		return (String)get_Value(COLUMNNAME_DocumentNo);
+	}
+
 	/** Set Comment/Help.
 		@param Help 
 		Comment or Hint
@@ -199,21 +232,21 @@ public class X_BAY_Contract extends PO implements I_BAY_Contract, I_Persistent
 		return (String)get_Value(COLUMNNAME_Help);
 	}
 
-	/** Set Interest in percent.
-		@param InterestPercent 
-		Percentage interest to charge on overdue invoices
+	/** Set Interest Amount.
+		@param InterestAmt 
+		Interest Amount
 	  */
-	public void setInterestPercent (BigDecimal InterestPercent)
+	public void setInterestAmt (BigDecimal InterestAmt)
 	{
-		set_Value (COLUMNNAME_InterestPercent, InterestPercent);
+		set_Value (COLUMNNAME_InterestAmt, InterestAmt);
 	}
 
-	/** Get Interest in percent.
-		@return Percentage interest to charge on overdue invoices
+	/** Get Interest Amount.
+		@return Interest Amount
 	  */
-	public BigDecimal getInterestPercent () 
+	public BigDecimal getInterestAmt () 
 	{
-		BigDecimal bd = (BigDecimal)get_Value(COLUMNNAME_InterestPercent);
+		BigDecimal bd = (BigDecimal)get_Value(COLUMNNAME_InterestAmt);
 		if (bd == null)
 			 return Env.ZERO;
 		return bd;
@@ -236,29 +269,52 @@ public class X_BAY_Contract extends PO implements I_BAY_Contract, I_Persistent
 		return (String)get_Value(COLUMNNAME_Name);
 	}
 
-	/** vorbereitet = 1 */
-	public static final String STATUSCODE_Vorbereitet = "1";
-	/** aktiv = 2 */
-	public static final String STATUSCODE_Aktiv = "2";
-	/** gestört = 3 */
-	public static final String STATUSCODE_Gestört = "3";
-	/** Bonikonto = 8 */
-	public static final String STATUSCODE_Bonikonto = "8";
-	/** beendet = 9 */
-	public static final String STATUSCODE_Beendet = "9";
-	/** Set Status Code.
-		@param StatusCode Status Code	  */
-	public void setStatusCode (String StatusCode)
-	{
+    /** Get Record ID/ColumnName
+        @return ID/ColumnName pair
+      */
+    public KeyNamePair getKeyNamePair() 
+    {
+        return new KeyNamePair(get_ID(), getName());
+    }
 
-		set_Value (COLUMNNAME_StatusCode, StatusCode);
+	/** Set Total Amount.
+		@param TotalAmt 
+		Total Amount
+	  */
+	public void setTotalAmt (BigDecimal TotalAmt)
+	{
+		set_ValueNoCheck (COLUMNNAME_TotalAmt, TotalAmt);
 	}
 
-	/** Get Status Code.
-		@return Status Code	  */
-	public String getStatusCode () 
+	/** Get Total Amount.
+		@return Total Amount
+	  */
+	public BigDecimal getTotalAmt () 
 	{
-		return (String)get_Value(COLUMNNAME_StatusCode);
+		BigDecimal bd = (BigDecimal)get_Value(COLUMNNAME_TotalAmt);
+		if (bd == null)
+			 return Env.ZERO;
+		return bd;
+	}
+
+	/** Set Total Lines.
+		@param TotalLines 
+		Total of all document lines
+	  */
+	public void setTotalLines (BigDecimal TotalLines)
+	{
+		set_ValueNoCheck (COLUMNNAME_TotalLines, TotalLines);
+	}
+
+	/** Get Total Lines.
+		@return Total of all document lines
+	  */
+	public BigDecimal getTotalLines () 
+	{
+		BigDecimal bd = (BigDecimal)get_Value(COLUMNNAME_TotalLines);
+		if (bd == null)
+			 return Env.ZERO;
+		return bd;
 	}
 
 	/** Set Search Key.
@@ -277,12 +333,4 @@ public class X_BAY_Contract extends PO implements I_BAY_Contract, I_Persistent
 	{
 		return (String)get_Value(COLUMNNAME_Value);
 	}
-
-    /** Get Record ID/ColumnName
-        @return ID/ColumnName pair
-      */
-    public KeyNamePair getKeyNamePair() 
-    {
-        return new KeyNamePair(get_ID(), getValue());
-    }
 }
