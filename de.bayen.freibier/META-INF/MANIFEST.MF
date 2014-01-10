@@ -12,5 +12,5 @@ Import-Package: org.adempiere.plugin.utils
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .,
  lib/commons-io.jar
-Service-Component: OSGI-INF/calloutfactory.xml,OSGI-INF/modelvalidatorfactory.xml,
- OSGI-INF/modelfactory.xml
+Service-Component: OSGI-INF/calloutfactory.xml,OSGI-INF/modelvalidatorfactory.xml,OSGI-INF/modelfactory.xml,
+ OSGI-INF/processfactory.xml

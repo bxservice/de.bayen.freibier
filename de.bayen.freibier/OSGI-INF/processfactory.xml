@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" name="de.bayen.freibier.ProcessFactory">
+   <implementation class="de.bayen.freibier.ProcessFactory"/>
+   <service>
+      <provide interface="org.adempiere.base.IProcessFactory"/>
+   </service>
+</scr:component>
