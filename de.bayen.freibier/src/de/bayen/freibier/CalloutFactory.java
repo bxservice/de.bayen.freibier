@@ -8,9 +8,11 @@ import org.adempiere.base.IColumnCalloutFactory;
 import org.compiere.model.MInvoiceBatchLine;
 import org.compiere.model.MProduct;
 
+import de.bayen.freibier.model.CalloutInterestCalculationLine;
 import de.bayen.freibier.model.CalloutInvoiceBatchLine;
 import de.bayen.freibier.model.CalloutProduct;
 import de.bayen.freibier.model.I_BAY_Contract;
+import de.bayen.freibier.model.MBAYInterestCalculationLine;
 
 public class CalloutFactory implements IColumnCalloutFactory {
 
@@ -29,6 +31,10 @@ public class CalloutFactory implements IColumnCalloutFactory {
 			if(columnName.equals(I_BAY_Contract.COLUMNNAME_BAY_Contract_ID)){
 				list.add(new CalloutInvoiceBatchLine());
 			}
+		}
+		//
+		if(tableName.equals(MBAYInterestCalculationLine.Table_Name)){
+			list.add(new CalloutInterestCalculationLine());
 		}
 		//
 		return list.toArray(new IColumnCallout[0]);

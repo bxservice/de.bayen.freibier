@@ -1,15 +1,12 @@
 package de.bayen.freibier.model;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.sql.ResultSet;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Properties;
 
 import org.compiere.model.MInvoiceLine;
 import org.compiere.model.Query;
+import org.compiere.util.DB;
 
 public class MBAYInterestCalculation extends X_BAY_InterestCalculation {
 
@@ -31,7 +28,7 @@ public class MBAYInterestCalculation extends X_BAY_InterestCalculation {
 	 *            starting with AND
 	 * @return lines
 	 */
-	private MBAYInterestCalculationLine[] getLines(String whereClause) {
+	protected MBAYInterestCalculationLine[] getLines(String whereClause) {
 		String whereClauseFinal = COLUMNNAME_BAY_InterestCalculation_ID + "=? ";
 		if (whereClause != null)
 			whereClauseFinal += whereClause;
@@ -43,45 +40,50 @@ public class MBAYInterestCalculation extends X_BAY_InterestCalculation {
 		return list.toArray(new MBAYInterestCalculationLine[list.size()]);
 	} // getLines
 
-	public void recalculate() {
-		MBAYInterestCalculationLine[] lines = getLines(null);
-		Calendar date = null;
-		BigDecimal sum = BigDecimal.ZERO;
-		BigDecimal interestSum = BigDecimal.ZERO;
-		for (MBAYInterestCalculationLine line : lines) {
-			Calendar linedate = new GregorianCalendar();
-			linedate.setTime(line.getDateTrx());
-			if (date != null) {
-				int days = (linedate.get(Calendar.YEAR) - date
-						.get(Calendar.YEAR)) * 360;
-				days += (linedate.get(Calendar.MONTH) - date
-						.get(Calendar.MONTH)) * 30;
-				days += (linedate.get(Calendar.DAY_OF_MONTH) - date
-						.get(Calendar.DAY_OF_MONTH));
-				days -= linedate.get(Calendar.DAY_OF_MONTH) == 31 ? 1 : 0;
-				days += date.get(Calendar.DAY_OF_MONTH) == 31 ? 1 : 0;
-				line.setDays(days);
-			} else {
-				line.setDays(0);
-			}
-			date = linedate;
-			// sum*(percent/100)*(days/360)
-			BigDecimal interest = sum.multiply(line.getInterestPercent())
-					.multiply(new BigDecimal(line.getDays()))
-					.divide(new BigDecimal(100 * 360), 2, RoundingMode.HALF_UP);
-			line.setLineTotalAmt(interest);
-			interestSum = interestSum.add(interest);
-			sum = sum.add(line.getAmount());
-			line.saveEx();
-		}
-		setInterestAmt(interestSum);
-		setTotalLines(sum);
-		setTotalAmt(sum.add(interestSum));
+	/**
+	 * This method does the same as {@link #recalculate()} but it does not use
+	 * the persistence layer. This allows to recalculate the header from the
+	 * afterSave() method of the line record. If we use the persistence layer
+	 * then the header object changes and the gui does not allow to enter a new
+	 * line before a (manual) refresh on the header object is made.
+	 * 
+	 * If you switch to the header tab the value is still refreshed (in swing).
+	 * I do not know how but this works. :-)
+	 * 
+	 * I choosed this way after looking how JJ did it in InvoiceLine so I think
+	 * this is the right way.
+	 */
+	public void recalculateSQL() {
+		// Update Invoice Header
+		// TotalLines, InterestAmt, TotalAmt
+		// @formatter:off
+		String sql = "UPDATE " + MBAYInterestCalculation.Table_Name + " ic "
+				//
+				+ " SET " + COLUMNNAME_TotalLines + "=" 
+				+ "(SELECT COALESCE(SUM(line." + MBAYInterestCalculationLine.COLUMNNAME_Amount + "),0) "
+				+ " FROM " + MBAYInterestCalculationLine.Table_Name
+				+ " line WHERE(ic."+MBAYInterestCalculation.COLUMNNAME_BAY_InterestCalculation_ID 
+				+ "=line."+MBAYInterestCalculation.COLUMNNAME_BAY_InterestCalculation_ID+ ")) "
+				//
+				+ " , " + COLUMNNAME_InterestAmt + "=" 
+				+ "(SELECT COALESCE(SUM(line." + MBAYInterestCalculationLine.COLUMNNAME_LineTotalAmt + "),0) "
+				+ " FROM " + MBAYInterestCalculationLine.Table_Name
+				+ " line WHERE(ic."+MBAYInterestCalculation.COLUMNNAME_BAY_InterestCalculation_ID 
+				+ "=line."+MBAYInterestCalculation.COLUMNNAME_BAY_InterestCalculation_ID+ ")) "
+				//
+				+ " , " + COLUMNNAME_TotalAmt + "=" 
+				+ "(SELECT COALESCE(SUM(line." + MBAYInterestCalculationLine.COLUMNNAME_Amount + "),0) + "
+				+ " COALESCE(SUM(line." + MBAYInterestCalculationLine.COLUMNNAME_LineTotalAmt + "),0) "
+				+ " FROM " + MBAYInterestCalculationLine.Table_Name
+				+ " line WHERE(ic."+MBAYInterestCalculation.COLUMNNAME_BAY_InterestCalculation_ID 
+				+ "=line."+MBAYInterestCalculation.COLUMNNAME_BAY_InterestCalculation_ID+ ")) "
+				//
+				+ "WHERE " + MBAYInterestCalculation.COLUMNNAME_BAY_InterestCalculation_ID + "=?";
+		// @formatter:on
+		int no = DB.executeUpdateEx(sql, new Object[] { get_ID() },
+				get_TrxName());
+		if (no != 1)
+			log.warning("(1) #" + no);
 	}
 
-	@Override
-	protected boolean beforeSave(boolean newRecord) {
-		recalculate();
-		return super.beforeSave(newRecord);
-	}
 }
