@@ -28,7 +28,7 @@ public class MBAYInterestCalculation extends X_BAY_InterestCalculation {
 	 *            starting with AND
 	 * @return lines
 	 */
-	protected MBAYInterestCalculationLine[] getLines(String whereClause) {
+	public MBAYInterestCalculationLine[] getLines(String whereClause) {
 		String whereClauseFinal = COLUMNNAME_BAY_InterestCalculation_ID + "=? ";
 		if (whereClause != null)
 			whereClauseFinal += whereClause;

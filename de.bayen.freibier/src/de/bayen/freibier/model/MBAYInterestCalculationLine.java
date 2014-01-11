@@ -8,6 +8,7 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.Properties;
 
+import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.Query;
 import org.compiere.util.DB;
 
@@ -18,11 +19,19 @@ public class MBAYInterestCalculationLine extends X_BAY_InterestCalculationLine {
 	public MBAYInterestCalculationLine(Properties ctx,
 			int BAY_InterestCalculationLine_ID, String trxName) {
 		super(ctx, BAY_InterestCalculationLine_ID, trxName);
+		if (BAY_InterestCalculationLine_ID == 0) {
+		}
 	}
 
 	public MBAYInterestCalculationLine(Properties ctx, ResultSet rs,
 			String trxName) {
 		super(ctx, rs, trxName);
+	}
+
+	public MBAYInterestCalculationLine(MBAYInterestCalculation ic) {
+		this(ic.getCtx(), 0, ic.get_TrxName());
+		setClientOrg(ic.getAD_Client_ID(), ic.getAD_Org_ID());
+		setBAY_InterestCalculation_ID(ic.get_ID());
 	}
 
 	@Override
@@ -37,6 +46,8 @@ public class MBAYInterestCalculationLine extends X_BAY_InterestCalculationLine {
 		}
 
 		recalculate();
+		if(getBAY_InterestCalculation_ID()<1)
+			throw new AdempiereException("Line needs a header object.");
 		return super.beforeSave(newRecord);
 	}
 
@@ -131,8 +142,8 @@ public class MBAYInterestCalculationLine extends X_BAY_InterestCalculationLine {
 		// @formatter:on
 	}
 
-	static public BigDecimal calculateInterest(BigDecimal sum, BigDecimal percent,
-			int days) {
+	static public BigDecimal calculateInterest(BigDecimal sum,
+			BigDecimal percent, int days) {
 		return sum.multiply(percent).multiply(new BigDecimal(days))
 				.divide(new BigDecimal(100 * 360), 2, RoundingMode.HALF_UP);
 	}

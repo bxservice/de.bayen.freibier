@@ -3,6 +3,8 @@ package de.bayen.freibier;
 import org.adempiere.base.IProcessFactory;
 import org.compiere.process.ProcessCall;
 
+import de.bayen.freibier.process.CreateInterestCalculationProcess;
+
 public class ProcessFactory implements IProcessFactory {
 
 	/**
@@ -15,6 +17,8 @@ public class ProcessFactory implements IProcessFactory {
 	 */
 	@Override
 	public ProcessCall newProcessInstance(String className) {
+		if(CreateInterestCalculationProcess.class.getName().equals(className))
+			return new CreateInterestCalculationProcess();
 		return null;
 	}
 

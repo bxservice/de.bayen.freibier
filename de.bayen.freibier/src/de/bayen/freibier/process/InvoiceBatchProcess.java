@@ -126,7 +126,7 @@ public class InvoiceBatchProcess extends SvrProcess
 					 * thrown or suppressed.
 					 */
 					
-					if ("Y".equals(Env.getContext(getCtx(), "Element_SR"))) {
+					if ("Y".equals(Env.getContext(getCtx(), "$Element_SR"))) {
 						// Sales Region Reference
 						String sr_colName = MSalesRegion.COLUMNNAME_C_SalesRegion_ID;
 						Object salesRegion = line.get_Value(sr_colName);
@@ -137,7 +137,7 @@ public class InvoiceBatchProcess extends SvrProcess
 						}
 					}
 					//
-					if ("Y".equals(Env.getContext(getCtx(), "Element_X1"))) {
+					if ("Y".equals(Env.getContext(getCtx(), "$Element_X1"))) {
 						// User Defined Reference.
 						// In FreiBier used for BAY_Contract
 						MAcctSchema[] ass = MAcctSchema.getClientAcctSchema(getCtx(), getAD_Client_ID());
@@ -222,7 +222,7 @@ public class InvoiceBatchProcess extends SvrProcess
 		m_invoice.saveEx();
 		
 		String message = Msg.parseTranslation(getCtx(), "@InvoiceProcessed@ " + m_invoice.getDocumentNo());
-		addLog(0, m_invoice.getDateInvoiced(), m_invoice.getGrandTotal(), message, m_invoice.get_Table_ID(), m_invoice.getC_Invoice_ID());
+		addBufferLog(0, m_invoice.getDateInvoiced(), m_invoice.getGrandTotal(), message, m_invoice.get_Table_ID(), m_invoice.getC_Invoice_ID());
 		m_count++;
 		
 		m_invoice = null;
