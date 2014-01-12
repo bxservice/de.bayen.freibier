@@ -44,6 +44,7 @@ public class CreateInterestCalculationProcess extends
 		ic.setC_BPartner_ID(record.getC_BPartner_ID());
 		ic.setName(params.getName());
 		ic.setDateDoc(params.getDateDocTo());
+		ic.setDateAcct(params.getDateDocTo());
 		ic.saveEx(get_TrxName());
 		//
 		// first line of the calculation is the running total at start date

@@ -33,7 +33,7 @@ public class X_BAY_Contract extends PO implements I_BAY_Contract, I_Persistent
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20140108L;
+	private static final long serialVersionUID = 20140112L;
 
     /** Standard Constructor */
     public X_BAY_Contract (Properties ctx, int BAY_Contract_ID, String trxName)
@@ -109,6 +109,20 @@ public class X_BAY_Contract extends PO implements I_BAY_Contract, I_Persistent
 		return (String)get_Value(COLUMNNAME_BAY_Contract_UU);
 	}
 
+	/** Set Category.
+		@param Category Category	  */
+	public void setCategory (String Category)
+	{
+		set_Value (COLUMNNAME_Category, Category);
+	}
+
+	/** Get Category.
+		@return Category	  */
+	public String getCategory () 
+	{
+		return (String)get_Value(COLUMNNAME_Category);
+	}
+
 	public org.compiere.model.I_C_BPartner getC_BPartner() throws RuntimeException
     {
 		return (org.compiere.model.I_C_BPartner)MTable.get(getCtx(), org.compiere.model.I_C_BPartner.Table_Name)
@@ -135,6 +149,20 @@ public class X_BAY_Contract extends PO implements I_BAY_Contract, I_Persistent
 		if (ii == null)
 			 return 0;
 		return ii.intValue();
+	}
+
+	/** Set Create Interest Calculation.
+		@param CreateInterestCalculation Create Interest Calculation	  */
+	public void setCreateInterestCalculation (String CreateInterestCalculation)
+	{
+		set_Value (COLUMNNAME_CreateInterestCalculation, CreateInterestCalculation);
+	}
+
+	/** Get Create Interest Calculation.
+		@return Create Interest Calculation	  */
+	public String getCreateInterestCalculation () 
+	{
+		return (String)get_Value(COLUMNNAME_CreateInterestCalculation);
 	}
 
 	public org.compiere.model.I_C_SalesRegion getC_SalesRegion() throws RuntimeException

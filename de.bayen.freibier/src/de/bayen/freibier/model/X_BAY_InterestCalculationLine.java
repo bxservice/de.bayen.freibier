@@ -33,7 +33,7 @@ public class X_BAY_InterestCalculationLine extends PO implements I_BAY_InterestC
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20140108L;
+	private static final long serialVersionUID = 20140112L;
 
     /** Standard Constructor */
     public X_BAY_InterestCalculationLine (Properties ctx, int BAY_InterestCalculationLine_ID, String trxName)
@@ -41,12 +41,14 @@ public class X_BAY_InterestCalculationLine extends PO implements I_BAY_InterestC
       super (ctx, BAY_InterestCalculationLine_ID, trxName);
       /** if (BAY_InterestCalculationLine_ID == 0)
         {
+			setBAY_InterestCalculation_ID (0);
 			setBAY_InterestCalculationLine_ID (0);
 			setDateTrx (new Timestamp( System.currentTimeMillis() ));
+// @DateDoc@
 			setInterestPercent (Env.ZERO);
 // @InterestPercent@
 			setLine (0);
-// @SQL=SELECT NVL(MAX(Line),0)+10 AS DefaultValue FROM C_BAY_InterestCalculationLine WHERE BAY_InterestCalculation_ID=@BAY_InterestCalculation_ID@
+// @SQL=SELECT NVL(MAX(Line),0)+10 AS DefaultValue FROM BAY_InterestCalculationLine WHERE BAY_InterestCalculation_ID=@BAY_InterestCalculation_ID@
         } */
     }
 
@@ -147,7 +149,7 @@ public class X_BAY_InterestCalculationLine extends PO implements I_BAY_InterestC
 		@param BAY_InterestCalculationLine_UU BAY_InterestCalculationLine_UU	  */
 	public void setBAY_InterestCalculationLine_UU (String BAY_InterestCalculationLine_UU)
 	{
-		set_Value (COLUMNNAME_BAY_InterestCalculationLine_UU, BAY_InterestCalculationLine_UU);
+		set_ValueNoCheck (COLUMNNAME_BAY_InterestCalculationLine_UU, BAY_InterestCalculationLine_UU);
 	}
 
 	/** Get BAY_InterestCalculationLine_UU.
@@ -163,7 +165,7 @@ public class X_BAY_InterestCalculationLine extends PO implements I_BAY_InterestC
 	  */
 	public void setDateTrx (Timestamp DateTrx)
 	{
-		set_ValueNoCheck (COLUMNNAME_DateTrx, DateTrx);
+		set_Value (COLUMNNAME_DateTrx, DateTrx);
 	}
 
 	/** Get Transaction Date.
@@ -234,7 +236,7 @@ public class X_BAY_InterestCalculationLine extends PO implements I_BAY_InterestC
 	  */
 	public void setLine (int Line)
 	{
-		set_ValueNoCheck (COLUMNNAME_Line, Integer.valueOf(Line));
+		set_Value (COLUMNNAME_Line, Integer.valueOf(Line));
 	}
 
 	/** Get Line No.

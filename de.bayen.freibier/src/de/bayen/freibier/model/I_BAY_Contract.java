@@ -82,6 +82,15 @@ public interface I_BAY_Contract
 	/** Get BAY_Contract_UU	  */
 	public String getBAY_Contract_UU();
 
+    /** Column name Category */
+    public static final String COLUMNNAME_Category = "Category";
+
+	/** Set Category	  */
+	public void setCategory (String Category);
+
+	/** Get Category	  */
+	public String getCategory();
+
     /** Column name C_BPartner_ID */
     public static final String COLUMNNAME_C_BPartner_ID = "C_BPartner_ID";
 
@@ -112,6 +121,15 @@ public interface I_BAY_Contract
 	  * User who created this records
 	  */
 	public int getCreatedBy();
+
+    /** Column name CreateInterestCalculation */
+    public static final String COLUMNNAME_CreateInterestCalculation = "CreateInterestCalculation";
+
+	/** Set Create Interest Calculation	  */
+	public void setCreateInterestCalculation (String CreateInterestCalculation);
+
+	/** Get Create Interest Calculation	  */
+	public String getCreateInterestCalculation();
 
     /** Column name C_SalesRegion_ID */
     public static final String COLUMNNAME_C_SalesRegion_ID = "C_SalesRegion_ID";
