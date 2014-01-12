@@ -37,9 +37,10 @@ public class CalloutFactory implements IColumnCalloutFactory {
 		}
 		//
 		if(tableName.equals(MBAYInterestCalculation.Table_Name)){
-			if(columnName.equals(I_BAY_InterestCalculation.COLUMNNAME_DateDoc)){
+			if(columnName.equals(I_BAY_InterestCalculation.COLUMNNAME_DateDoc))
 				list.add(new CalloutInterestCalculation());
-			}
+			else if(columnName.equals(I_BAY_InterestCalculation.COLUMNNAME_BAY_Contract_ID))
+				list.add(new CalloutInterestCalculation());
 		}
 		//
 		if(tableName.equals(MBAYInterestCalculationLine.Table_Name)){
