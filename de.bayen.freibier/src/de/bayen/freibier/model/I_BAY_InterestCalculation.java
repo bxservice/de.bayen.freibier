@@ -312,6 +312,19 @@ public interface I_BAY_InterestCalculation
 	  */
 	public String getName();
 
+    /** Column name Posted */
+    public static final String COLUMNNAME_Posted = "Posted";
+
+	/** Set Posted.
+	  * Posting status
+	  */
+	public void setPosted (boolean Posted);
+
+	/** Get Posted.
+	  * Posting status
+	  */
+	public boolean isPosted();
+
     /** Column name Processed */
     public static final String COLUMNNAME_Processed = "Processed";
 
@@ -333,6 +346,21 @@ public interface I_BAY_InterestCalculation
 
 	/** Get Process Now	  */
 	public boolean isProcessing();
+
+    /** Column name Reversal_ID */
+    public static final String COLUMNNAME_Reversal_ID = "Reversal_ID";
+
+	/** Set Reversal ID.
+	  * ID of document reversal
+	  */
+	public void setReversal_ID (int Reversal_ID);
+
+	/** Get Reversal ID.
+	  * ID of document reversal
+	  */
+	public int getReversal_ID();
+
+	public I_BAY_InterestCalculation getReversal() throws RuntimeException;
 
     /** Column name TotalAmt */
     public static final String COLUMNNAME_TotalAmt = "TotalAmt";

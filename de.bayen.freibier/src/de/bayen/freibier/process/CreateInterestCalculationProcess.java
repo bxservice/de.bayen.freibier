@@ -45,6 +45,7 @@ public class CreateInterestCalculationProcess extends
 		ic.setName(params.getName());
 		ic.setDateDoc(params.getDateDocTo());
 		ic.setDateAcct(params.getDateDocTo());
+		// TODO DocType setzen
 		ic.saveEx(get_TrxName());
 		//
 		// first line of the calculation is the running total at start date
@@ -155,6 +156,8 @@ public class CreateInterestCalculationProcess extends
 			newLine.setInterestPercent(record.getInterestPercent());
 			newLine.saveEx(get_TrxName());
 		}
+		
+		// TODO Dokument ggf. abschliessen
 		
 		// logging
 		addLog(getProcessInfo().getAD_Process_ID(),
