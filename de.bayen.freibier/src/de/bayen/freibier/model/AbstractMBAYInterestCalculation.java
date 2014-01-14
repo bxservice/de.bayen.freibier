@@ -6,10 +6,8 @@ import java.sql.ResultSet;
 import java.util.Properties;
 import java.util.logging.Level;
 
-import org.compiere.model.MDocType;
 import org.compiere.model.MFactAcct;
 import org.compiere.model.MJournal;
-import org.compiere.model.MPeriod;
 import org.compiere.model.MQuery;
 import org.compiere.model.ModelValidationEngine;
 import org.compiere.model.ModelValidator;
@@ -62,8 +60,10 @@ abstract public class AbstractMBAYInterestCalculation<L> extends X_BAY_InterestC
 	private boolean		m_justPrepared = false;
 
 	public String getDocumentInfo(){
-		MDocType dt = MDocType.get(getCtx(), getC_DocType_ID());
-		String msgreturn = dt.getNameTrl()+" "+getDocumentNo();
+		String msgreturn;
+		// MDocType dt = MDocType.get(getCtx(), getC_DocType_ID());
+		// String msgreturn = dt.getNameTrl()+" "+getDocumentNo();
+		msgreturn=getDocumentNo()+" - "+getDescription();
 		return msgreturn.toString();
 	}
 
@@ -175,7 +175,7 @@ abstract public class AbstractMBAYInterestCalculation<L> extends X_BAY_InterestC
 		if (m_processMsg != null)
 			return DocAction.STATUS_Invalid;
 		
-		MPeriod.testPeriodOpen(getCtx(), getDateAcct(), getC_DocType_ID(), getAD_Org_ID());
+		// MPeriod.testPeriodOpen(getCtx(), getDateAcct(), getC_DocType_ID(), getAD_Org_ID());
 
 		// this document has lines
 		L[] lines = getLines();
@@ -361,12 +361,12 @@ abstract public class AbstractMBAYInterestCalculation<L> extends X_BAY_InterestC
 		if (m_processMsg != null)
 			return false;
 
-		MPeriod.testPeriodOpen(getCtx(), getDateAcct(), getC_DocType_ID(), getAD_Org_ID());
+		// MPeriod.testPeriodOpen(getCtx(), getDateAcct(), getC_DocType_ID(), getAD_Org_ID());
 		MFactAcct.deleteEx(MJournal.Table_ID, get_ID(), get_TrxName());
 
 		//... insert more code here if appropriate
 
-		setPosted(false);
+		// setPosted(false);
 		setProcessed(false);
 		setDocAction(DOCACTION_Complete);
 

@@ -33,7 +33,7 @@ public class X_BAY_Contract extends PO implements I_BAY_Contract, I_Persistent
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20140112L;
+	private static final long serialVersionUID = 20140114L;
 
     /** Standard Constructor */
     public X_BAY_Contract (Properties ctx, int BAY_Contract_ID, String trxName)

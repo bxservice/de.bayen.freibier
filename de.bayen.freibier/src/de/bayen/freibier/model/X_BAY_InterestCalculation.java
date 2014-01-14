@@ -34,7 +34,7 @@ public class X_BAY_InterestCalculation extends PO implements I_BAY_InterestCalcu
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20140112L;
+	private static final long serialVersionUID = 20140114L;
 
     /** Standard Constructor */
     public X_BAY_InterestCalculation (Properties ctx, int BAY_InterestCalculation_ID, String trxName)
@@ -45,7 +45,6 @@ public class X_BAY_InterestCalculation extends PO implements I_BAY_InterestCalcu
 			setBAY_InterestCalculation_ID (0);
 			setC_Currency_ID (0);
 // @$C_Currency_ID@
-			setC_DocType_ID (0);
 			setDateAcct (new Timestamp( System.currentTimeMillis() ));
 // @#Date@
 			setDocAction (null);
@@ -55,9 +54,9 @@ public class X_BAY_InterestCalculation extends PO implements I_BAY_InterestCalcu
 			setDocumentNo (null);
 			setIsApproved (true);
 // Y
+			setIsSOTrx (false);
+// @IsSOTrx@
 			setName (null);
-			setPosted (false);
-// N
 			setProcessed (false);
 // N
 			setProcessing (false);
@@ -204,34 +203,6 @@ public class X_BAY_InterestCalculation extends PO implements I_BAY_InterestCalcu
 	public int getC_Currency_ID () 
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_C_Currency_ID);
-		if (ii == null)
-			 return 0;
-		return ii.intValue();
-	}
-
-	public org.compiere.model.I_C_DocType getC_DocType() throws RuntimeException
-    {
-		return (org.compiere.model.I_C_DocType)MTable.get(getCtx(), org.compiere.model.I_C_DocType.Table_Name)
-			.getPO(getC_DocType_ID(), get_TrxName());	}
-
-	/** Set Document Type.
-		@param C_DocType_ID 
-		Document type or rules
-	  */
-	public void setC_DocType_ID (int C_DocType_ID)
-	{
-		if (C_DocType_ID < 0) 
-			set_Value (COLUMNNAME_C_DocType_ID, null);
-		else 
-			set_Value (COLUMNNAME_C_DocType_ID, Integer.valueOf(C_DocType_ID));
-	}
-
-	/** Get Document Type.
-		@return Document type or rules
-	  */
-	public int getC_DocType_ID () 
-	{
-		Integer ii = (Integer)get_Value(COLUMNNAME_C_DocType_ID);
 		if (ii == null)
 			 return 0;
 		return ii.intValue();
@@ -486,6 +457,30 @@ public class X_BAY_InterestCalculation extends PO implements I_BAY_InterestCalcu
 		return false;
 	}
 
+	/** Set Sales Transaction.
+		@param IsSOTrx 
+		This is a Sales Transaction
+	  */
+	public void setIsSOTrx (boolean IsSOTrx)
+	{
+		set_Value (COLUMNNAME_IsSOTrx, Boolean.valueOf(IsSOTrx));
+	}
+
+	/** Get Sales Transaction.
+		@return This is a Sales Transaction
+	  */
+	public boolean isSOTrx () 
+	{
+		Object oo = get_Value(COLUMNNAME_IsSOTrx);
+		if (oo != null) 
+		{
+			 if (oo instanceof Boolean) 
+				 return ((Boolean)oo).booleanValue(); 
+			return "Y".equals(oo);
+		}
+		return false;
+	}
+
 	/** Set Name.
 		@param Name 
 		Alphanumeric identifier of the entity
@@ -510,30 +505,6 @@ public class X_BAY_InterestCalculation extends PO implements I_BAY_InterestCalcu
     {
         return new KeyNamePair(get_ID(), getName());
     }
-
-	/** Set Posted.
-		@param Posted 
-		Posting status
-	  */
-	public void setPosted (boolean Posted)
-	{
-		set_Value (COLUMNNAME_Posted, Boolean.valueOf(Posted));
-	}
-
-	/** Get Posted.
-		@return Posting status
-	  */
-	public boolean isPosted () 
-	{
-		Object oo = get_Value(COLUMNNAME_Posted);
-		if (oo != null) 
-		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
-			return "Y".equals(oo);
-		}
-		return false;
-	}
 
 	/** Set Processed.
 		@param Processed 

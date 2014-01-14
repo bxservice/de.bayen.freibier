@@ -9,7 +9,6 @@ import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MInvoiceLine;
-import org.compiere.model.MPeriod;
 import org.compiere.model.MSysConfig;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
@@ -26,6 +25,21 @@ public class MBAYInterestCalculation extends AbstractMBAYInterestCalculation<MBA
 
 	public MBAYInterestCalculation(Properties ctx, int BAY_InterestCalculation_ID, String trxName) {
 		super(ctx, BAY_InterestCalculation_ID, trxName);
+		// if (getC_DocType_ID() < 1) {
+		// // chhose the default document type
+		// String docbasetype = isSOTrx() ? "ARZ" : "APZ";
+		// String sql = "SELECT C_DocType_ID FROM C_DocType "
+		// + "WHERE AD_Client_ID=? AND AD_Org_ID in (0,?) AND DocBaseType=?" +
+		// " AND IsActive='Y' "
+		// + "ORDER BY IsDefault DESC, AD_Org_ID DESC";
+		// int C_DocType_ID = DB.getSQLValueEx(get_TrxName(), sql,
+		// getAD_Client_ID(), getAD_Org_ID(), docbasetype);
+		// if (C_DocType_ID <= 0)
+		// throw new AdempiereException("document type not found: " +
+		// docbasetype);
+		// else
+		// setC_DocType_ID(C_DocType_ID);
+		// }
 	}
 
 	public MBAYInterestCalculation(Properties ctx, ResultSet rs, String trxName) {
@@ -118,58 +132,58 @@ public class MBAYInterestCalculation extends AbstractMBAYInterestCalculation<MBA
 			reversalDate = new Timestamp(System.currentTimeMillis());
 		}
 		Timestamp reversalDateDoc = accrual ? reversalDate : getDateDoc();
-		
-		MPeriod.testPeriodOpen(getCtx(), reversalDate, getC_DocType_ID(), getAD_Org_ID());
+
+		// MPeriod.testPeriodOpen(getCtx(), reversalDate, C_DocType_ID, getAD_Org_ID());
 
 		MBAYInterestCalculation reversal = null;
 		if (MSysConfig.getBooleanValue(MSysConfig.Invoice_ReverseUseNewNumber, true, getAD_Client_ID()))
-			reversal = copyFrom(this, reversalDateDoc, reversalDate, getC_DocType_ID(), get_TrxName(), null);
+			reversal = copyFrom(this, reversalDateDoc, reversalDate, get_TrxName(), null);
 		else
-			reversal = copyFrom(this, reversalDateDoc, reversalDate, getC_DocType_ID(), get_TrxName(), getDocumentNo()+"^");
-		if (reversal == null){
+			reversal = copyFrom(this, reversalDateDoc, reversalDate, get_TrxName(), getDocumentNo() + "^");
+		if (reversal == null) {
 			m_processMsg = "Could not create Reversal Document";
 			return null;
 		}
 		MBAYInterestCalculationLine[] lines = getLines();
 		for (MBAYInterestCalculationLine line : lines) {
 			line.setAmount(line.getAmount().negate());
-			if (!line.save(get_TrxName())){
+			if (!line.save(get_TrxName())) {
 				m_processMsg = "Could not correct Reversal Line";
 				return null;
 			}
 		}
-		reversal.setName("{-> "+getName()+"}");
+		reversal.setName("{-> " + getName() + "}");
 		reversal.setReversal_ID(get_ID());
 		reversal.saveEx(get_TrxName());
-		if (!reversal.processIt(DocAction.ACTION_Complete)){
+		if (!reversal.processIt(DocAction.ACTION_Complete)) {
 			m_processMsg = "Reversal ERROR: " + reversal.getProcessMsg();
 			return null;
 		}
 		reversal.closeIt();
-		reversal.setProcessing (false);
+		reversal.setProcessing(false);
 		reversal.setDocStatus(DOCSTATUS_Reversed);
 		reversal.setDocAction(DOCACTION_None);
 		reversal.saveEx(get_TrxName());
 		//
-		String desc= Util.isEmpty(getDescription())?"":getDescription()+" ";
-		desc+="("+reversal.getDocumentNo()+"<-)";
+		String desc = Util.isEmpty(getDescription()) ? "" : getDescription() + " ";
+		desc += "(" + reversal.getDocumentNo() + "<-)";
 		setDescription(desc);
 		setProcessed(true);
 		setReversal_ID(reversal.get_ID());
-		setDocStatus(DOCSTATUS_Reversed);	//	may come from void
+		setDocStatus(DOCSTATUS_Reversed); // may come from void
 		setDocAction(DOCACTION_None);
 		return reversal;
 	}
 
 	public static MBAYInterestCalculation copyFrom(MBAYInterestCalculation from, Timestamp dateDoc, Timestamp dateAcct,
-			int C_DocTypeTarget_ID, String trxName, String DocumentNo) {
+			String trxName, String DocumentNo) {
 		MBAYInterestCalculation to = new MBAYInterestCalculation(from.getCtx(), 0, trxName);
 		PO.copyValues(from, to, from.getAD_Client_ID(), from.getAD_Org_ID());
 		to.set_ValueNoCheck(COLUMNNAME_DocumentNo, DocumentNo);
 		to.setDocStatus(DOCSTATUS_Drafted); // Draft
 		to.setDocAction(DOCACTION_Complete);
 		//
-		to.setC_DocType_ID(C_DocTypeTarget_ID);
+		// to.setC_DocType_ID(C_DocTypeTarget_ID);
 		//
 		to.setDateDoc(dateDoc);
 		to.setDateAcct(dateAcct);
@@ -179,7 +193,7 @@ public class MBAYInterestCalculation extends AbstractMBAYInterestCalculation<MBA
 		to.setInterestAmt(Env.ZERO);
 		to.setTotalAmt(Env.ZERO);
 		//
-		to.setPosted(false);
+		// to.setPosted(false);
 		to.setProcessed(false);
 		// [ 1633721 ] Reverse Documents- Processing=Y
 		to.setProcessing(false);
@@ -194,7 +208,9 @@ public class MBAYInterestCalculation extends AbstractMBAYInterestCalculation<MBA
 	}
 
 	public int copyLinesFrom(MBAYInterestCalculation otherDocument) {
-		if (isProcessed() || isPosted() || otherDocument == null)
+		if (isProcessed()
+		// || isPosted()
+				|| otherDocument == null)
 			return 0;
 		MBAYInterestCalculationLine[] fromLines = otherDocument.getLines();
 		int count = 0;
