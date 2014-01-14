@@ -45,7 +45,8 @@ public class CreateInterestCalculationProcess extends
 		ic.setName(params.getName());
 		ic.setDateDoc(params.getDateDocTo());
 		ic.setDateAcct(params.getDateDocTo());
-		// TODO DocType setzen
+		String currencyID = getCtx().getProperty("$C_Currency_ID");
+		ic.setC_Currency_ID(new Integer(currencyID));
 		ic.saveEx(get_TrxName());
 		//
 		// first line of the calculation is the running total at start date
