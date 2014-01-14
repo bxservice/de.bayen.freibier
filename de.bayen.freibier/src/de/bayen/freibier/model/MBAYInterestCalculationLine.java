@@ -16,15 +16,13 @@ public class MBAYInterestCalculationLine extends X_BAY_InterestCalculationLine {
 
 	private static final long serialVersionUID = 1L;
 
-	public MBAYInterestCalculationLine(Properties ctx,
-			int BAY_InterestCalculationLine_ID, String trxName) {
+	public MBAYInterestCalculationLine(Properties ctx, int BAY_InterestCalculationLine_ID, String trxName) {
 		super(ctx, BAY_InterestCalculationLine_ID, trxName);
 		if (BAY_InterestCalculationLine_ID == 0) {
 		}
 	}
 
-	public MBAYInterestCalculationLine(Properties ctx, ResultSet rs,
-			String trxName) {
+	public MBAYInterestCalculationLine(Properties ctx, ResultSet rs, String trxName) {
 		super(ctx, rs, trxName);
 	}
 
@@ -38,15 +36,14 @@ public class MBAYInterestCalculationLine extends X_BAY_InterestCalculationLine {
 	protected boolean beforeSave(boolean newRecord) {
 		// Get Line No
 		if (getLine() == 0) {
-			String sql = "SELECT COALESCE(MAX(Line),0)+10 FROM " + Table_Name
-					+ " WHERE " + COLUMNNAME_BAY_InterestCalculation_ID + "=?";
-			int ii = DB.getSQLValue(get_TrxName(), sql,
-					getBAY_InterestCalculation_ID());
+			String sql = "SELECT COALESCE(MAX(Line),0)+10 FROM " + Table_Name + " WHERE "
+					+ COLUMNNAME_BAY_InterestCalculation_ID + "=?";
+			int ii = DB.getSQLValue(get_TrxName(), sql, getBAY_InterestCalculation_ID());
 			setLine(ii);
 		}
 
 		recalculate();
-		if(getBAY_InterestCalculation_ID()<1)
+		if (getBAY_InterestCalculation_ID() < 1)
 			throw new AdempiereException("Line needs a header object.");
 		return super.beforeSave(newRecord);
 	}
@@ -80,20 +77,20 @@ public class MBAYInterestCalculationLine extends X_BAY_InterestCalculationLine {
 		return super.afterSave(newRecord, success);
 	}
 
-	public static int calculateDays(Properties ctx, Timestamp dateTrx,
-			int headerID, int myID, String trxName) {
+	public static int calculateDays(Properties ctx, Timestamp dateTrx, int myLine, int headerID, int myID,
+			String trxName) {
 		if (dateTrx == null) {
 			return 0;
 		}
 		StringBuilder whereClause = new StringBuilder();
 		whereClause.append(COLUMNNAME_BAY_InterestCalculation_ID + "=? "); // #1
-		whereClause.append(" AND " + COLUMNNAME_DateTrx + "<? "); // #2
-		whereClause.append(" AND " + COLUMNNAME_BAY_InterestCalculationLine_ID
-				+ "!=? "); // #3
+//		whereClause.append(" AND " + COLUMNNAME_DateTrx + "<=? "); // #2
+		whereClause.append(" AND " + COLUMNNAME_Line + "<? "); // #3
+		whereClause.append(" AND " + COLUMNNAME_BAY_InterestCalculationLine_ID + "!=? "); // #4
 		// @formatter:off
 		MBAYInterestCalculationLine lastline = 
 				new Query(ctx, Table_Name, whereClause.toString(), trxName)
-		        	.setParameters(headerID, dateTrx, myID)
+		        	.setParameters(headerID, /*dateTrx,*/ myLine, myID)
 		        	.setOrderBy(COLUMNNAME_DateTrx + " DESC")
 		        	.first();
 		// @formatter:on
@@ -105,12 +102,9 @@ public class MBAYInterestCalculationLine extends X_BAY_InterestCalculationLine {
 			lastdate.setTime(lastline.getDateTrx());
 			Calendar linedate = new GregorianCalendar();
 			linedate.setTime(dateTrx);
-			int days = (linedate.get(Calendar.YEAR) - lastdate
-					.get(Calendar.YEAR)) * 360;
-			days += (linedate.get(Calendar.MONTH) - lastdate
-					.get(Calendar.MONTH)) * 30;
-			days += (linedate.get(Calendar.DAY_OF_MONTH) - lastdate
-					.get(Calendar.DAY_OF_MONTH));
+			int days = (linedate.get(Calendar.YEAR) - lastdate.get(Calendar.YEAR)) * 360;
+			days += (linedate.get(Calendar.MONTH) - lastdate.get(Calendar.MONTH)) * 30;
+			days += (linedate.get(Calendar.DAY_OF_MONTH) - lastdate.get(Calendar.DAY_OF_MONTH));
 			days -= linedate.get(Calendar.DAY_OF_MONTH) == 31 ? 1 : 0;
 			days += lastdate.get(Calendar.DAY_OF_MONTH) == 31 ? 1 : 0;
 			return days;
@@ -127,14 +121,13 @@ public class MBAYInterestCalculationLine extends X_BAY_InterestCalculationLine {
 	 * @param trxName
 	 * @return
 	 */
-	static public BigDecimal calculateRunningTotal(Properties ctx,
-			Timestamp dateTrx, int headerID, int myID, String trxName) {
+	static public BigDecimal calculateRunningTotal(Properties ctx, Timestamp dateTrx, int headerID, int myID,
+			String trxName) {
 		// calculate actual running total sum
 		StringBuilder whereClause = new StringBuilder();
 		whereClause.append(COLUMNNAME_BAY_InterestCalculation_ID + "=? "); // #1
 		whereClause.append(" AND " + COLUMNNAME_DateTrx + "<? "); // #2
-		whereClause.append(" AND " + COLUMNNAME_BAY_InterestCalculationLine_ID
-				+ "!=? "); // #3
+		whereClause.append(" AND " + COLUMNNAME_BAY_InterestCalculationLine_ID + "!=? "); // #3
 		// @formatter:off
 		return new Query(ctx, Table_Name, whereClause.toString(), trxName)
 		        	.setParameters(headerID, dateTrx, myID)
@@ -142,17 +135,16 @@ public class MBAYInterestCalculationLine extends X_BAY_InterestCalculationLine {
 		// @formatter:on
 	}
 
-	static public BigDecimal calculateInterest(BigDecimal sum,
-			BigDecimal percent, int days) {
+	static public BigDecimal calculateInterest(BigDecimal sum, BigDecimal percent, int days) {
 		return sum.multiply(percent).multiply(new BigDecimal(days))
 				.divide(new BigDecimal(100 * 360), 2, RoundingMode.HALF_UP);
 	}
 
 	private void recalculate() {
-		setDays(calculateDays(getCtx(), getDateTrx(),
-				getBAY_InterestCalculation_ID(), get_ID(), get_TrxName()));
-		BigDecimal sum = calculateRunningTotal(getCtx(), getDateTrx(),
-				getBAY_InterestCalculation_ID(), get_ID(), get_TrxName());
+		setDays(calculateDays(getCtx(), getDateTrx(), getLine(), getBAY_InterestCalculation_ID(), get_ID(),
+				get_TrxName()));
+		BigDecimal sum = calculateRunningTotal(getCtx(), getDateTrx(), getBAY_InterestCalculation_ID(), get_ID(),
+				get_TrxName());
 		// calculate interest
 		setLineTotalAmt(calculateInterest(sum, getInterestPercent(), getDays()));
 	}
