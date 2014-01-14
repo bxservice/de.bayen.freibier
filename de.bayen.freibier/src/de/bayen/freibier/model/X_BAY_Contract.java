@@ -42,6 +42,8 @@ public class X_BAY_Contract extends PO implements I_BAY_Contract, I_Persistent
       /** if (BAY_Contract_ID == 0)
         {
 			setBAY_Contract_ID (0);
+			setIsSOTrx (true);
+// Y
 			setName (null);
 			setValue (null);
         } */
@@ -245,6 +247,30 @@ public class X_BAY_Contract extends PO implements I_BAY_Contract, I_Persistent
 		if (bd == null)
 			 return Env.ZERO;
 		return bd;
+	}
+
+	/** Set Sales Transaction.
+		@param IsSOTrx 
+		This is a Sales Transaction
+	  */
+	public void setIsSOTrx (boolean IsSOTrx)
+	{
+		set_Value (COLUMNNAME_IsSOTrx, Boolean.valueOf(IsSOTrx));
+	}
+
+	/** Get Sales Transaction.
+		@return This is a Sales Transaction
+	  */
+	public boolean isSOTrx () 
+	{
+		Object oo = get_Value(COLUMNNAME_IsSOTrx);
+		if (oo != null) 
+		{
+			 if (oo instanceof Boolean) 
+				 return ((Boolean)oo).booleanValue(); 
+			return "Y".equals(oo);
+		}
+		return false;
 	}
 
 	/** Set Name.

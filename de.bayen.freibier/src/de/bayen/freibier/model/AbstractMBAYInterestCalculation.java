@@ -227,12 +227,15 @@ abstract public class AbstractMBAYInterestCalculation<L> extends X_BAY_InterestC
 		if (m_processMsg != null)
 			return DocAction.STATUS_Invalid;
 
-		//... insert more code here if appropriate
+		String err=complete();
+		if (err != null){
+			m_processMsg = err;
+			return DocAction.STATUS_Invalid;
+		}
 		
 		//	User Validation
 		String valid = ModelValidationEngine.get().fireDocValidate(this, ModelValidator.TIMING_AFTER_COMPLETE);
-		if (valid != null)
-		{
+		if (valid != null){
 			m_processMsg = valid;
 			return DocAction.STATUS_Invalid;
 		}
@@ -244,6 +247,8 @@ abstract public class AbstractMBAYInterestCalculation<L> extends X_BAY_InterestC
 		setDocAction(DOCACTION_Close);
 		return DocAction.STATUS_Completed;
 	}
+	
+	abstract public String complete();
 
 	@Override
 	public boolean voidIt() {

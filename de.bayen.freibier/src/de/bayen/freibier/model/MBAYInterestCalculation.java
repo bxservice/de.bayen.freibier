@@ -27,11 +27,15 @@ public class MBAYInterestCalculation extends AbstractMBAYInterestCalculation<MBA
 	public MBAYInterestCalculation(Properties ctx, int BAY_InterestCalculation_ID, String trxName) {
 		super(ctx, BAY_InterestCalculation_ID, trxName);
 		if (getC_DocType_ID() < 1) {
-			// chhose the default document type
+			// chose the default document type
 			String docbasetype = isSOTrx() ? "ARI" : "API";
 			String sql = "SELECT C_DocType_ID FROM C_DocType "
 					+ "WHERE AD_Client_ID=? AND AD_Org_ID in (0,?) AND DocBaseType=?" + " AND IsActive='Y' "
-					+ "ORDER BY IsDefault DESC, AD_Org_ID DESC";
+					+ "ORDER BY IsDefault DESC, AD_Org_ID DESC"
+					// durch Sortierung nach dem Namen ist der default 
+					// der alphabetisch letzte Wert - also die Zinsabrechnung
+					// keine Ahnung, wie man das besser macht ohne eigenen Basis-Dokumenttyp
+					+ ", Name DESC";
 			int C_DocType_ID = DB.getSQLValueEx(get_TrxName(), sql, getAD_Client_ID(), getAD_Org_ID(), docbasetype);
 			if (C_DocType_ID <= 0)
 				throw new AdempiereException("document type not found: " + docbasetype);
@@ -122,6 +126,12 @@ public class MBAYInterestCalculation extends AbstractMBAYInterestCalculation<MBA
 	@Override
 	public BigDecimal getApprovalAmt() {
 		return getInterestAmt();
+	}
+	
+	@Override
+	public String complete() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	public MBAYInterestCalculation reverse(boolean accrual) {
