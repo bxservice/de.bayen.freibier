@@ -372,7 +372,15 @@ public class Statistikanpassung extends SvrProcess {
 			X_BAY_Umsatzstatistik alteZeile = new X_BAY_Umsatzstatistik(getCtx(), rs, get_TrxName());
 			// alten Eintrag löschen
 			System.out.println("löschen Zeile "+alteZeile.get_ID());
-			alteZeile.deleteEx(false);
+			/*
+			 * Ich frage hier keinen Fehler ab, da es doppelte Zeilen geben
+			 * kann, wenn ein Artikel z.B. zwei Hersteller hat. Der wird dann
+			 * ggf. zweimal gelöscht, was natürlich nicht geht.
+			 */
+			boolean erg = alteZeile.delete(false);
+			if (!erg)
+				System.out.println("Problem beim löschen von " + alteZeile.get_ID()
+						+ ". Kann bei Artikeln mit zwei Herstellern normal sein.");
 			count++;
 		}
 		rs.close();

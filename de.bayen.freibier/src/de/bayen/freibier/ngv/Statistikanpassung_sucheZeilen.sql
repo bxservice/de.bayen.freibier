@@ -25,7 +25,10 @@ CROSS JOIN BAY_Umsatzstatistik
 LEFT JOIN BAY_Statistikperiode ON(BAY_Statistikperiode.BAY_Statistikperiode_ID = BAY_Umsatzstatistik.BAY_Statistikperiode_ID)
 LEFT JOIN C_BPartner ON(C_BPartner.C_BPartner_ID = BAY_Umsatzstatistik.C_BPartner_ID)
 LEFT JOIN M_Product ON(M_Product.M_Product_ID = BAY_Umsatzstatistik.M_Product_ID)
-LEFT JOIN C_BPartner_Product ON(C_BPartner_Product.M_Product_ID = M_Product.M_Product_ID)
+LEFT JOIN C_BPartner_Product 
+  ON(C_BPartner_Product.M_Product_ID = M_Product.M_Product_ID 
+     AND C_BPartner_Product.isActive='Y' AND C_BPartner_Product.isManufacturer='Y'
+  )
 /* Achtung! Jeder Artikel darf nur einen einzigen Eintrag im Geschäftspartner-Register haben. Sonst funktioniert das hier nicht. */
 LEFT JOIN C_BPartner AS Vendor ON(C_BPartner_Product.C_BPartner_ID = Vendor.C_Bpartner_ID)
 /* und meine Auswahltabelle hinzunehmen, damit ich dann mit deren Werten filtern kann */
