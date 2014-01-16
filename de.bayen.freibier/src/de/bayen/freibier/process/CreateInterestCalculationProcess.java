@@ -149,7 +149,7 @@ public class CreateInterestCalculationProcess extends
 		}
 
 		// last line
-		if (!lastDate.equals(params.getDateDocTo())) {
+		if (lastDate==null || !lastDate.equals(params.getDateDocTo())) {
 			MBAYInterestCalculationLine newLine = new MBAYInterestCalculationLine(
 					ic);
 			newLine.setDateTrx(params.getDateDocTo());

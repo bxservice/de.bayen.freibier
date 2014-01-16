@@ -369,11 +369,13 @@ abstract public class AbstractMBAYInterestCalculation<L> extends X_BAY_InterestC
 		MPeriod.testPeriodOpen(getCtx(), getDateAcct(), getC_DocType_ID(), getAD_Org_ID());
 		MFactAcct.deleteEx(MJournal.Table_ID, get_ID(), get_TrxName());
 
-		//... insert more code here if appropriate
+		m_processMsg=reactivate();
+		if(m_processMsg==null)
+			return false;
 
 		// setPosted(false);
 		setProcessed(false);
-		setDocAction(DOCACTION_Complete);
+		setDocAction(DOCACTION_None);
 
 		// After reActivate
 		m_processMsg = ModelValidationEngine.get().fireDocValidate(this,ModelValidator.TIMING_AFTER_REACTIVATE);
@@ -382,5 +384,7 @@ abstract public class AbstractMBAYInterestCalculation<L> extends X_BAY_InterestC
 
 		return false;
 	}
+	
+	abstract public String reactivate();
 
 }

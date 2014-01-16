@@ -46,7 +46,7 @@ public class CalloutInterestCalculationLine implements IColumnCallout {
 				record.getBAY_InterestCalculation_ID(), record.getBAY_InterestCalculationLine_ID(), null);
 		record.setDays(days);
 		//
-		BigDecimal sum = MBAYInterestCalculationLine.calculateRunningTotal(ctx, record.getDateTrx(),
+		BigDecimal sum = MBAYInterestCalculationLine.calculateRunningTotal(ctx, record.getDateTrx(), record.getLine(),
 				record.getBAY_InterestCalculation_ID(), record.getBAY_InterestCalculationLine_ID(), null);
 		BigDecimal interest = MBAYInterestCalculationLine.calculateInterest(sum, record.getInterestPercent(), days);
 		record.setLineTotalAmt(interest);

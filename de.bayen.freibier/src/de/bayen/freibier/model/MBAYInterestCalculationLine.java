@@ -84,14 +84,13 @@ public class MBAYInterestCalculationLine extends X_BAY_InterestCalculationLine {
 		}
 		StringBuilder whereClause = new StringBuilder();
 		whereClause.append(COLUMNNAME_BAY_InterestCalculation_ID + "=? "); // #1
-//		whereClause.append(" AND " + COLUMNNAME_DateTrx + "<=? "); // #2
-		whereClause.append(" AND " + COLUMNNAME_Line + "<? "); // #3
-		whereClause.append(" AND " + COLUMNNAME_BAY_InterestCalculationLine_ID + "!=? "); // #4
+		whereClause.append(" AND " + COLUMNNAME_Line + "<? "); // #2
+		whereClause.append(" AND " + COLUMNNAME_BAY_InterestCalculationLine_ID + "!=? "); // #3
 		// @formatter:off
 		MBAYInterestCalculationLine lastline = 
 				new Query(ctx, Table_Name, whereClause.toString(), trxName)
-		        	.setParameters(headerID, /*dateTrx,*/ myLine, myID)
-		        	.setOrderBy(COLUMNNAME_DateTrx + " DESC")
+		        	.setParameters(headerID, myLine, myID)
+		        	.setOrderBy(COLUMNNAME_Line + " DESC")
 		        	.first();
 		// @formatter:on
 
@@ -121,16 +120,16 @@ public class MBAYInterestCalculationLine extends X_BAY_InterestCalculationLine {
 	 * @param trxName
 	 * @return
 	 */
-	static public BigDecimal calculateRunningTotal(Properties ctx, Timestamp dateTrx, int headerID, int myID,
-			String trxName) {
+	static public BigDecimal calculateRunningTotal(Properties ctx, Timestamp dateTrx, int lineNo, int headerID,
+			int myID, String trxName) {
 		// calculate actual running total sum
 		StringBuilder whereClause = new StringBuilder();
 		whereClause.append(COLUMNNAME_BAY_InterestCalculation_ID + "=? "); // #1
-		whereClause.append(" AND " + COLUMNNAME_DateTrx + "<? "); // #2
+		whereClause.append(" AND " + COLUMNNAME_Line + "<? "); // #2
 		whereClause.append(" AND " + COLUMNNAME_BAY_InterestCalculationLine_ID + "!=? "); // #3
 		// @formatter:off
 		return new Query(ctx, Table_Name, whereClause.toString(), trxName)
-		        	.setParameters(headerID, dateTrx, myID)
+		        	.setParameters(headerID, lineNo, myID)
 		        	.aggregate(COLUMNNAME_Amount, Query.AGGREGATE_SUM);
 		// @formatter:on
 	}
@@ -143,8 +142,8 @@ public class MBAYInterestCalculationLine extends X_BAY_InterestCalculationLine {
 	private void recalculate() {
 		setDays(calculateDays(getCtx(), getDateTrx(), getLine(), getBAY_InterestCalculation_ID(), get_ID(),
 				get_TrxName()));
-		BigDecimal sum = calculateRunningTotal(getCtx(), getDateTrx(), getBAY_InterestCalculation_ID(), get_ID(),
-				get_TrxName());
+		BigDecimal sum = calculateRunningTotal(getCtx(), getDateTrx(), getLine(), getBAY_InterestCalculation_ID(),
+				get_ID(), get_TrxName());
 		// calculate interest
 		setLineTotalAmt(calculateInterest(sum, getInterestPercent(), getDays()));
 	}

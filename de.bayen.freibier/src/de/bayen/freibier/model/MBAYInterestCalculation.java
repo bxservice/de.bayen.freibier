@@ -14,13 +14,15 @@ import org.compiere.model.MSysConfig;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.process.DocAction;
+import org.compiere.process.DocOptions;
+import org.compiere.process.DocumentEngine;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.Util;
 
 public class MBAYInterestCalculation extends AbstractMBAYInterestCalculation<MBAYInterestCalculationLine> implements
-		DocAction {
+		DocAction, DocOptions {
 
 	private static final long serialVersionUID = 1L;
 
@@ -237,6 +239,20 @@ public class MBAYInterestCalculation extends AbstractMBAYInterestCalculation<MBA
 			throw new AdempiereException(msg);
 		}
 		return count;
+	}
+	
+	@Override
+	public String reactivate() {
+		return null;
+	}
+
+	@Override
+	public int customizeValidActions(String docStatus, Object processing, String orderType, String isSOTrx,
+			int AD_Table_ID, String[] docAction, String[] options, int index) {
+		if (docStatus.equals(DocumentEngine.STATUS_Completed)){
+			options[index++] = DocumentEngine.ACTION_ReActivate;
+		}
+		return index;
 	}
 
 }
