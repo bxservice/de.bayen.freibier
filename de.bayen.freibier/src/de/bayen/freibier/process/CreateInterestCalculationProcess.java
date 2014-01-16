@@ -104,12 +104,14 @@ public class CreateInterestCalculationProcess extends
 			sql.append("Fact_Acct.AmtAcctCr, ");
 			sql.append("BAY_Contract.Value, ");
 			sql.append("Fact_Acct.Description AS fa_Description, ");
-			sql.append("C_Invoice.Description AS Description ");
+			sql.append("C_Invoice.Description AS i_Description ");
+			sql.append("C_InvoiceLine.Description AS Description ");
 			sql.append("FROM Fact_Acct ");
 			sql.append("RIGHT JOIN C_ElementValue ON(C_ElementValue.C_ElementValue_ID = Fact_Acct.Account_ID) ");
 			sql.append("RIGHT JOIN C_BPartner ON(C_BPartner.C_BPartner_ID = Fact_Acct.C_BPartner_ID) ");
 			sql.append("LEFT JOIN BAY_Contract ON(BAY_Contract.BAY_Contract_ID = Fact_Acct.UserElement1_ID) ");
 			sql.append("LEFT JOIN C_Invoice ON(Fact_Acct.AD_Table_ID = 318 AND C_Invoice.C_Invoice_ID = Fact_Acct.Record_ID) ");
+			sql.append("LEFT JOIN C_InvoiceLine ON(Fact_Acct.AD_Table_ID = 318 AND C_InvoiceLine.C_InvoiceLine_ID = Fact_Acct.Line_ID) ");
 			sql.append("WHERE C_ElementValue.Value=? "); // #1
 			sql.append("AND BAY_Contract.BAY_Contract_ID=? "); // #2
 			sql.append("AND Fact_Acct.PostingType='A' ");
