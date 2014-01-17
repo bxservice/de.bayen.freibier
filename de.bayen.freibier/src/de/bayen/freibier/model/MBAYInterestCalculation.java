@@ -8,6 +8,7 @@ import java.util.Properties;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
+import org.compiere.model.MInvoice;
 import org.compiere.model.MInvoiceLine;
 import org.compiere.model.MPeriod;
 import org.compiere.model.MSysConfig;
@@ -107,6 +108,14 @@ public class MBAYInterestCalculation extends AbstractMBAYInterestCalculation<MBA
 		if (no != 1)
 			log.warning("(1) #" + no);
 	}
+	
+	private X_BAY_Config freibierConfig=null;
+	
+	private I_BAY_Config getConfig(){
+		if(freibierConfig==null)
+			freibierConfig=new Query(getCtx(), I_BAY_Config.Table_Name, null, get_TrxName()).first();
+		return freibierConfig;
+	}
 
 	// DocAction
 	// **********
@@ -132,7 +141,48 @@ public class MBAYInterestCalculation extends AbstractMBAYInterestCalculation<MBA
 	
 	@Override
 	public String complete() {
-		// TODO Auto-generated method stub
+		MInvoice invoice = new MInvoice(getCtx(), 0, get_TrxName());
+		if (isSOTrx())
+			invoice.setC_DocType_ID(getConfig().getDocType_InterestCustomer_ID());
+		else
+			invoice.setC_DocType_ID(getConfig().getDocType_InterestVendor_ID());
+		invoice.setC_BPartner_ID(getC_BPartner_ID());
+		invoice.setDateAcct(getDateAcct());
+		invoice.setDateInvoiced(getDateDoc());
+		invoice.setUser1_ID(getBAY_Contract_ID());
+		invoice.saveEx(get_TrxName());
+		//
+		MInvoiceLine line1 = new MInvoiceLine(invoice);
+		if (isSOTrx())
+			line1.setC_Charge_ID(getConfig().getChargeInterestRevenue_ID());
+		else
+			line1.setC_Charge_ID(getConfig().getChargeInterestExpense_ID());
+		line1.setPriceEntered(getInterestAmt());
+		line1.setDescription(getDescription());
+		line1.saveEx(get_TrxName());
+		//
+		MInvoiceLine line2 = new MInvoiceLine(invoice);
+		if (isSOTrx())
+			line2.setC_Charge_ID(getConfig().getChargeCustomerLoan_ID());
+		else
+			line2.setC_Charge_ID(getConfig().getChargeVendorLoan_ID());
+		line2.setPriceEntered(getInterestAmt());
+		line2.setDescription(getDescription());
+		line2.saveEx(get_TrxName());
+		//
+		// TODO fertigstellen der Rechnung
+		if(false){
+		invoice.setDocAction(DOCACTION_Complete);
+		if (!invoice.processIt(DOCACTION_Complete)) {
+			log.warning("Invoice Process Failed: " + invoice + " - " + invoice.getProcessMsg());
+			throw new IllegalStateException("Invoice Process Failed: " + invoice + " - " + invoice.getProcessMsg());
+		}
+		invoice.saveEx();
+		
+		String message = Msg.parseTranslation(getCtx(), "@InvoiceProcessed@ " + invoice.getDocumentNo() + " - "
+				+ invoice.getDocumentInfo());
+		log.info(message);
+		}
 		return null;
 	}
 
@@ -243,6 +293,11 @@ public class MBAYInterestCalculation extends AbstractMBAYInterestCalculation<MBA
 	
 	@Override
 	public String reactivate() {
+		/**
+		 * Die erzeugte Rechnung bleibt einfach bestehen. Wen das stört, der
+		 * kann die hier noch stornieren lassen, aber ich dachte mir, das macht
+		 * man dann auch händisch, wenn man es unbedingt möchte.
+		 */
 		return null;
 	}
 

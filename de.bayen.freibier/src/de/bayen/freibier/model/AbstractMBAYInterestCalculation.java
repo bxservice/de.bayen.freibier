@@ -355,9 +355,6 @@ abstract public class AbstractMBAYInterestCalculation<L> extends X_BAY_InterestC
 		return true;
 	}
 
-	/**
-	 * This implementation does not allow reactivation and gives back false in every case.
-	 */
 	@Override
 	public boolean reActivateIt() {
 		if (log.isLoggable(Level.INFO)) log.info("reActivateIt - " + getDocumentInfo());
@@ -370,7 +367,7 @@ abstract public class AbstractMBAYInterestCalculation<L> extends X_BAY_InterestC
 		MFactAcct.deleteEx(MJournal.Table_ID, get_ID(), get_TrxName());
 
 		m_processMsg=reactivate();
-		if(m_processMsg==null)
+		if(m_processMsg!=null)
 			return false;
 
 		// setPosted(false);
@@ -382,7 +379,7 @@ abstract public class AbstractMBAYInterestCalculation<L> extends X_BAY_InterestC
 		if (m_processMsg != null)
 			return false;
 
-		return false;
+		return true;
 	}
 	
 	abstract public String reactivate();

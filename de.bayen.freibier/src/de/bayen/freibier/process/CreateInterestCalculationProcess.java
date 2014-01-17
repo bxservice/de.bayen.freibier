@@ -6,12 +6,16 @@ import java.sql.ResultSet;
 import java.sql.Timestamp;
 
 import org.adempiere.exceptions.AdempiereException;
+import org.compiere.model.Query;
+import org.compiere.model.X_C_Charge_Acct;
 import org.compiere.util.CPreparedStatement;
 import org.compiere.util.DB;
 
+import de.bayen.freibier.model.I_BAY_Config;
 import de.bayen.freibier.model.MBAYContract;
 import de.bayen.freibier.model.MBAYInterestCalculation;
 import de.bayen.freibier.model.MBAYInterestCalculationLine;
+import de.bayen.freibier.model.X_BAY_Config;
 import de.bayen.freibier.util.AbstractRecordProcessor;
 
 public class CreateInterestCalculationProcess extends
@@ -23,10 +27,16 @@ public class CreateInterestCalculationProcess extends
 
 	static public interface Params {
 		public String getName();
+		
+		public String getInvoiceFrequency();
 
 		public Timestamp getDateDoc();
 
 		public Timestamp getDateDocTo();
+		
+		public String getDescription();
+		
+		public String getDocAction();
 	}
 
 	@Override
@@ -36,13 +46,26 @@ public class CreateInterestCalculationProcess extends
 
 	@Override
 	protected String processRecord(MBAYContract record) {
-		final String INTEREST_ACCOUNT = "1360"; // XXX configure somewhere
 		Params params = (Params) getParameterBean();
+		if (params.getInvoiceFrequency() != null && !params.getInvoiceFrequency().equals(record.getInvoiceFrequency()))
+			return null;
+		int chargeID;
+		if (record.isSOTrx())
+			chargeID = getConfig().getChargeCustomerLoan_ID();
+		else
+			chargeID = getConfig().getChargeVendorLoan_ID();
+		// XXX Query ist nicht gut, wenn es mehrere Account Schemas gibt
+		X_C_Charge_Acct accounting = new Query(getCtx(), X_C_Charge_Acct.Table_Name,
+				X_C_Charge_Acct.COLUMNNAME_C_Charge_ID + "=?", get_TrxName()).setParameters(chargeID).first();
+		// TODO man muss nicht value nehmen, ID wäre effektiver
+		String interestAccount = accounting.getCh_Expense_A().getAccount().getValue();
+		//
 		MBAYInterestCalculation ic = new MBAYInterestCalculation(getCtx(), 0,
 				get_TrxName());
 		ic.setBAY_Contract_ID(record.getBAY_Contract_ID());
 		ic.setC_BPartner_ID(record.getC_BPartner_ID());
 		ic.setName(params.getName());
+		ic.setDescription(params.getDescription());
 		ic.setDateDoc(params.getDateDocTo());
 		ic.setDateAcct(params.getDateDocTo());
 		String currencyID = getCtx().getProperty("$C_Currency_ID");
@@ -69,7 +92,7 @@ public class CreateInterestCalculationProcess extends
 			CPreparedStatement stat = DB.prepareStatement(sql.toString(),
 					get_TrxName());
 			try {
-				stat.setString(1, INTEREST_ACCOUNT);
+				stat.setString(1, interestAccount);
 				stat.setInt(2, record.get_ID());
 				stat.setDate(3, new Date(params.getDateDoc().getTime()));
 				ResultSet rs = stat.executeQuery();
@@ -79,8 +102,7 @@ public class CreateInterestCalculationProcess extends
 								ic);
 						newLine.setDateTrx(params.getDateDoc());
 						newLine.setAmount(rs.getBigDecimal(1));
-						newLine.setDescription("Anfangssaldo"); // XXX
-																// translation
+						newLine.setDescription("Anfangssaldo"); // XXX translation
 						newLine.setInterestPercent(record.getInterestPercent());
 						newLine.saveEx(get_TrxName());
 					}
@@ -121,7 +143,7 @@ public class CreateInterestCalculationProcess extends
 			CPreparedStatement stat = DB.prepareStatement(sql.toString(),
 					get_TrxName());
 			try {
-				stat.setString(1, "1360");
+				stat.setString(1, interestAccount);
 				stat.setInt(2, record.get_ID());
 				stat.setDate(3, new Date(params.getDateDoc().getTime()));
 				stat.setDate(4, new Date(params.getDateDocTo().getTime()));
@@ -135,6 +157,8 @@ public class CreateInterestCalculationProcess extends
 						newLine.setAmount(rs.getBigDecimal("AmtAcctDr")
 								.subtract(rs.getBigDecimal("AmtAcctCr")));
 						String description = rs.getString("Description");
+						if (description == null)
+							description = rs.getString("i_Description");
 						if (description == null)
 							description = rs.getString("fa_Description");
 						newLine.setDescription(description);
@@ -164,11 +188,18 @@ public class CreateInterestCalculationProcess extends
 		// TODO Dokument ggf. abschliessen
 		
 		// logging
-		addLog(getProcessInfo().getAD_Process_ID(),
-				new Timestamp(System.currentTimeMillis()), new BigDecimal(
-						getProcessInfo().getAD_PInstance_ID()), "new: ",
+		addLog(getProcessInfo().getAD_Process_ID(), new Timestamp(System.currentTimeMillis()), new BigDecimal(
+				getProcessInfo().getAD_PInstance_ID()), "new: " + ic.getDocumentInfo(),
 				MBAYInterestCalculation.Table_ID, ic.get_ID());
 		return null;
+	}
+	
+	private X_BAY_Config freibierConfig=null;
+	
+	private I_BAY_Config getConfig(){
+		if(freibierConfig==null)
+			freibierConfig=new Query(getCtx(), I_BAY_Config.Table_Name, null, get_TrxName()).first();
+		return freibierConfig;
 	}
 
 }

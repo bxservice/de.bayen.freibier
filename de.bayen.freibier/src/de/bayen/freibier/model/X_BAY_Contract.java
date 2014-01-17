@@ -33,7 +33,7 @@ public class X_BAY_Contract extends PO implements I_BAY_Contract, I_Persistent
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20140114L;
+	private static final long serialVersionUID = 20140117L;
 
     /** Standard Constructor */
     public X_BAY_Contract (Properties ctx, int BAY_Contract_ID, String trxName)
@@ -249,6 +249,32 @@ public class X_BAY_Contract extends PO implements I_BAY_Contract, I_Persistent
 		return bd;
 	}
 
+	/** InvoiceFrequency AD_Reference_ID=196 */
+	public static final int INVOICEFREQUENCY_AD_Reference_ID=196;
+	/** Month = M */
+	public static final String INVOICEFREQUENCY_Month = "M";
+	/** Quarter = Q */
+	public static final String INVOICEFREQUENCY_Quarter = "Q";
+	/** Year = Y */
+	public static final String INVOICEFREQUENCY_Year = "Y";
+	/** Set Invoice Frequency.
+		@param InvoiceFrequency 
+		How often invoices will be generated
+	  */
+	public void setInvoiceFrequency (String InvoiceFrequency)
+	{
+
+		set_Value (COLUMNNAME_InvoiceFrequency, InvoiceFrequency);
+	}
+
+	/** Get Invoice Frequency.
+		@return How often invoices will be generated
+	  */
+	public String getInvoiceFrequency () 
+	{
+		return (String)get_Value(COLUMNNAME_InvoiceFrequency);
+	}
+
 	/** Set Sales Transaction.
 		@param IsSOTrx 
 		This is a Sales Transaction
@@ -321,7 +347,7 @@ public class X_BAY_Contract extends PO implements I_BAY_Contract, I_Persistent
 	  */
 	public void setValue (String Value)
 	{
-		set_Value (COLUMNNAME_Value, Value);
+		set_ValueNoCheck (COLUMNNAME_Value, Value);
 	}
 
 	/** Get Search Key.

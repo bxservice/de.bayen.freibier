@@ -185,6 +185,19 @@ public interface I_BAY_Contract
 	  */
 	public BigDecimal getInterestPercent();
 
+    /** Column name InvoiceFrequency */
+    public static final String COLUMNNAME_InvoiceFrequency = "InvoiceFrequency";
+
+	/** Set Invoice Frequency.
+	  * How often invoices will be generated
+	  */
+	public void setInvoiceFrequency (String InvoiceFrequency);
+
+	/** Get Invoice Frequency.
+	  * How often invoices will be generated
+	  */
+	public String getInvoiceFrequency();
+
     /** Column name IsActive */
     public static final String COLUMNNAME_IsActive = "IsActive";
 

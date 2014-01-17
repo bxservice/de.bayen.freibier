@@ -32,7 +32,7 @@ public class X_BAY_Umsatzstatistik extends PO implements I_BAY_Umsatzstatistik, 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20140114L;
+	private static final long serialVersionUID = 20140117L;
 
     /** Standard Constructor */
     public X_BAY_Umsatzstatistik (Properties ctx, int BAY_Umsatzstatistik_ID, String trxName)
@@ -208,7 +208,7 @@ public class X_BAY_Umsatzstatistik extends PO implements I_BAY_Umsatzstatistik, 
 		@param Stueck Stück	  */
 	public void setStueck (BigDecimal Stueck)
 	{
-		set_ValueNoCheck (COLUMNNAME_Stueck, Stueck);
+		set_Value (COLUMNNAME_Stueck, Stueck);
 	}
 
 	/** Get Stück.

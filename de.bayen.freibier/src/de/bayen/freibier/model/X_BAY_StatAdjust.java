@@ -34,7 +34,7 @@ public class X_BAY_StatAdjust extends PO implements I_BAY_StatAdjust, I_Persiste
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20140114L;
+	private static final long serialVersionUID = 20140117L;
 
     /** Standard Constructor */
     public X_BAY_StatAdjust (Properties ctx, int BAY_StatAdjust_ID, String trxName)

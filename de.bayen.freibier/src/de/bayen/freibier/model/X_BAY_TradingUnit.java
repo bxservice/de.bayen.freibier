@@ -33,7 +33,7 @@ public class X_BAY_TradingUnit extends PO implements I_BAY_TradingUnit, I_Persis
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20140114L;
+	private static final long serialVersionUID = 20140117L;
 
     /** Standard Constructor */
     public X_BAY_TradingUnit (Properties ctx, int BAY_TradingUnit_ID, String trxName)
