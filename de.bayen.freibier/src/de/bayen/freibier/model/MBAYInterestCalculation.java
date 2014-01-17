@@ -169,6 +169,7 @@ public class MBAYInterestCalculation extends AbstractMBAYInterestCalculation<MBA
 		line2.setPriceEntered(getInterestAmt());
 		line2.setDescription(getDescription());
 		line2.saveEx(get_TrxName());
+
 		//
 		// TODO fertigstellen der Rechnung
 		if(false){
@@ -183,6 +184,8 @@ public class MBAYInterestCalculation extends AbstractMBAYInterestCalculation<MBA
 				+ invoice.getDocumentInfo());
 		log.info(message);
 		}
+		
+		setC_Invoice_ID(invoice.get_ID());
 		return null;
 	}
 
