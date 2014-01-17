@@ -143,13 +143,14 @@ public class MBAYInterestCalculation extends AbstractMBAYInterestCalculation<MBA
 	public String complete() {
 		MInvoice invoice1 = new MInvoice(getCtx(), 0, get_TrxName());
 		if (isSOTrx())
-			invoice1.setC_DocType_ID(getConfig().getDocType_InterestCustomer_ID());
+			invoice1.setC_DocTypeTarget_ID(getConfig().getDocType_InterestCustomer_ID());
 		else
-			invoice1.setC_DocType_ID(getConfig().getDocType_InterestVendor_ID());
+			invoice1.setC_DocTypeTarget_ID(getConfig().getDocType_InterestVendor_ID());
 		invoice1.setC_BPartner_ID(getC_BPartner_ID());
 		invoice1.setDateAcct(getDateAcct());
 		invoice1.setDateInvoiced(getDateDoc());
 		invoice1.set_ValueOfColumn(MBAYContract.COLUMNNAME_BAY_Contract_ID, getBAY_Contract_ID());
+		invoice1.setDescription(getDocumentInfo());
 		invoice1.saveEx(get_TrxName());
 		//
 		MInvoiceLine line1 = new MInvoiceLine(invoice1);
@@ -164,13 +165,14 @@ public class MBAYInterestCalculation extends AbstractMBAYInterestCalculation<MBA
 		//
 		MInvoice invoice2 = new MInvoice(getCtx(), 0, get_TrxName());
 		if (isSOTrx())
-			invoice2.setC_DocType_ID(getConfig().getDocType_LoanCustomer_ID());
+			invoice2.setC_DocTypeTarget_ID(getConfig().getDocType_LoanCustomer_ID());
 		else
-			invoice2.setC_DocType_ID(getConfig().getDocType_LoanVendor_ID());
+			invoice2.setC_DocTypeTarget_ID(getConfig().getDocType_LoanVendor_ID());
 		invoice2.setC_BPartner_ID(getC_BPartner_ID());
 		invoice2.setDateAcct(getDateAcct());
 		invoice2.setDateInvoiced(getDateDoc());
 		invoice2.set_ValueOfColumn(MBAYContract.COLUMNNAME_BAY_Contract_ID, getBAY_Contract_ID());
+		invoice1.setDescription(getDocumentInfo());
 		invoice2.saveEx(get_TrxName());
 		//
 		MInvoiceLine line2 = new MInvoiceLine(invoice2);
