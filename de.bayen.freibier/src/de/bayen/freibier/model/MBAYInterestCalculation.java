@@ -149,7 +149,7 @@ public class MBAYInterestCalculation extends AbstractMBAYInterestCalculation<MBA
 		invoice.setC_BPartner_ID(getC_BPartner_ID());
 		invoice.setDateAcct(getDateAcct());
 		invoice.setDateInvoiced(getDateDoc());
-		invoice.setUser1_ID(getBAY_Contract_ID());
+		invoice.set_ValueOfColumn(MBAYContract.COLUMNNAME_BAY_Contract_ID, getBAY_Contract_ID());
 		invoice.saveEx(get_TrxName());
 		//
 		MInvoiceLine line1 = new MInvoiceLine(invoice);
@@ -157,6 +157,7 @@ public class MBAYInterestCalculation extends AbstractMBAYInterestCalculation<MBA
 			line1.setC_Charge_ID(getConfig().getChargeInterestRevenue_ID());
 		else
 			line1.setC_Charge_ID(getConfig().getChargeInterestExpense_ID());
+		line1.setQty(1);
 		line1.setPriceEntered(getInterestAmt());
 		line1.setDescription(getDescription());
 		line1.saveEx(get_TrxName());
@@ -166,6 +167,7 @@ public class MBAYInterestCalculation extends AbstractMBAYInterestCalculation<MBA
 			line2.setC_Charge_ID(getConfig().getChargeCustomerLoan_ID());
 		else
 			line2.setC_Charge_ID(getConfig().getChargeVendorLoan_ID());
+		line2.setQty(1);
 		line2.setPriceEntered(getInterestAmt());
 		line2.setDescription(getDescription());
 		line2.saveEx(get_TrxName());
