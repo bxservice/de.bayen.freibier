@@ -11,6 +11,7 @@ import de.bayen.freibier.model.MBAYInterestCalculation;
 import de.bayen.freibier.model.MBAYInterestCalculationLine;
 import de.bayen.freibier.model.MBAYStatistikperiode;
 import de.bayen.freibier.model.MBAYTradingUnit;
+import de.bayen.freibier.model.X_BAY_Config;
 
 public class ModelFactory implements IModelFactory {
 
@@ -40,8 +41,9 @@ public class ModelFactory implements IModelFactory {
 		if (MBAYInterestCalculation.Table_Name.equals(tableName))
 			return new MBAYInterestCalculation(Env.getCtx(), Record_ID, trxName);
 		if (MBAYInterestCalculationLine.Table_Name.equals(tableName))
-			return new MBAYInterestCalculationLine(Env.getCtx(), Record_ID,
-					trxName);
+			return new MBAYInterestCalculationLine(Env.getCtx(), Record_ID, trxName);
+		if (X_BAY_Config.Table_Name.equals(tableName))
+			return new X_BAY_Config(Env.getCtx(), Record_ID, trxName);
 		return null;
 	}
 
@@ -57,6 +59,8 @@ public class ModelFactory implements IModelFactory {
 			return new MBAYInterestCalculation(Env.getCtx(), rs, trxName);
 		if (MBAYInterestCalculationLine.Table_Name.equals(tableName))
 			return new MBAYInterestCalculationLine(Env.getCtx(), rs, trxName);
+		if (X_BAY_Config.Table_Name.equals(tableName))
+			return new X_BAY_Config(Env.getCtx(), rs, trxName);
 		return null;
 	}
 

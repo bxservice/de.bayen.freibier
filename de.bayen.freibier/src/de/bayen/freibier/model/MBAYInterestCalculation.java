@@ -141,18 +141,18 @@ public class MBAYInterestCalculation extends AbstractMBAYInterestCalculation<MBA
 	
 	@Override
 	public String complete() {
-		MInvoice invoice = new MInvoice(getCtx(), 0, get_TrxName());
+		MInvoice invoice1 = new MInvoice(getCtx(), 0, get_TrxName());
 		if (isSOTrx())
-			invoice.setC_DocType_ID(getConfig().getDocType_InterestCustomer_ID());
+			invoice1.setC_DocType_ID(getConfig().getDocType_InterestCustomer_ID());
 		else
-			invoice.setC_DocType_ID(getConfig().getDocType_InterestVendor_ID());
-		invoice.setC_BPartner_ID(getC_BPartner_ID());
-		invoice.setDateAcct(getDateAcct());
-		invoice.setDateInvoiced(getDateDoc());
-		invoice.set_ValueOfColumn(MBAYContract.COLUMNNAME_BAY_Contract_ID, getBAY_Contract_ID());
-		invoice.saveEx(get_TrxName());
+			invoice1.setC_DocType_ID(getConfig().getDocType_InterestVendor_ID());
+		invoice1.setC_BPartner_ID(getC_BPartner_ID());
+		invoice1.setDateAcct(getDateAcct());
+		invoice1.setDateInvoiced(getDateDoc());
+		invoice1.set_ValueOfColumn(MBAYContract.COLUMNNAME_BAY_Contract_ID, getBAY_Contract_ID());
+		invoice1.saveEx(get_TrxName());
 		//
-		MInvoiceLine line1 = new MInvoiceLine(invoice);
+		MInvoiceLine line1 = new MInvoiceLine(invoice1);
 		if (isSOTrx())
 			line1.setC_Charge_ID(getConfig().getChargeInterestRevenue_ID());
 		else
@@ -162,7 +162,18 @@ public class MBAYInterestCalculation extends AbstractMBAYInterestCalculation<MBA
 		line1.setDescription(getDescription());
 		line1.saveEx(get_TrxName());
 		//
-		MInvoiceLine line2 = new MInvoiceLine(invoice);
+		MInvoice invoice2 = new MInvoice(getCtx(), 0, get_TrxName());
+		if (isSOTrx())
+			invoice2.setC_DocType_ID(getConfig().getDocType_LoanCustomer_ID());
+		else
+			invoice2.setC_DocType_ID(getConfig().getDocType_LoanVendor_ID());
+		invoice2.setC_BPartner_ID(getC_BPartner_ID());
+		invoice2.setDateAcct(getDateAcct());
+		invoice2.setDateInvoiced(getDateDoc());
+		invoice2.set_ValueOfColumn(MBAYContract.COLUMNNAME_BAY_Contract_ID, getBAY_Contract_ID());
+		invoice2.saveEx(get_TrxName());
+		//
+		MInvoiceLine line2 = new MInvoiceLine(invoice2);
 		if (isSOTrx())
 			line2.setC_Charge_ID(getConfig().getChargeCustomerLoan_ID());
 		else
@@ -175,19 +186,26 @@ public class MBAYInterestCalculation extends AbstractMBAYInterestCalculation<MBA
 		//
 		// TODO fertigstellen der Rechnung
 		if(false){
-		invoice.setDocAction(DOCACTION_Complete);
-		if (!invoice.processIt(DOCACTION_Complete)) {
-			log.warning("Invoice Process Failed: " + invoice + " - " + invoice.getProcessMsg());
-			throw new IllegalStateException("Invoice Process Failed: " + invoice + " - " + invoice.getProcessMsg());
+		invoice1.setDocAction(DOCACTION_Complete);
+		if (!invoice1.processIt(DOCACTION_Complete)) {
+			log.warning("Invoice Process Failed: " + invoice1 + " - " + invoice1.getProcessMsg());
+			throw new IllegalStateException("Invoice Process Failed: " + invoice1 + " - " + invoice1.getProcessMsg());
 		}
-		invoice.saveEx();
+		invoice2.setDocAction(DOCACTION_Complete);
+		if (!invoice2.processIt(DOCACTION_Complete)) {
+			log.warning("Invoice Process Failed: " + invoice2 + " - " + invoice2.getProcessMsg());
+			throw new IllegalStateException("Invoice Process Failed: " + invoice2 + " - " + invoice2.getProcessMsg());
+		}
+		invoice1.saveEx();
+		invoice2.saveEx();
 		
-		String message = Msg.parseTranslation(getCtx(), "@InvoiceProcessed@ " + invoice.getDocumentNo() + " - "
-				+ invoice.getDocumentInfo());
+		String message = Msg.parseTranslation(getCtx(), "@InvoiceProcessed@ " + invoice1.getDocumentInfo() + " / "
+				+ invoice2.getDocumentInfo());
 		log.info(message);
 		}
 		
-		setC_Invoice_ID(invoice.get_ID());
+		setC_Invoice_ID(invoice1.get_ID());
+		setRef_Invoice_ID(invoice2.get_ID());
 		return null;
 	}
 

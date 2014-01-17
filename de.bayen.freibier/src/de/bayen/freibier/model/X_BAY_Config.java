@@ -270,4 +270,54 @@ public class X_BAY_Config extends PO implements I_BAY_Config, I_Persistent
 			 return 0;
 		return ii.intValue();
 	}
+
+	public org.compiere.model.I_C_DocType getDocType_LoanCustomer() throws RuntimeException
+    {
+		return (org.compiere.model.I_C_DocType)MTable.get(getCtx(), org.compiere.model.I_C_DocType.Table_Name)
+			.getPO(getDocType_LoanCustomer_ID(), get_TrxName());	}
+
+	/** Set DocType_LoanCustomer_ID.
+		@param DocType_LoanCustomer_ID DocType_LoanCustomer_ID	  */
+	public void setDocType_LoanCustomer_ID (int DocType_LoanCustomer_ID)
+	{
+		if (DocType_LoanCustomer_ID < 1) 
+			set_Value (COLUMNNAME_DocType_LoanCustomer_ID, null);
+		else 
+			set_Value (COLUMNNAME_DocType_LoanCustomer_ID, Integer.valueOf(DocType_LoanCustomer_ID));
+	}
+
+	/** Get DocType_LoanCustomer_ID.
+		@return DocType_LoanCustomer_ID	  */
+	public int getDocType_LoanCustomer_ID () 
+	{
+		Integer ii = (Integer)get_Value(COLUMNNAME_DocType_LoanCustomer_ID);
+		if (ii == null)
+			 return 0;
+		return ii.intValue();
+	}
+
+	public org.compiere.model.I_C_DocType getDocType_LoanVendor() throws RuntimeException
+    {
+		return (org.compiere.model.I_C_DocType)MTable.get(getCtx(), org.compiere.model.I_C_DocType.Table_Name)
+			.getPO(getDocType_LoanVendor_ID(), get_TrxName());	}
+
+	/** Set DocType_LoanVendor_ID.
+		@param DocType_LoanVendor_ID DocType_LoanVendor_ID	  */
+	public void setDocType_LoanVendor_ID (int DocType_LoanVendor_ID)
+	{
+		if (DocType_LoanVendor_ID < 1) 
+			set_Value (COLUMNNAME_DocType_LoanVendor_ID, null);
+		else 
+			set_Value (COLUMNNAME_DocType_LoanVendor_ID, Integer.valueOf(DocType_LoanVendor_ID));
+	}
+
+	/** Get DocType_LoanVendor_ID.
+		@return DocType_LoanVendor_ID	  */
+	public int getDocType_LoanVendor_ID () 
+	{
+		Integer ii = (Integer)get_Value(COLUMNNAME_DocType_LoanVendor_ID);
+		if (ii == null)
+			 return 0;
+		return ii.intValue();
+	}
 }

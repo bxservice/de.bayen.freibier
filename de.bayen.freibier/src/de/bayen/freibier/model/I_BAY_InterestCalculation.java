@@ -362,6 +362,17 @@ public interface I_BAY_InterestCalculation
 	/** Get Process Now	  */
 	public boolean isProcessing();
 
+    /** Column name Ref_Invoice_ID */
+    public static final String COLUMNNAME_Ref_Invoice_ID = "Ref_Invoice_ID";
+
+	/** Set Referenced Invoice	  */
+	public void setRef_Invoice_ID (int Ref_Invoice_ID);
+
+	/** Get Referenced Invoice	  */
+	public int getRef_Invoice_ID();
+
+	public org.compiere.model.I_C_Invoice getRef_Invoice() throws RuntimeException;
+
     /** Column name Reversal_ID */
     public static final String COLUMNNAME_Reversal_ID = "Reversal_ID";
 

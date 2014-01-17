@@ -250,9 +250,9 @@ public class X_BAY_InterestCalculation extends PO implements I_BAY_InterestCalcu
 	public void setC_Invoice_ID (int C_Invoice_ID)
 	{
 		if (C_Invoice_ID < 1) 
-			set_ValueNoCheck (COLUMNNAME_C_Invoice_ID, null);
+			set_Value (COLUMNNAME_C_Invoice_ID, null);
 		else 
-			set_ValueNoCheck (COLUMNNAME_C_Invoice_ID, Integer.valueOf(C_Invoice_ID));
+			set_Value (COLUMNNAME_C_Invoice_ID, Integer.valueOf(C_Invoice_ID));
 	}
 
 	/** Get Invoice.
@@ -607,6 +607,31 @@ public class X_BAY_InterestCalculation extends PO implements I_BAY_InterestCalcu
 			return "Y".equals(oo);
 		}
 		return false;
+	}
+
+	public org.compiere.model.I_C_Invoice getRef_Invoice() throws RuntimeException
+    {
+		return (org.compiere.model.I_C_Invoice)MTable.get(getCtx(), org.compiere.model.I_C_Invoice.Table_Name)
+			.getPO(getRef_Invoice_ID(), get_TrxName());	}
+
+	/** Set Referenced Invoice.
+		@param Ref_Invoice_ID Referenced Invoice	  */
+	public void setRef_Invoice_ID (int Ref_Invoice_ID)
+	{
+		if (Ref_Invoice_ID < 1) 
+			set_Value (COLUMNNAME_Ref_Invoice_ID, null);
+		else 
+			set_Value (COLUMNNAME_Ref_Invoice_ID, Integer.valueOf(Ref_Invoice_ID));
+	}
+
+	/** Get Referenced Invoice.
+		@return Referenced Invoice	  */
+	public int getRef_Invoice_ID () 
+	{
+		Integer ii = (Integer)get_Value(COLUMNNAME_Ref_Invoice_ID);
+		if (ii == null)
+			 return 0;
+		return ii.intValue();
 	}
 
 	public I_BAY_InterestCalculation getReversal() throws RuntimeException

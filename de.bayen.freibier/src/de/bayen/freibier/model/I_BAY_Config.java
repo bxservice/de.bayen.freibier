@@ -177,6 +177,28 @@ public interface I_BAY_Config
 
 	public org.compiere.model.I_C_DocType getDocType_InterestVendor() throws RuntimeException;
 
+    /** Column name DocType_LoanCustomer_ID */
+    public static final String COLUMNNAME_DocType_LoanCustomer_ID = "DocType_LoanCustomer_ID";
+
+	/** Set DocType_LoanCustomer_ID	  */
+	public void setDocType_LoanCustomer_ID (int DocType_LoanCustomer_ID);
+
+	/** Get DocType_LoanCustomer_ID	  */
+	public int getDocType_LoanCustomer_ID();
+
+	public org.compiere.model.I_C_DocType getDocType_LoanCustomer() throws RuntimeException;
+
+    /** Column name DocType_LoanVendor_ID */
+    public static final String COLUMNNAME_DocType_LoanVendor_ID = "DocType_LoanVendor_ID";
+
+	/** Set DocType_LoanVendor_ID	  */
+	public void setDocType_LoanVendor_ID (int DocType_LoanVendor_ID);
+
+	/** Get DocType_LoanVendor_ID	  */
+	public int getDocType_LoanVendor_ID();
+
+	public org.compiere.model.I_C_DocType getDocType_LoanVendor() throws RuntimeException;
+
     /** Column name IsActive */
     public static final String COLUMNNAME_IsActive = "IsActive";
 

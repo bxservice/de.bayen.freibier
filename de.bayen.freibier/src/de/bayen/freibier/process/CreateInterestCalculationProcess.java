@@ -126,7 +126,7 @@ public class CreateInterestCalculationProcess extends
 			sql.append("Fact_Acct.AmtAcctCr, ");
 			sql.append("BAY_Contract.Value, ");
 			sql.append("Fact_Acct.Description AS fa_Description, ");
-			sql.append("C_Invoice.Description AS i_Description ");
+			sql.append("C_Invoice.Description AS i_Description, ");
 			sql.append("C_InvoiceLine.Description AS Description ");
 			sql.append("FROM Fact_Acct ");
 			sql.append("RIGHT JOIN C_ElementValue ON(C_ElementValue.C_ElementValue_ID = Fact_Acct.Account_ID) ");
