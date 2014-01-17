@@ -51,6 +51,8 @@ public class ModelFactory implements IModelFactory {
 			return new MBAYStatistikperiode(Env.getCtx(), rs, trxName);
 		if (MBAYTradingUnit.Table_Name.equals(tableName))
 			return new MBAYTradingUnit(Env.getCtx(), rs, trxName);
+		if (MBAYContract.Table_Name.equals(tableName))
+			return new MBAYContract(Env.getCtx(), rs, trxName);
 		if (MBAYInterestCalculation.Table_Name.equals(tableName))
 			return new MBAYInterestCalculation(Env.getCtx(), rs, trxName);
 		if (MBAYInterestCalculationLine.Table_Name.equals(tableName))
