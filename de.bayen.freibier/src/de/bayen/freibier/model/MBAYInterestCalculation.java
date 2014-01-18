@@ -148,7 +148,6 @@ public class MBAYInterestCalculation extends AbstractMBAYInterestCalculation<MBA
 	
 	@Override
 	public String complete() {
-
 		MInvoice invoice1 = new MInvoice(getCtx(), 0, get_TrxName());
 		if (isSOTrx())
 			invoice1.setC_DocTypeTarget_ID(getConfig().getDocType_InterestCustomer_ID());
