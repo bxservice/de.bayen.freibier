@@ -34,7 +34,7 @@ public class X_BAY_InterestCalculation extends PO implements I_BAY_InterestCalcu
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20140117L;
+	private static final long serialVersionUID = 20140118L;
 
     /** Standard Constructor */
     public X_BAY_InterestCalculation (Properties ctx, int BAY_InterestCalculation_ID, String trxName)
@@ -45,8 +45,6 @@ public class X_BAY_InterestCalculation extends PO implements I_BAY_InterestCalcu
 			setBAY_InterestCalculation_ID (0);
 			setC_Currency_ID (0);
 // @$C_Currency_ID@
-			setC_DocType_ID (0);
-// 0
 			setDateAcct (new Timestamp( System.currentTimeMillis() ));
 // @#Date@
 			setDocAction (null);
@@ -210,34 +208,6 @@ public class X_BAY_InterestCalculation extends PO implements I_BAY_InterestCalcu
 		return ii.intValue();
 	}
 
-	public org.compiere.model.I_C_DocType getC_DocType() throws RuntimeException
-    {
-		return (org.compiere.model.I_C_DocType)MTable.get(getCtx(), org.compiere.model.I_C_DocType.Table_Name)
-			.getPO(getC_DocType_ID(), get_TrxName());	}
-
-	/** Set Document Type.
-		@param C_DocType_ID 
-		Document type or rules
-	  */
-	public void setC_DocType_ID (int C_DocType_ID)
-	{
-		if (C_DocType_ID < 0) 
-			set_Value (COLUMNNAME_C_DocType_ID, null);
-		else 
-			set_Value (COLUMNNAME_C_DocType_ID, Integer.valueOf(C_DocType_ID));
-	}
-
-	/** Get Document Type.
-		@return Document type or rules
-	  */
-	public int getC_DocType_ID () 
-	{
-		Integer ii = (Integer)get_Value(COLUMNNAME_C_DocType_ID);
-		if (ii == null)
-			 return 0;
-		return ii.intValue();
-	}
-
 	public org.compiere.model.I_C_Invoice getC_Invoice() throws RuntimeException
     {
 		return (org.compiere.model.I_C_Invoice)MTable.get(getCtx(), org.compiere.model.I_C_Invoice.Table_Name)
@@ -264,6 +234,31 @@ public class X_BAY_InterestCalculation extends PO implements I_BAY_InterestCalcu
 		if (ii == null)
 			 return 0;
 		return ii.intValue();
+	}
+
+	/** CreateInterestCalculation AD_Reference_ID=394 */
+	public static final int CREATEINTERESTCALCULATION_AD_Reference_ID=394;
+	/** Dunning = D */
+	public static final String CREATEINTERESTCALCULATION_Dunning = "D";
+	/** Collection Agency = C */
+	public static final String CREATEINTERESTCALCULATION_CollectionAgency = "C";
+	/** Legal Procedure = L */
+	public static final String CREATEINTERESTCALCULATION_LegalProcedure = "L";
+	/** Uncollectable = U */
+	public static final String CREATEINTERESTCALCULATION_Uncollectable = "U";
+	/** Set Create Interest Calculation.
+		@param CreateInterestCalculation Create Interest Calculation	  */
+	public void setCreateInterestCalculation (String CreateInterestCalculation)
+	{
+
+		set_ValueNoCheck (COLUMNNAME_CreateInterestCalculation, CreateInterestCalculation);
+	}
+
+	/** Get Create Interest Calculation.
+		@return Create Interest Calculation	  */
+	public String getCreateInterestCalculation () 
+	{
+		return (String)get_Value(COLUMNNAME_CreateInterestCalculation);
 	}
 
 	/** Set Account Date.

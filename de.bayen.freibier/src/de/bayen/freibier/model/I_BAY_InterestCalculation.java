@@ -123,21 +123,6 @@ public interface I_BAY_InterestCalculation
 
 	public org.compiere.model.I_C_Currency getC_Currency() throws RuntimeException;
 
-    /** Column name C_DocType_ID */
-    public static final String COLUMNNAME_C_DocType_ID = "C_DocType_ID";
-
-	/** Set Document Type.
-	  * Document type or rules
-	  */
-	public void setC_DocType_ID (int C_DocType_ID);
-
-	/** Get Document Type.
-	  * Document type or rules
-	  */
-	public int getC_DocType_ID();
-
-	public org.compiere.model.I_C_DocType getC_DocType() throws RuntimeException;
-
     /** Column name C_Invoice_ID */
     public static final String COLUMNNAME_C_Invoice_ID = "C_Invoice_ID";
 
@@ -168,6 +153,15 @@ public interface I_BAY_InterestCalculation
 	  * User who created this records
 	  */
 	public int getCreatedBy();
+
+    /** Column name CreateInterestCalculation */
+    public static final String COLUMNNAME_CreateInterestCalculation = "CreateInterestCalculation";
+
+	/** Set Create Interest Calculation	  */
+	public void setCreateInterestCalculation (String CreateInterestCalculation);
+
+	/** Get Create Interest Calculation	  */
+	public String getCreateInterestCalculation();
 
     /** Column name DateAcct */
     public static final String COLUMNNAME_DateAcct = "DateAcct";

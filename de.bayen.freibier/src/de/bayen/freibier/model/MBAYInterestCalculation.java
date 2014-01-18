@@ -8,10 +8,8 @@ import java.util.Properties;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
-import org.compiere.model.MDocType;
 import org.compiere.model.MInvoice;
 import org.compiere.model.MInvoiceLine;
-import org.compiere.model.MPeriod;
 import org.compiere.model.MSysConfig;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
@@ -30,23 +28,6 @@ public class MBAYInterestCalculation extends AbstractMBAYInterestCalculation<MBA
 
 	public MBAYInterestCalculation(Properties ctx, int BAY_InterestCalculation_ID, String trxName) {
 		super(ctx, BAY_InterestCalculation_ID, trxName);
-		if (getC_DocType_ID() < 1) {
-			// chose the default document type
-			String docbasetype = isSOTrx() ? "ARI" : "API";
-			String sql = "SELECT C_DocType_ID FROM C_DocType "
-					+ "WHERE AD_Client_ID=? AND AD_Org_ID in (0,?) AND DocBaseType=?" + " AND IsActive='Y' "
-					+ "ORDER BY IsDefault DESC, AD_Org_ID DESC"
-					// durch Sortierung nach dem Namen ist der default
-					// der alphabetisch letzte Wert - also die Zinsabrechnung
-					// keine Ahnung, wie man das besser macht ohne eigenen
-					// Basis-Dokumenttyp
-					+ ", Name DESC";
-			int C_DocType_ID = DB.getSQLValueEx(get_TrxName(), sql, getAD_Client_ID(), getAD_Org_ID(), docbasetype);
-			if (C_DocType_ID <= 0)
-				throw new AdempiereException("document type not found: " + docbasetype);
-			else
-				setC_DocType_ID(C_DocType_ID);
-		}
 	}
 
 	public MBAYInterestCalculation(Properties ctx, ResultSet rs, String trxName) {
@@ -110,11 +91,11 @@ public class MBAYInterestCalculation extends AbstractMBAYInterestCalculation<MBA
 		if (no != 1)
 			log.warning("(1) #" + no);
 	}
-	
+
 	/**
 	 * Recalculates all lines and the header totals.
 	 */
-	public void recalculateEverything(){
+	public void recalculateEverything() {
 		MBAYInterestCalculationLine[] lines = getLines();
 		for (MBAYInterestCalculationLine line : lines) {
 			MBAYInterestCalculationLine.recalculate(getCtx(), line);
@@ -238,14 +219,14 @@ public class MBAYInterestCalculation extends AbstractMBAYInterestCalculation<MBA
 		}
 		Timestamp reversalDateDoc = accrual ? reversalDate : getDateDoc();
 
-		MPeriod.testPeriodOpen(getCtx(), reversalDate, getC_DocType_ID(), getAD_Org_ID());
+		// MPeriod.testPeriodOpen(getCtx(), reversalDate, getC_DocType_ID(),
+		// getAD_Org_ID());
 
 		MBAYInterestCalculation reversal = null;
 		if (MSysConfig.getBooleanValue(MSysConfig.Invoice_ReverseUseNewNumber, true, getAD_Client_ID()))
-			reversal = copyFrom(this, reversalDateDoc, reversalDate, getC_DocType_ID(), get_TrxName(), null);
+			reversal = copyFrom(this, reversalDateDoc, reversalDate, get_TrxName(), null);
 		else
-			reversal = copyFrom(this, reversalDateDoc, reversalDate, getC_DocType_ID(), get_TrxName(), getDocumentNo()
-					+ "^");
+			reversal = copyFrom(this, reversalDateDoc, reversalDate, get_TrxName(), getDocumentNo() + "^");
 		if (reversal == null) {
 			m_processMsg = "Could not create Reversal Document";
 			return null;
@@ -282,14 +263,13 @@ public class MBAYInterestCalculation extends AbstractMBAYInterestCalculation<MBA
 	}
 
 	public static MBAYInterestCalculation copyFrom(MBAYInterestCalculation from, Timestamp dateDoc, Timestamp dateAcct,
-			int C_DocTypeTarget_ID, String trxName, String DocumentNo) {
-		MBAYInterestCalculation to = new MBAYInterestCalculation(from.getCtx(), 0, trxName);
+			String trxName, String DocumentNo) {
+		MBAYInterestCalculation to		//
+ = new MBAYInterestCalculation(from.getCtx(), 0, trxName);
 		PO.copyValues(from, to, from.getAD_Client_ID(), from.getAD_Org_ID());
 		to.set_ValueNoCheck(COLUMNNAME_DocumentNo, DocumentNo);
 		to.setDocStatus(DOCSTATUS_Drafted); // Draft
 		to.setDocAction(DOCACTION_Complete);
-		//
-		to.setC_DocType_ID(C_DocTypeTarget_ID);
 		//
 		to.setDateDoc(dateDoc);
 		to.setDateAcct(dateAcct);
