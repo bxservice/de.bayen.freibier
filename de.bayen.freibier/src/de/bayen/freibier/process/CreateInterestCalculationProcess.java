@@ -88,6 +88,7 @@ public class CreateInterestCalculationProcess extends
 			sql.append("WHERE C_ElementValue.Value=? "); // #1
 			sql.append("AND BAY_Contract.BAY_Contract_ID=? "); // #2
 			sql.append("AND Fact_Acct.PostingType='A' ");
+			sql.append("AND Reversal_ID IS NULL ");
 			sql.append("AND Fact_Acct.DateTrx<? "); // #3
 			sql.append(") AS olderPostings ");
 			CPreparedStatement stat = DB.prepareStatement(sql.toString(),
@@ -138,6 +139,7 @@ public class CreateInterestCalculationProcess extends
 			sql.append("WHERE C_ElementValue.Value=? "); // #1
 			sql.append("AND BAY_Contract.BAY_Contract_ID=? "); // #2
 			sql.append("AND Fact_Acct.PostingType='A' ");
+			sql.append("AND Reversal_ID IS NULL ");
 			sql.append("AND Fact_Acct.DateTrx>=? "); // #3
 			sql.append("AND Fact_Acct.DateTrx<=? "); // #4
 			sql.append("ORDER BY Fact_Acct.DateTrx ");
