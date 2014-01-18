@@ -99,6 +99,7 @@ public class MBAYInterestCalculation extends AbstractMBAYInterestCalculation<MBA
 		MBAYInterestCalculationLine[] lines = getLines();
 		for (MBAYInterestCalculationLine line : lines) {
 			MBAYInterestCalculationLine.recalculate(getCtx(), line);
+			line.saveEx(get_TrxName());
 		}
 		recalculateSQL();
 	}
@@ -140,6 +141,8 @@ public class MBAYInterestCalculation extends AbstractMBAYInterestCalculation<MBA
 
 	@Override
 	public String complete() {
+		recalculateEverything();
+
 		MInvoice invoice1 = new MInvoice(getCtx(), 0, get_TrxName());
 		if (isSOTrx())
 			invoice1.setC_DocTypeTarget_ID(getConfig().getDocType_InterestCustomer_ID());
@@ -209,6 +212,8 @@ public class MBAYInterestCalculation extends AbstractMBAYInterestCalculation<MBA
 
 		setC_Invoice_ID(invoice1.get_ID());
 		setRef_Invoice_ID(invoice2.get_ID());
+		saveEx(get_TrxName());
+
 		return null;
 	}
 
@@ -264,8 +269,8 @@ public class MBAYInterestCalculation extends AbstractMBAYInterestCalculation<MBA
 
 	public static MBAYInterestCalculation copyFrom(MBAYInterestCalculation from, Timestamp dateDoc, Timestamp dateAcct,
 			String trxName, String DocumentNo) {
-		MBAYInterestCalculation to		//
- = new MBAYInterestCalculation(from.getCtx(), 0, trxName);
+		MBAYInterestCalculation to //
+		= new MBAYInterestCalculation(from.getCtx(), 0, trxName);
 		PO.copyValues(from, to, from.getAD_Client_ID(), from.getAD_Org_ID());
 		to.set_ValueNoCheck(COLUMNNAME_DocumentNo, DocumentNo);
 		to.setDocStatus(DOCSTATUS_Drafted); // Draft
