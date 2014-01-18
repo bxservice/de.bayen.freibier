@@ -9,6 +9,7 @@ import java.util.GregorianCalendar;
 import java.util.Properties;
 
 import org.adempiere.exceptions.AdempiereException;
+import org.adempiere.model.GridTabWrapper;
 import org.compiere.model.Query;
 import org.compiere.util.DB;
 
@@ -42,7 +43,7 @@ public class MBAYInterestCalculationLine extends X_BAY_InterestCalculationLine {
 			setLine(ii);
 		}
 
-		recalculate();
+		recalculate(getCtx(), this);
 		if (getBAY_InterestCalculation_ID() < 1)
 			throw new AdempiereException("Line needs a header object.");
 		return super.beforeSave(newRecord);
@@ -64,7 +65,7 @@ public class MBAYInterestCalculationLine extends X_BAY_InterestCalculationLine {
 		if (followingline != null) {
 			// Diese Zeile wiederum ruft Ihre Nachfolger auf,
 			// so das alles neu berechnet wird.
-			followingline.recalculate();
+			recalculate(getCtx(), followingline);
 			followingline.saveEx(get_TrxName());
 		}
 
@@ -139,12 +140,28 @@ public class MBAYInterestCalculationLine extends X_BAY_InterestCalculationLine {
 				.divide(new BigDecimal(100 * 360), 2, RoundingMode.HALF_UP);
 	}
 
-	private void recalculate() {
-		setDays(calculateDays(getCtx(), getDateTrx(), getLine(), getBAY_InterestCalculation_ID(), get_ID(),
-				get_TrxName()));
-		BigDecimal sum = calculateRunningTotal(getCtx(), getDateTrx(), getLine(), getBAY_InterestCalculation_ID(),
-				get_ID(), get_TrxName());
-		// calculate interest
-		setLineTotalAmt(calculateInterest(sum, getInterestPercent(), getDays()));
+	/**
+	 * Berechnet alle Daten der Zeile neu.
+	 * 
+	 * Diese Methode ist statisch und bekommt ein Objekt übergeben, obwohl sie
+	 * eigentlich auch als ganz normale Objekt-Methode implementiert sein
+	 * könnte. Dadurch kann sie auch für Objekte aufgerufen werden, die ein
+	 * {@link X_BAY_InterestCalculationLine} sind aber kein
+	 * {@link MBAYInterestCalculationLine}. Das passiert z.B. in Callouts, die
+	 * ja einen {@link GridTabWrapper} benutzen.
+	 * 
+	 * @param ctx
+	 * @param record
+	 */
+	public static void recalculate(Properties ctx, I_BAY_InterestCalculationLine record) {
+		int days = MBAYInterestCalculationLine.calculateDays(ctx, record.getDateTrx(), record.getLine(),
+				record.getBAY_InterestCalculation_ID(), record.getBAY_InterestCalculationLine_ID(), null);
+		record.setDays(days);
+		//
+		BigDecimal sum = MBAYInterestCalculationLine.calculateRunningTotal(ctx, record.getDateTrx(), record.getLine(),
+				record.getBAY_InterestCalculation_ID(), record.getBAY_InterestCalculationLine_ID(), null);
+		BigDecimal interest = MBAYInterestCalculationLine.calculateInterest(sum, record.getInterestPercent(), days);
+		record.setLineTotalAmt(interest);
 	}
+
 }

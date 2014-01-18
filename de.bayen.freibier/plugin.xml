@@ -2,22 +2,6 @@
 <?eclipse version="3.4"?>
 <plugin>
    <extension
-         id="de.bayen.freibier.bank.BankStatementCreatePayments"
-         name="de.bayen.freibier.bank.BankStatementCreatePayments"
-         point="org.adempiere.base.Process">
-      <process
-            class="de.bayen.freibier.bank.BankStatementCreatePayments">
-      </process>
-   </extension>
-   <extension
-         id="de.bayen.freibier.ngv.ImportStatisticsFromDurst"
-         name="de.bayen.freibier.ngv.ImportStatisticsFromDurst"
-         point="org.adempiere.base.Process">
-      <process
-            class="de.bayen.freibier.ngv.ImportStatisticsFromDurst">
-      </process>
-   </extension>
-   <extension
          id="de.bayen.freibier.model.ProductValidator"
          name="de.bayen.freibier.model.ProductValidator"
          point="org.adempiere.base.ModelValidator">
@@ -25,54 +9,6 @@
             class="de.bayen.freibier.model.ProductValidator"
             priority="100">
       </listener>
-   </extension>
-   <extension
-         id="de.bayen.freibier.ngv.ExportNGV"
-         name="de.bayen.freibier.ngv.ExportNGV"
-         point="org.adempiere.base.Process">
-      <process
-            class="de.bayen.freibier.ngv.ExportNGV">
-      </process>
-   </extension>
-   <extension
-         id="de.bayen.freibier.ngv.ExportNGV001"
-         name="de.bayen.freibier.ngv.ExportNGV001"
-         point="org.adempiere.base.Process">
-      <process
-            class="de.bayen.freibier.ngv.ExportNGV001">
-      </process>
-   </extension>
-   <extension
-         id="de.bayen.freibier.ngv.NGVMeldungen"
-         name="de.bayen.freibier.ngv.NGVMeldungen"
-         point="org.adempiere.base.Process">
-      <process
-            class="de.bayen.freibier.ngv.NGVMeldungen">
-      </process>
-   </extension>
-   <extension
-         id="de.bayen.freibier.ngv.ErzeugeAbsatzMeldungen"
-         name="de.bayen.freibier.ngv.ErzeugeAbsatzMeldungen"
-         point="org.adempiere.base.Process">
-      <process
-            class="de.bayen.freibier.ngv.ErzeugeAbsatzMeldungen">
-      </process>
-   </extension>
-   <extension
-         id="de.bayen.freibier.ngv.Statistikanpassung"
-         name="de.bayen.freibier.ngv.Statistikanpassung"
-         point="org.adempiere.base.Process">
-      <process
-            class="de.bayen.freibier.ngv.Statistikanpassung">
-      </process>
-   </extension>
-   <extension
-         id="de.bayen.freibier.process.InvoiceBatchProcess"
-         name="de.bayen.freibier.process.InvoiceBatchProcess"
-         point="org.adempiere.base.Process">
-      <process
-            class="de.bayen.freibier.process.InvoiceBatchProcess">
-      </process>
    </extension>
 
 </plugin>

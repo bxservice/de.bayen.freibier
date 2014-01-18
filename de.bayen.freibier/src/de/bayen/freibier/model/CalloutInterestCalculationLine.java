@@ -17,13 +17,13 @@ public class CalloutInterestCalculationLine implements IColumnCallout {
 		setDefaultPercentage(ctx, record, mTab);
 
 		if (MBAYInterestCalculationLine.COLUMNNAME_DateTrx.equals(mField.getColumnName())) {
-			recalculate(ctx, record);
+			MBAYInterestCalculationLine.recalculate(ctx, record);
 		}
 		if (MBAYInterestCalculationLine.COLUMNNAME_Amount.equals(mField.getColumnName())) {
-			recalculate(ctx, record);
+			MBAYInterestCalculationLine.recalculate(ctx, record);
 		}
 		if (MBAYInterestCalculationLine.COLUMNNAME_InterestPercent.equals(mField.getColumnName())) {
-			recalculate(ctx, record);
+			MBAYInterestCalculationLine.recalculate(ctx, record);
 		}
 		return null;
 	}
@@ -39,17 +39,6 @@ public class CalloutInterestCalculationLine implements IColumnCallout {
 			record.setInterestPercent(BigDecimal.ZERO);
 		else
 			record.setInterestPercent(contract.getInterestPercent());
-	}
-
-	private void recalculate(Properties ctx, I_BAY_InterestCalculationLine record) {
-		int days = MBAYInterestCalculationLine.calculateDays(ctx, record.getDateTrx(), record.getLine(),
-				record.getBAY_InterestCalculation_ID(), record.getBAY_InterestCalculationLine_ID(), null);
-		record.setDays(days);
-		//
-		BigDecimal sum = MBAYInterestCalculationLine.calculateRunningTotal(ctx, record.getDateTrx(), record.getLine(),
-				record.getBAY_InterestCalculation_ID(), record.getBAY_InterestCalculationLine_ID(), null);
-		BigDecimal interest = MBAYInterestCalculationLine.calculateInterest(sum, record.getInterestPercent(), days);
-		record.setLineTotalAmt(interest);
 	}
 
 }

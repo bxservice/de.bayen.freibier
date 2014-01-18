@@ -8,6 +8,7 @@ import java.util.Properties;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
+import org.compiere.model.MDocType;
 import org.compiere.model.MInvoice;
 import org.compiere.model.MInvoiceLine;
 import org.compiere.model.MPeriod;
@@ -35,9 +36,10 @@ public class MBAYInterestCalculation extends AbstractMBAYInterestCalculation<MBA
 			String sql = "SELECT C_DocType_ID FROM C_DocType "
 					+ "WHERE AD_Client_ID=? AND AD_Org_ID in (0,?) AND DocBaseType=?" + " AND IsActive='Y' "
 					+ "ORDER BY IsDefault DESC, AD_Org_ID DESC"
-					// durch Sortierung nach dem Namen ist der default 
+					// durch Sortierung nach dem Namen ist der default
 					// der alphabetisch letzte Wert - also die Zinsabrechnung
-					// keine Ahnung, wie man das besser macht ohne eigenen Basis-Dokumenttyp
+					// keine Ahnung, wie man das besser macht ohne eigenen
+					// Basis-Dokumenttyp
 					+ ", Name DESC";
 			int C_DocType_ID = DB.getSQLValueEx(get_TrxName(), sql, getAD_Client_ID(), getAD_Org_ID(), docbasetype);
 			if (C_DocType_ID <= 0)
@@ -109,11 +111,22 @@ public class MBAYInterestCalculation extends AbstractMBAYInterestCalculation<MBA
 			log.warning("(1) #" + no);
 	}
 	
-	private X_BAY_Config freibierConfig=null;
-	
-	private I_BAY_Config getConfig(){
-		if(freibierConfig==null)
-			freibierConfig=new Query(getCtx(), I_BAY_Config.Table_Name, null, get_TrxName()).first();
+	/**
+	 * Recalculates all lines and the header totals.
+	 */
+	public void recalculateEverything(){
+		MBAYInterestCalculationLine[] lines = getLines();
+		for (MBAYInterestCalculationLine line : lines) {
+			MBAYInterestCalculationLine.recalculate(getCtx(), line);
+		}
+		recalculateSQL();
+	}
+
+	private X_BAY_Config freibierConfig = null;
+
+	private I_BAY_Config getConfig() {
+		if (freibierConfig == null)
+			freibierConfig = new Query(getCtx(), I_BAY_Config.Table_Name, null, get_TrxName()).first();
 		return freibierConfig;
 	}
 
@@ -134,11 +147,16 @@ public class MBAYInterestCalculation extends AbstractMBAYInterestCalculation<MBA
 		return sb.toString();
 	}
 
+	public String getDocumentInfo() {
+		String msgreturn = "Zinsen " + getDocumentNo();
+		return msgreturn.toString();
+	}
+
 	@Override
 	public BigDecimal getApprovalAmt() {
 		return getInterestAmt();
 	}
-	
+
 	@Override
 	public String complete() {
 		MInvoice invoice1 = new MInvoice(getCtx(), 0, get_TrxName());
@@ -159,7 +177,7 @@ public class MBAYInterestCalculation extends AbstractMBAYInterestCalculation<MBA
 		else
 			line1.setC_Charge_ID(getConfig().getChargeInterestExpense_ID());
 		line1.setQty(1);
-		line1.setPriceEntered(getInterestAmt());
+		line1.setPrice(getInterestAmt());
 		line1.setDescription(getDescription());
 		line1.saveEx(get_TrxName());
 		//
@@ -172,7 +190,7 @@ public class MBAYInterestCalculation extends AbstractMBAYInterestCalculation<MBA
 		invoice2.setDateAcct(getDateAcct());
 		invoice2.setDateInvoiced(getDateDoc());
 		invoice2.set_ValueOfColumn(MBAYContract.COLUMNNAME_BAY_Contract_ID, getBAY_Contract_ID());
-		invoice1.setDescription(getDocumentInfo());
+		invoice2.setDescription(getDocumentInfo());
 		invoice2.saveEx(get_TrxName());
 		//
 		MInvoiceLine line2 = new MInvoiceLine(invoice2);
@@ -181,31 +199,33 @@ public class MBAYInterestCalculation extends AbstractMBAYInterestCalculation<MBA
 		else
 			line2.setC_Charge_ID(getConfig().getChargeVendorLoan_ID());
 		line2.setQty(1);
-		line2.setPriceEntered(getInterestAmt());
+		line2.setPrice(getInterestAmt());
 		line2.setDescription(getDescription());
 		line2.saveEx(get_TrxName());
 
 		//
 		// TODO fertigstellen der Rechnung
-		if(false){
-		invoice1.setDocAction(DOCACTION_Complete);
-		if (!invoice1.processIt(DOCACTION_Complete)) {
-			log.warning("Invoice Process Failed: " + invoice1 + " - " + invoice1.getProcessMsg());
-			throw new IllegalStateException("Invoice Process Failed: " + invoice1 + " - " + invoice1.getProcessMsg());
+		if (false) {
+			invoice1.setDocAction(DOCACTION_Complete);
+			if (!invoice1.processIt(DOCACTION_Complete)) {
+				log.warning("Invoice Process Failed: " + invoice1 + " - " + invoice1.getProcessMsg());
+				throw new IllegalStateException("Invoice Process Failed: " + invoice1 + " - "
+						+ invoice1.getProcessMsg());
+			}
+			invoice2.setDocAction(DOCACTION_Complete);
+			if (!invoice2.processIt(DOCACTION_Complete)) {
+				log.warning("Invoice Process Failed: " + invoice2 + " - " + invoice2.getProcessMsg());
+				throw new IllegalStateException("Invoice Process Failed: " + invoice2 + " - "
+						+ invoice2.getProcessMsg());
+			}
+			invoice1.saveEx();
+			invoice2.saveEx();
+
+			String message = Msg.parseTranslation(getCtx(), "@InvoiceProcessed@ " + invoice1.getDocumentInfo() + " / "
+					+ invoice2.getDocumentInfo());
+			log.info(message);
 		}
-		invoice2.setDocAction(DOCACTION_Complete);
-		if (!invoice2.processIt(DOCACTION_Complete)) {
-			log.warning("Invoice Process Failed: " + invoice2 + " - " + invoice2.getProcessMsg());
-			throw new IllegalStateException("Invoice Process Failed: " + invoice2 + " - " + invoice2.getProcessMsg());
-		}
-		invoice1.saveEx();
-		invoice2.saveEx();
-		
-		String message = Msg.parseTranslation(getCtx(), "@InvoiceProcessed@ " + invoice1.getDocumentInfo() + " / "
-				+ invoice2.getDocumentInfo());
-		log.info(message);
-		}
-		
+
 		setC_Invoice_ID(invoice1.get_ID());
 		setRef_Invoice_ID(invoice2.get_ID());
 		return null;
@@ -217,45 +237,46 @@ public class MBAYInterestCalculation extends AbstractMBAYInterestCalculation<MBA
 			reversalDate = new Timestamp(System.currentTimeMillis());
 		}
 		Timestamp reversalDateDoc = accrual ? reversalDate : getDateDoc();
-		
+
 		MPeriod.testPeriodOpen(getCtx(), reversalDate, getC_DocType_ID(), getAD_Org_ID());
 
 		MBAYInterestCalculation reversal = null;
 		if (MSysConfig.getBooleanValue(MSysConfig.Invoice_ReverseUseNewNumber, true, getAD_Client_ID()))
 			reversal = copyFrom(this, reversalDateDoc, reversalDate, getC_DocType_ID(), get_TrxName(), null);
 		else
-			reversal = copyFrom(this, reversalDateDoc, reversalDate, getC_DocType_ID(), get_TrxName(), getDocumentNo()+"^");
-		if (reversal == null){
+			reversal = copyFrom(this, reversalDateDoc, reversalDate, getC_DocType_ID(), get_TrxName(), getDocumentNo()
+					+ "^");
+		if (reversal == null) {
 			m_processMsg = "Could not create Reversal Document";
 			return null;
 		}
 		MBAYInterestCalculationLine[] lines = getLines();
 		for (MBAYInterestCalculationLine line : lines) {
 			line.setAmount(line.getAmount().negate());
-			if (!line.save(get_TrxName())){
+			if (!line.save(get_TrxName())) {
 				m_processMsg = "Could not correct Reversal Line";
 				return null;
 			}
 		}
-		reversal.setName("{-> "+getName()+"}");
+		reversal.setName("{-> " + getName() + "}");
 		reversal.setReversal_ID(get_ID());
 		reversal.saveEx(get_TrxName());
-		if (!reversal.processIt(DocAction.ACTION_Complete)){
+		if (!reversal.processIt(DocAction.ACTION_Complete)) {
 			m_processMsg = "Reversal ERROR: " + reversal.getProcessMsg();
 			return null;
 		}
 		reversal.closeIt();
-		reversal.setProcessing (false);
+		reversal.setProcessing(false);
 		reversal.setDocStatus(DOCSTATUS_Reversed);
 		reversal.setDocAction(DOCACTION_None);
 		reversal.saveEx(get_TrxName());
 		//
-		String desc= Util.isEmpty(getDescription())?"":getDescription()+" ";
-		desc+="("+reversal.getDocumentNo()+"<-)";
+		String desc = Util.isEmpty(getDescription()) ? "" : getDescription() + " ";
+		desc += "(" + reversal.getDocumentNo() + "<-)";
 		setDescription(desc);
 		setProcessed(true);
 		setReversal_ID(reversal.get_ID());
-		setDocStatus(DOCSTATUS_Reversed);	//	may come from void
+		setDocStatus(DOCSTATUS_Reversed); // may come from void
 		setDocAction(DOCACTION_None);
 		return reversal;
 	}
@@ -293,8 +314,8 @@ public class MBAYInterestCalculation extends AbstractMBAYInterestCalculation<MBA
 	}
 
 	public int copyLinesFrom(MBAYInterestCalculation otherDocument) {
-		if (isProcessed() 
-				// || isPosted() 
+		if (isProcessed()
+		// || isPosted()
 				|| otherDocument == null)
 			return 0;
 		MBAYInterestCalculationLine[] fromLines = otherDocument.getLines();
@@ -315,7 +336,7 @@ public class MBAYInterestCalculation extends AbstractMBAYInterestCalculation<MBA
 		}
 		return count;
 	}
-	
+
 	@Override
 	public String reactivate() {
 		/**
@@ -329,7 +350,7 @@ public class MBAYInterestCalculation extends AbstractMBAYInterestCalculation<MBA
 	@Override
 	public int customizeValidActions(String docStatus, Object processing, String orderType, String isSOTrx,
 			int AD_Table_ID, String[] docAction, String[] options, int index) {
-		if (docStatus.equals(DocumentEngine.STATUS_Completed)){
+		if (docStatus.equals(DocumentEngine.STATUS_Completed)) {
 			options[index++] = DocumentEngine.ACTION_ReActivate;
 		}
 		return index;

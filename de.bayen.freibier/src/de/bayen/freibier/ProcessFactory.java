@@ -1,9 +1,8 @@
 package de.bayen.freibier;
 
 import org.adempiere.base.IProcessFactory;
+import org.adempiere.exceptions.AdempiereException;
 import org.compiere.process.ProcessCall;
-
-import de.bayen.freibier.process.CreateInterestCalculationProcess;
 
 public class ProcessFactory implements IProcessFactory {
 
@@ -11,14 +10,28 @@ public class ProcessFactory implements IProcessFactory {
 	 * Bisher habe ich alle meine Prozesse mit einer Extension gemacht. Das ist
 	 * aber inzwischen uncool geworden. Außerdem mag ich es auch lieber, meine
 	 * Zuordnungen durch debugbaren Java-Code laufen zu lassen anstatt durch die
-	 * Magie der OSGi-Extensions. Also habe ich diese Klasse hier schonmal
-	 * vorbereitet. Beim nächsten Prozess nehme ich die und wenn alles glatt
-	 * läuft, können die vorhandenen Prozeß-Extensions dann umgestellt werden.
+	 * Magie der OSGi-Extensions.
 	 */
 	@Override
 	public ProcessCall newProcessInstance(String className) {
-		if(CreateInterestCalculationProcess.class.getName().equals(className))
-			return new CreateInterestCalculationProcess();
+		if (className == null)
+			return null;
+		String[] processPackages = { getClass().getPackage().getName() + ".process.", "de.bayen.freibier.bank.",
+				"de.bayen.freibier.ngv." };
+
+		for (String packageName : processPackages) {
+			if (className.startsWith(packageName)) {
+				ClassLoader cl = getClass().getClassLoader();
+				try {
+					Class<?> clazz = cl.loadClass(className);
+					if (ProcessCall.class.isAssignableFrom(clazz)) {
+						return (ProcessCall) clazz.newInstance();
+					}
+				} catch (Exception e) {
+					throw new AdempiereException(e);
+				}
+			}
+		}
 		return null;
 	}
 

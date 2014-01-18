@@ -8,6 +8,7 @@ import java.sql.Timestamp;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.Query;
 import org.compiere.model.X_C_Charge_Acct;
+import org.compiere.process.DocAction;
 import org.compiere.util.CPreparedStatement;
 import org.compiere.util.DB;
 
@@ -185,7 +186,14 @@ public class CreateInterestCalculationProcess extends
 			newLine.saveEx(get_TrxName());
 		}
 		
-		// TODO Dokument ggf. abschliessen
+		// Dokument ggf. abschliessen
+		if(DocAction.ACTION_Complete.equals(params.getDocAction())){
+			ic.setDocAction(params.getDocAction());
+			if(!ic.processIt(params.getDocAction())){
+				throw new AdempiereException("can not complete InterestCalculation document");
+			}
+			ic.saveEx();
+		}
 		
 		// logging
 		addLog(getProcessInfo().getAD_Process_ID(), new Timestamp(System.currentTimeMillis()), new BigDecimal(
