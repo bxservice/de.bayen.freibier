@@ -140,8 +140,14 @@ public class MBAYInterestCalculation extends AbstractMBAYInterestCalculation<MBA
 	}
 
 	@Override
-	public String complete() {
+	String prepare() {
 		recalculateEverything();
+		saveEx(get_TrxName());
+		return null;
+	}
+	
+	@Override
+	public String complete() {
 
 		MInvoice invoice1 = new MInvoice(getCtx(), 0, get_TrxName());
 		if (isSOTrx())
