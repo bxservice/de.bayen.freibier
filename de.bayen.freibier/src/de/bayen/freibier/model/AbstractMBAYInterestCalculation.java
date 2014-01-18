@@ -122,7 +122,7 @@ abstract public class AbstractMBAYInterestCalculation<L> extends X_BAY_InterestC
 			return re.getPDF(file);
 		}
 	}
-
+	
 	// Document Action methods
 
 	/**

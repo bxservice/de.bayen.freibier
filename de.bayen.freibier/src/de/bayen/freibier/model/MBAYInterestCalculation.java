@@ -10,9 +10,14 @@ import java.util.logging.Level;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MInvoice;
 import org.compiere.model.MInvoiceLine;
+import org.compiere.model.MQuery;
 import org.compiere.model.MSysConfig;
+import org.compiere.model.MTable;
 import org.compiere.model.PO;
+import org.compiere.model.PrintInfo;
 import org.compiere.model.Query;
+import org.compiere.print.MPrintFormat;
+import org.compiere.print.ReportEngine;
 import org.compiere.process.DocAction;
 import org.compiere.process.DocOptions;
 import org.compiere.process.DocumentEngine;
@@ -145,9 +150,12 @@ public class MBAYInterestCalculation extends AbstractMBAYInterestCalculation<MBA
 		saveEx(get_TrxName());
 		return null;
 	}
-	
+
 	@Override
 	public String complete() {
+		print();
+		// if (true)
+		// return null;
 		MInvoice invoice1 = new MInvoice(getCtx(), 0, get_TrxName());
 		if (isSOTrx())
 			invoice1.setC_DocTypeTarget_ID(getConfig().getDocType_InterestCustomer_ID());
@@ -344,6 +352,21 @@ public class MBAYInterestCalculation extends AbstractMBAYInterestCalculation<MBA
 			options[index++] = DocumentEngine.ACTION_ReActivate;
 		}
 		return index;
+	}
+
+	// print
+
+	public void print() {
+		int viewTable = MTable.getTable_ID("RV_" + Table_Name);
+		MPrintFormat format = new Query(getCtx(), MPrintFormat.Table_Name, MPrintFormat.COLUMNNAME_AD_Table_ID
+				+ "=? AND " + MPrintFormat.COLUMNNAME_IsDefault + "=? ", get_TrxName()).setParameters(viewTable, "Y")
+				.first();
+		MQuery query = new MQuery(get_Table_ID());
+		query.addRestriction(get_KeyColumns()[0], MQuery.EQUAL, get_ID());
+		PrintInfo info = new PrintInfo(getDocumentInfo(), get_Table_ID(), get_ID());
+		info.setWithDialog(true);  // TODO vor nächster Abrechnung wieder ausschalten
+		ReportEngine re = new ReportEngine(getCtx(), format, query, info, get_TrxName());
+		re.print();
 	}
 
 }
