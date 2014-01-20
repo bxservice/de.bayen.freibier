@@ -142,7 +142,7 @@ public class CreateInterestCalculationProcess extends
 			sql.append("AND Reversal_ID IS NULL ");
 			sql.append("AND Fact_Acct.DateTrx>=? "); // #3
 			sql.append("AND Fact_Acct.DateTrx<=? "); // #4
-			sql.append("ORDER BY Fact_Acct.DateTrx ");
+			sql.append("ORDER BY Fact_Acct.DateTrx, Fact_Acct.Fact_Acct_ID ");
 			CPreparedStatement stat = DB.prepareStatement(sql.toString(),
 					get_TrxName());
 			try {
