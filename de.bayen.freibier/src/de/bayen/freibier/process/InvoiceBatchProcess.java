@@ -160,7 +160,7 @@ public class InvoiceBatchProcess extends SvrProcess
 					}
 				}
 				if (!m_invoice.save())
-					throw new AdempiereUserError("Cannot save Invoice");
+					throw new AdempiereUserError("Cannot save Invoice: "+line.getDocumentNo());
 				//
 				m_oldDocumentNo = line.getDocumentNo();
 				m_oldC_BPartner_ID = line.getC_BPartner_ID();
