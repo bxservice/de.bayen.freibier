@@ -1,3 +1,16 @@
+/******************************************************************************
+ * Copyright (C) 2013 Thomas Bayen                                            *
+ * Copyright (C) 2013 Jakob Bayen KG             							  *
+ * This program is free software; you can redistribute it and/or modify it    *
+ * under the terms version 2 of the GNU General Public License as published   *
+ * by the Free Software Foundation. This program is distributed in the hope   *
+ * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied *
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.           *
+ * See the GNU General Public License for more details.                       *
+ * You should have received a copy of the GNU General Public License along    *
+ * with this program; if not, write to the Free Software Foundation, Inc.,    *
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                     *
+ *****************************************************************************/
 package de.bayen.freibier.report;
 
 import java.io.File;
@@ -15,16 +28,37 @@ import net.sf.jasperreports.engine.util.LocalJasperReportsContext;
 
 import org.adempiere.exceptions.AdempiereException;
 
-class ReportFileResolver implements FileResolver {
+/**
+ * Abstract base class for JasperReports {@link FileResolver}s.
+ * 
+ * @author tbayen
+ */
+abstract class ReportFileResolver implements FileResolver {
 
+	public static final String SUFFIX_JASPER = "jasper";
+	public static final String SUFFIX_JRXML = "jrxml";
+
+	/**
+	 * The cachedir keeps all files I deal with: *.jrxml, *.jasper, images,
+	 * resources, properties... everything. The cache can at every time be
+	 * cleaned with a command like <code>rm /tmp/JasperReportsCache* /*</code>.
+	 * The cache is fresh and empty with every program run. If iDempiere is
+	 * exited gracefully the cache is automatically deleted. If not you can
+	 * delete the cache directory everytime with no harm.
+	 */
 	static File cacheDir = null;
 
-	static final String SUFFIX_JASPER = "jasper";
-	static final String SUFFIX_JRXML = "jrxml";
-	static final String DEFAULT_RESOURCEPATH = ReportFileResolver.class.getPackage().getName().replace('.', '/')+"/";
+	private FileResolver parentFileResover;
 
-	public ReportFileResolver() {
+	/**
+	 * Constructor for a JasperReport FileResolver. If parent is not null the
+	 * parent is used in the case that this class can not resolve the file.
+	 * 
+	 * @param parent
+	 */
+	public ReportFileResolver(FileResolver parent) {
 		if (cacheDir == null) {
+			// creating the cache directory as a temporary dir
 			try {
 				cacheDir = File.createTempFile("JasperReportsCache", "");
 				// createTempFile creates a new file, but I need a directory
@@ -37,6 +71,7 @@ class ReportFileResolver implements FileResolver {
 				throw new AdempiereException();
 			}
 		}
+		parentFileResover = parent;
 	}
 
 	@Override
@@ -52,16 +87,17 @@ class ReportFileResolver implements FileResolver {
 		// includes not '.'
 		String suffix = i2 == -1 ? "" : fileName.substring(i2 + 1);
 
+		// this loads the file into the cache
 		File cacheFile = loadFile(path, name, suffix);
+		// if I can't find this file perhaps my parent can
+		if (cacheFile == null && parentFileResover != null)
+			return parentFileResover.resolveFile(fileName);
 		return cacheFile;
-		// return new
-		// File("/home/tbayen/Projekte/iDempiere/JasperReports/Reporte/" +
-		// fileName);
 	}
 
 	/**
-	 * Does the definitely file loading.
-	 * Candidate for overloading for different access methods.
+	 * Does the file loading. This method tries to load the file into the cache
+	 * directory. If the file is not accessible the result is <code>null</code>.
 	 * 
 	 * @param path
 	 * @param name
@@ -73,21 +109,57 @@ class ReportFileResolver implements FileResolver {
 		File cacheFile = new File(cacheDir + "/" + path + name + fullSuffix);
 
 		// check if the file is actual (classpath resources never change)
-		if (cacheFile.exists())
+		if (cacheFile.exists() && checkCacheFreshness(cacheFile, path, name, suffix))
 			return cacheFile;
 
 		// copy file to cache
-		String fullPath = DEFAULT_RESOURCEPATH + name + fullSuffix;
-		InputStream originalFileStream = getClass().getClassLoader().getResourceAsStream(fullPath);
-		if(originalFileStream==null && SUFFIX_JASPER.equals(suffix)){
-			loadFile(path, name, SUFFIX_JRXML);
-			return compileJrxml(cacheDir + "/" + path + name);
-		}else{
-			return copyStreamToCache(originalFileStream, cacheFile);
+		InputStream originalFileStream = loadOriginalFileAsStream(path, name, suffix);
+		if (originalFileStream == null) {
+			if (SUFFIX_JASPER.equals(suffix)) {
+				File jrxmlFile = loadFile(path, name, SUFFIX_JRXML);
+				if (jrxmlFile != null)
+					return compileJrxml(cacheDir + "/" + path + name);
+			}
+			return null;
+		} else {
+			copyStreamToCache(originalFileStream, cacheFile);
+			return cacheFile;
 		}
 	}
 
-	protected File copyStreamToCache(InputStream originalFileStream, File cacheFile) {
+	/**
+	 * Checks if the file in the cache is still fresh. This method should be
+	 * overloaded to use different checking methods for different types of file
+	 * retrieval. If the file sources never change it can just return
+	 * <code>true</code>;
+	 * 
+	 * @param cacheFile
+	 * @param path
+	 * @param name
+	 * @param suffix
+	 * @return
+	 */
+	abstract protected boolean checkCacheFreshness(File cacheFile, String path, String name, String suffix);
+
+	/**
+	 * This method loads the original file from whereever the specific
+	 * implementation of this abstract class takes its files. It does no
+	 * freshness checks (this is done earlier), just loading.
+	 * 
+	 * @param path
+	 * @param name
+	 * @param suffix
+	 * @return
+	 */
+	abstract protected InputStream loadOriginalFileAsStream(String path, String name, String suffix);
+
+	/**
+	 * Does a straight copy of binary data from the stream into a file.
+	 * 
+	 * @param originalFileStream
+	 * @param cacheFile
+	 */
+	protected static void copyStreamToCache(InputStream originalFileStream, File cacheFile) {
 		try {
 			OutputStream out = null;
 			try {
@@ -110,22 +182,23 @@ class ReportFileResolver implements FileResolver {
 		} catch (IOException e) {
 			throw new AdempiereException();
 		}
-		return cacheFile;
 	}
-	
+
 	/**
-	 * The path parameter is a filepath without extension. The path has to be a real file path (in the cache directory).
+	 * Compiles a *.jrxml file into an *.jasper file. The path parameter is a
+	 * filepath without extension. The path has to be a (real existing) absolute
+	 * file path (in the cache directory).
 	 * 
 	 * @param path
 	 * @return
 	 */
-	protected File compileJrxml(String path){
-		File inputFile=new File(path+"."+SUFFIX_JRXML);
-		File outputFile=new File(path+"."+SUFFIX_JASPER);
-        try {
-        	LocalJasperReportsContext context = new LocalJasperReportsContext(DefaultJasperReportsContext.getInstance());
-        	context.setClassLoader(JasperReport.class.getClassLoader());
-        	JasperCompileManager manager = JasperCompileManager.getInstance(context);
+	protected File compileJrxml(String path) {
+		File inputFile = new File(path + "." + SUFFIX_JRXML);
+		File outputFile = new File(path + "." + SUFFIX_JASPER);
+		try {
+			LocalJasperReportsContext context = new LocalJasperReportsContext(DefaultJasperReportsContext.getInstance());
+			context.setClassLoader(JasperReport.class.getClassLoader());
+			JasperCompileManager manager = JasperCompileManager.getInstance(context);
 
 			/*
 			 * I do not really understand what is happening. But when I call the
@@ -142,11 +215,11 @@ class ReportFileResolver implements FileResolver {
 			} finally {
 				Thread.currentThread().setContextClassLoader(cl1);
 			}
-            outputFile.setLastModified(inputFile.lastModified()); //Synchronize Dates
-            return outputFile;
-        } catch (JRException e) {
-        	throw new AdempiereException(e);
-        }
+			// Synchronize Dates
+			outputFile.setLastModified(inputFile.lastModified());
+			return outputFile;
+		} catch (JRException e) {
+			throw new AdempiereException(e);
+		}
 	}
-
 }

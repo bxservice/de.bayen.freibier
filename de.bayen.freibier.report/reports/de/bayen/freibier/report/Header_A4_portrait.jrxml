@@ -22,16 +22,15 @@
 	<queryString>
 		<![CDATA[SELECT
   AD_Org.Name,
-  Logo_ID,
-  AD_Image.binarydata
+  Logo_ID
+  /* ,AD_Image.binarydata */
 FROM AD_Org
 JOIN AD_OrgInfo ON (AD_Org.AD_Org_ID = AD_OrgInfo.AD_Org_ID)
-LEFT JOIN AD_Image ON(AD_OrgInfo.Logo_ID = AD_Image.AD_Image_ID)
+/* LEFT JOIN AD_Image ON(AD_OrgInfo.Logo_ID = AD_Image.AD_Image_ID) */
 WHERE AD_Org.AD_Org_ID = $P{AD_Org_ID}]]>
 	</queryString>
 	<field name="name" class="java.lang.String"/>
 	<field name="logo_id" class="java.math.BigDecimal"/>
-	<field name="binarydata" class="java.lang.Object"/>
 	<background>
 		<band splitType="Stretch"/>
 	</background>
@@ -45,7 +44,7 @@ WHERE AD_Org.AD_Org_ID = $P{AD_Org_ID}]]>
 			</rectangle>
 			<image>
 				<reportElement x="3" y="3" width="36" height="21" backcolor="#CCCCCC" uuid="395dda47-9b39-4233-82b5-7444a0756dd9"/>
-				<imageExpression><![CDATA[(new java.io.ByteArrayInputStream((byte[])$F{binarydata}))]]></imageExpression>
+				<imageExpression><![CDATA["AD_Image:"+($F{logo_id}).toString()]]></imageExpression>
 			</image>
 			<textField>
 				<reportElement x="44" y="3" width="118" height="21" uuid="4e3a6285-071c-499d-8061-6c21cf84ce2c"/>
