@@ -540,7 +540,7 @@ public class ReportStarter implements ProcessCall, ClientProcess {
 	private Map<String, Object> getProcessInfoParameters(ProcessInfoParameter[] para) {
 		Map<String, Object> params = new HashMap<String, Object>();
 		if (para == null)
-			return null;
+			return params;
 		for (int i = 0; i < para.length; i++) {
 			params.put(para[i].getParameterName(), para[i].getParameter());
 			if (para[i].getParameter_To() != null) {
