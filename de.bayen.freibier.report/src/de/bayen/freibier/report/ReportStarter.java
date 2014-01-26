@@ -13,24 +13,45 @@
  *****************************************************************************/
 package de.bayen.freibier.report;
 
+import java.awt.print.PrinterJob;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 
+import javax.print.attribute.HashPrintRequestAttributeSet;
+import javax.print.attribute.PrintRequestAttributeSet;
+import javax.print.attribute.standard.Copies;
+import javax.print.attribute.standard.JobName;
+
 import net.sf.jasperreports.engine.DefaultJasperReportsContext;
 import net.sf.jasperreports.engine.JRException;
+import net.sf.jasperreports.engine.JRExporter;
+import net.sf.jasperreports.engine.JRExporterParameter;
 import net.sf.jasperreports.engine.JRParameter;
 import net.sf.jasperreports.engine.JRPropertiesUtil;
+import net.sf.jasperreports.engine.JRVariable;
 import net.sf.jasperreports.engine.JasperPrint;
 import net.sf.jasperreports.engine.JasperReport;
+import net.sf.jasperreports.engine.export.JRCsvExporter;
+import net.sf.jasperreports.engine.export.JRHtmlExporter;
+import net.sf.jasperreports.engine.export.JRPdfExporter;
+import net.sf.jasperreports.engine.export.JRPrintServiceExporter;
+import net.sf.jasperreports.engine.export.JRPrintServiceExporterParameter;
+import net.sf.jasperreports.engine.export.JRTextExporter;
+import net.sf.jasperreports.engine.export.JRXlsExporter;
+import net.sf.jasperreports.engine.export.JRXmlExporter;
 import net.sf.jasperreports.engine.fill.JRBaseFiller;
 import net.sf.jasperreports.engine.fill.JRFiller;
 import net.sf.jasperreports.engine.fill.JRSwapFileVirtualizer;
+import net.sf.jasperreports.engine.util.FileResolver;
 import net.sf.jasperreports.engine.util.JRLoader;
 import net.sf.jasperreports.engine.util.JRSwapFile;
 import net.sf.jasperreports.engine.util.LocalJasperReportsContext;
@@ -39,19 +60,30 @@ import org.adempiere.base.Service;
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.exceptions.DBException;
 import org.adempiere.util.IProcessUI;
+import org.compiere.model.GridTab;
+import org.compiere.model.MClient;
+import org.compiere.model.MPInstance;
+import org.compiere.model.MRole;
 import org.compiere.model.MSysConfig;
+import org.compiere.model.MTable;
+import org.compiere.model.MUser;
+import org.compiere.model.PrintInfo;
 import org.compiere.model.X_AD_PInstance_Para;
+import org.compiere.print.MPrintFormat;
+import org.compiere.print.PrintUtil;
+import org.compiere.print.ServerReportCtl;
 import org.compiere.process.ClientProcess;
 import org.compiere.process.ProcessCall;
 import org.compiere.process.ProcessInfo;
+import org.compiere.process.ProcessInfoParameter;
 import org.compiere.report.JRViewerProvider;
-import org.compiere.util.CLogger;
 import org.compiere.util.CPreparedStatement;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Ini;
 import org.compiere.util.Language;
 import org.compiere.util.Trx;
+import org.compiere.util.Util;
 
 /**
  * Starter Class to do a report using the JasperReports library. This starter is
@@ -62,108 +94,90 @@ import org.compiere.util.Trx;
  * This class is loosely based on work done in the former JasperReports start
  * class "org.compiere.report.ReportStarter" done by many members of the
  * community: rlemeill, Ashley Ramdass, victor.perez@e-evolution.com, Teo Sarca
- * (www.arhipac.ro), Cristina Ghita (www.arhipac.ro)
+ * (www.arhipac.ro), Cristina Ghita (www.arhipac.ro), Trifon
  */
-//TODO reading from http (with md5 checksums)
-//TODO reading from database attachments
-public class ReportStarter implements ProcessCall, ClientProcess
-{
+// TODO reading from http (checked with md5 checksums)
+// TODO reading from database attachments
+public class ReportStarter implements ProcessCall, ClientProcess {
+
+	/**
+	 * Parameters for the JasperReports parameter context.
+	 */
+	/* @formatter:off */
+	public static final String JCTX_IDEMPIERE_PARAMETER		= "IDEMPIERE_PARAMETER";
+	public static final String JCTX_IDEMPIERE_PARAMETER_PI	= "IDEMPIERE_PARAMETER_PI";
+	public static final String JCTX_SUBREPORT_DIR			= "SUBREPORT_DIR";
+	public static final String JCTX_AD_PINSTANCE_ID			= MPInstance.COLUMNNAME_AD_PInstance_ID;
+	public static final String JCTX_AD_CLIENT_ID 			= MClient.COLUMNNAME_AD_Client_ID;
+	public static final String JCTX_AD_ROLE_ID 				= MRole.COLUMNNAME_AD_Role_ID;
+	public static final String JCTX_AD_USER_ID 				= MUser.COLUMNNAME_AD_User_ID;
+	public static final String JCTX_AD_LANGUAGE 			= "AD_Language";
+	public static final String JCTX_CONTEXT 				= "CONTEXT";
+	public static final String JCTX_RECORD_ID				= "RECORD_ID";
+	public static final String JCTX_TAB_WHERE 				= "TAB_WHERE";
+	public static final String JCTX_TAB_ORDER 				= "TAB_ORDER";
+	public static final String JCTX_GUI_SORT 				= "GUI_SORT";
+	public static final String JCTX_GUI_JOIN 				= "GUI_JOIN";
+	public static final String JCTX_RECORD_IDS				= "RECORD_IDs";
+	/* @formatter:on */
+
 	private static final int DEFAULT_SWAP_MAX_PAGES = 100;
-	/** Logger */
-	private static CLogger log = CLogger.getCLogger(ReportStarter.class);
 
-	@SuppressWarnings("unused")
-	private IProcessUI m_processUI;
+	/* Instance fields */
+	private String m_printerName;
+	private MPrintFormat m_printFormat;
+	private PrintInfo m_printInfo;
+	private boolean m_directPrint;
+	private String m_jasperFilepath;
+	private FileResolver m_fileResolver;
 
-    public boolean startProcess(Properties ctx, ProcessInfo pi, Trx trx) {
-		String trxName = trx == null ? null : trx.getTrxName();
-		// read some later used jasper report configuration values
-		boolean directPrint = false;
-		String path = null;
-		CPreparedStatement pstmt = null;
-		ResultSet rs = null;
-		{
-			String sql = "SELECT pr.JasperReport, pr.IsDirectPrint " + "FROM AD_Process pr, AD_PInstance pi "
-					+ "WHERE pr.AD_Process_ID = pi.AD_Process_ID " + " AND pi.AD_PInstance_ID=?";
-			try {
-				pstmt = DB.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, trxName);
-				pstmt.setInt(1, pi.getAD_PInstance_ID());
-				rs = pstmt.executeQuery();
-				boolean isPrintPreview = pi.isPrintPreview();
-				if (rs.next()) {
-					path = rs.getString(1);
-					if ("Y".equalsIgnoreCase(rs.getString(2)) && !Ini.isPropertyBool(Ini.P_PRINTPREVIEW)
-							&& !isPrintPreview)
-						directPrint = true;
-				} else {
-					log.severe("data not found; sql = " + sql);
-					return false;
-				}
-			} catch (SQLException e) {
-				throw new DBException(e, sql);
-			} finally {
-				DB.close(rs, pstmt);
-				rs = null;
-				pstmt = null;
-			}
-		}
-
-		// create and initialize parameter hash
-		HashMap<String, Object> params = new HashMap<String, Object>();
-		Map<String, Object> parameter = getProcessParameters(pi.getAD_PInstance_ID(), trxName);
-		//Map<String, Object> parameter = getProcessInfoParameters(pi.getParameter());
-		// parameters are saved as map and direct
-		params.put("IDEMPIERE_PARAMETER", parameter);
-		params.putAll(parameter);
-        params.put("SUBREPORT_DIR", "");
-        if (pi.getRecord_ID() > 0)
-        	params.put("RECORD_ID", new Integer(pi.getRecord_ID()));
-        params.put("AD_PINSTANCE_ID", new Integer(pi.getAD_PInstance_ID()));
-    	params.put("AD_CLIENT_ID", new Integer( Env.getAD_Client_ID(Env.getCtx())));
-    	params.put("AD_ROLE_ID", new Integer( Env.getAD_Role_ID(Env.getCtx())));
-    	params.put("AD_USER_ID", new Integer( Env.getAD_User_ID(Env.getCtx())));
-    	Language currLang = Env.getLanguage(Env.getCtx());
-       	params.put("AD_Language", currLang.getAD_Language());       	
-       	// The following are just for compatibility:
-       	params.put("CURRENT_LANG", currLang.getAD_Language());
-
-    	// load jasper file
-		ReportFileResolver fileResolver = new ReportFileResolverClasspath(null);
-		fileResolver=new ReportFileResolverFileSystem(fileResolver);
-		fileResolver=new ReportFileResolverImage(fileResolver);
+	/*
+	 * Start class to create a JasperReports report.
+	 */
+	public boolean startProcess(Properties ctx, ProcessInfo pi, Trx trx) {
 		
-		File jasperFile = fileResolver.resolveFile(path);
-        JasperReport jasperReport;
-        try {
-			jasperReport = (JasperReport)JRLoader.loadObjectFromFile(jasperFile.getAbsolutePath());
-		} catch (JRException e) {
-			throw new AdempiereException(e);
-		}
+		// initialize fields and the parameter map
+		String trxName = trx == null ? null : trx.getTrxName();
+		initFromAD_Process(pi, trxName);
+		HashMap<String, Object> params = initParameterMap(ctx, pi, trxName);
+		// at this point all private fields are initialized
 
-        Connection conn = DB.getConnectionRO();
+		// load jasper file
+		File jasperFile = m_fileResolver.resolveFile(m_jasperFilepath);
+		JasperReport jasperReport;
+
+		Connection conn = DB.getConnectionRO();
 		try {
-			// create and initialize a virtualizer
-			int maxPages = MSysConfig.getIntValue(MSysConfig.JASPER_SWAP_MAX_PAGES, DEFAULT_SWAP_MAX_PAGES);
-			String swapPath = System.getProperty("java.io.tmpdir");
-			JRSwapFile swapFile = new JRSwapFile(swapPath, 1024, 1024);
-			JRSwapFileVirtualizer virtualizer = new JRSwapFileVirtualizer(maxPages, swapFile, true);
-			params.put(JRParameter.REPORT_VIRTUALIZER, virtualizer);
-
-			// create context
-			LocalJasperReportsContext jasperContext=new LocalJasperReportsContext(DefaultJasperReportsContext.getInstance());
-			jasperContext.setClassLoader(JasperReport.class.getClassLoader());
-			jasperContext.setFileResolver(fileResolver);
-			JRPropertiesUtil.getInstance(jasperContext).setProperty("net.sf.jasperreports.awt.ignore.missing.font",
-					"true");
+			jasperReport = (JasperReport) JRLoader.loadObjectFromFile(jasperFile.getAbsolutePath());
+			createVirtualizer(params);
+			LocalJasperReportsContext jasperContext = createJasperContext();
 
 			// fill the report and create a print object
 			JRBaseFiller filler = JRFiller.createFiller(jasperContext, jasperReport);
 			JasperPrint jasperPrint = filler.fill(params, conn);
+			// save the number of processed rows for the returned process
+			// instance
+			Object rowCount = filler.getVariableValue(JRVariable.REPORT_COUNT);
 
-			// view the report
-			JRViewerProvider viewerLauncher = Service.locator().locate(JRViewerProvider.class).getService();
-//			List<JRViewerProvider> viewerLaunchers = Service.locator().list(JRViewerProvider.class).getServices();
-			viewerLauncher.openViewer(jasperPrint, pi.getTitle());
+			// use the right way to output the report
+			if (pi.isExport()) {
+				buildReportExport(pi, jasperContext, jasperPrint);
+			} else if (!m_directPrint) {
+				// view the report
+				JRViewerProvider viewerLauncher = Service.locator().locate(JRViewerProvider.class).getService();
+				viewerLauncher.openViewer(jasperPrint, pi.getTitle());
+			} else if (pi.isBatch()) {
+				buildReportAsPDF(pi, jasperPrint);
+			} else {
+				buildReportDirectPrint(pi, jasperPrint);
+			}
+
+			/*
+			 * if we got to this place without an exception we save the message
+			 * what we did.
+			 */
+			if (rowCount instanceof Integer)
+				pi.setRowCount((Integer) rowCount);
 		} catch (Exception e) {
 			throw new AdempiereException("error while creating jasper report", e);
 		} finally {
@@ -180,32 +194,371 @@ public class ReportStarter implements ProcessCall, ClientProcess
 					+ pi.getAD_PInstance_ID();
 			DB.executeUpdateEx(sql, new Object[] { result, errMsg }, trxName);
 		}
-		
+
 		return true;
 	}
-	
-//	private Map<String, Object> getProcessInfoParameters(ProcessInfoParameter[] para) {
-//		Map<String, Object> params = new HashMap<String, Object>();
-//		if (para == null)
-//			return null;
-//		for (int i = 0; i < para.length; i++) {
-//			params.put(para[i].getParameterName(), para[i].getParameter());
-//			if (para[i].getParameter_To() != null) {
-//				params.put(para[i].getParameterName() + "To", para[i].getParameter_To());
-//				// for compatibility:
-//				params.put(para[i].getParameterName() + "1", para[i].getParameter());
-//				params.put(para[i].getParameterName() + "2", para[i].getParameter_To());
-//			}
-//		}
-//		return params;
-//	}
 
-    /**
-     * Load Process Parameters into a map
-     * 
-     * @param AD_PInstance_ID
-     * @param trxName
-     */
+	/**
+	 * Creates a report and direct sends it to the appropriate printer.
+	 * 
+	 * @param pi
+	 * @param jasperPrint
+	 * @throws JRException
+	 */
+	private void buildReportDirectPrint(ProcessInfo pi, JasperPrint jasperPrint) throws JRException {
+		// Get printer job
+		PrinterJob printerJob = PrintUtil.getPrinterJob(m_printerName);
+		// Set print request attributes
+
+		// Paper Attributes:
+		PrintRequestAttributeSet prats = new HashPrintRequestAttributeSet();
+
+		// add: copies, job-name, priority
+		if (m_printInfo == null || m_printInfo.isDocumentCopy() || m_printInfo.getCopies() < 1) // @Trifon
+			prats.add(new Copies(1));
+		else
+			prats.add(new Copies(m_printInfo.getCopies()));
+		Locale locale = Language.getLoginLanguage().getLocale();
+		// @Trifon
+		String printFormat_name = m_printFormat == null ? "" : m_printFormat.getName();
+		int numCopies = m_printInfo == null ? 0 : m_printInfo.getCopies();
+		prats.add(new JobName(printFormat_name + "_" + pi.getRecord_ID(), locale));
+		prats.add(PrintUtil.getJobPriority(jasperPrint.getPages().size(), numCopies, true));
+
+		// Create print service exporter
+		JRPrintServiceExporter exporter = new JRPrintServiceExporter();
+		;
+		// Set parameters
+		exporter.setParameter(JRExporterParameter.JASPER_PRINT, jasperPrint);
+		exporter.setParameter(JRPrintServiceExporterParameter.PRINT_SERVICE,
+				printerJob.getPrintService());
+		exporter.setParameter(JRPrintServiceExporterParameter.PRINT_SERVICE_ATTRIBUTE_SET, printerJob
+				.getPrintService().getAttributes());
+		exporter.setParameter(JRPrintServiceExporterParameter.PRINT_REQUEST_ATTRIBUTE_SET, prats);
+		exporter.setParameter(JRPrintServiceExporterParameter.DISPLAY_PAGE_DIALOG, Boolean.FALSE);
+		exporter.setParameter(JRPrintServiceExporterParameter.DISPLAY_PRINT_DIALOG, Boolean.FALSE);
+		// Print report / document
+		exporter.exportReport();
+	}
+
+	/**
+	 * The Report is build and exported to a file. The filename is written to
+	 * the ProcessInfo object. So the UI can give it to the user as a link to
+	 * download.
+	 * 
+	 * @param pi
+	 * @param jasperContext
+	 * @param jasperPrint
+	 * @throws JRException
+	 */
+	private void buildReportExport(ProcessInfo pi, LocalJasperReportsContext jasperContext, JasperPrint jasperPrint)
+			throws JRException {
+		// export
+		try {
+			String ext = pi.getExportFileExtension();
+			if (ext == null)
+				ext = "pdf";
+
+			StringBuilder prefix = new StringBuilder();
+			for (char ch : jasperPrint.getName().toCharArray())
+				prefix.append(Character.isLetterOrDigit(ch) ? ch : '_');
+			File file = File.createTempFile(prefix.toString(), "." + ext);
+
+			JRExporter exporter = null;
+			if (ext.equals("pdf"))
+				exporter = new JRPdfExporter(jasperContext);
+			else if (ext.equals("ps"))
+				exporter = new JRPrintServiceExporter(jasperContext);
+			else if (ext.equals("xml"))
+				exporter = new JRXmlExporter(jasperContext);
+			else if (ext.equals("csv") || ext.equals("ssv"))
+				exporter = new JRCsvExporter(jasperContext);
+			else if (ext.equals("txt"))
+				exporter = new JRTextExporter(jasperContext);
+			else if (ext.equals("html") || ext.equals("htm"))
+				exporter = new JRHtmlExporter(jasperContext);
+			else if (ext.equals("xls"))
+				exporter = new JRXlsExporter(jasperContext);
+			else
+				throw new AdempiereException("FileInvalidExtension=" + ext);
+
+			exporter.setParameter(JRExporterParameter.JASPER_PRINT, jasperPrint);
+			FileOutputStream strm = new FileOutputStream(file);
+			exporter.setParameter(JRExporterParameter.OUTPUT_STREAM, strm);
+			exporter.exportReport();
+			strm.close();
+			pi.setExportFile(file);
+		} catch (IOException e) {
+			throw new AdempiereException("ReportStarter: Can not export PDF File", e);
+		}
+	}
+
+	/**
+	 * Creates a PDF report and set the PDFReport property in the ProcessInfo
+	 * Object as a result value. This is used in automatic batch calls. This PDF
+	 * can e.g. sent as an email or stored as an attachment.
+	 * 
+	 * @param pi
+	 * @param jasperPrint
+	 * @throws JRException
+	 */
+	private void buildReportAsPDF(ProcessInfo pi, JasperPrint jasperPrint) throws JRException {
+		// You can use JasperPrint to create PDF
+		try {
+			StringBuilder prefix = new StringBuilder();
+			for (char ch : jasperPrint.getName().toCharArray())
+				prefix.append(Character.isLetterOrDigit(ch) ? ch : '_');
+			File PDF = File.createTempFile(prefix.toString(), ".pdf");
+			DefaultJasperReportsContext jrContext = DefaultJasperReportsContext.getInstance();
+			LocalJasperReportsContext ljrContext = new LocalJasperReportsContext(jrContext);
+			ljrContext.setClassLoader(this.getClass().getClassLoader());
+			JRPdfExporter exporter = new JRPdfExporter(ljrContext);
+			exporter.setParameter(JRExporterParameter.JASPER_PRINT, jasperPrint);
+			exporter.setParameter(JRExporterParameter.OUTPUT_FILE_NAME, PDF.getAbsolutePath());
+			exporter.exportReport();
+			pi.setPDFReport(PDF);
+		} catch (IOException e) {
+			throw new AdempiereException("ReportStarter: Can not make PDF File", e);
+		}
+	}
+
+	private void createVirtualizer(HashMap<String, Object> params) {
+		// create and initialize a virtualizer
+		int maxPages = MSysConfig.getIntValue(MSysConfig.JASPER_SWAP_MAX_PAGES, DEFAULT_SWAP_MAX_PAGES);
+		String swapPath = System.getProperty("java.io.tmpdir");
+		JRSwapFile swapFile = new JRSwapFile(swapPath, 1024, 1024);
+		JRSwapFileVirtualizer virtualizer = new JRSwapFileVirtualizer(maxPages, swapFile, true);
+		params.put(JRParameter.REPORT_VIRTUALIZER, virtualizer);
+	}
+
+	private LocalJasperReportsContext createJasperContext() {
+		// create context
+		LocalJasperReportsContext jasperContext = new LocalJasperReportsContext(
+				DefaultJasperReportsContext.getInstance());
+		jasperContext.setClassLoader(JasperReport.class.getClassLoader());
+		jasperContext.setFileResolver(m_fileResolver);
+		JRPropertiesUtil.getInstance(jasperContext).setProperty("net.sf.jasperreports.awt.ignore.missing.font",
+				"true");
+		return jasperContext;
+	}
+	
+	/**
+	 * Collects a bunch of interesting values into a map to use them as
+	 * parameters in the JasperReports report file.
+	 * 
+	 * @param ctx
+	 * @param pi
+	 * @param trxName
+	 * @return Map
+	 */
+	private HashMap<String, Object> initParameterMap(Properties ctx, ProcessInfo pi, String trxName) {
+		// create and initialize parameter hash
+		HashMap<String, Object> params = new HashMap<String, Object>();
+		/*
+		 * Process Parameters hash contains the parameters set by the user in
+		 * the parameters dialog.
+		 */
+		Map<String, Object> parameterP = getProcessParameters(pi.getAD_PInstance_ID(), trxName);
+
+		/*
+		 * The ProcessInfo object has some more info created by the process
+		 * calling code. See ServerReportCtl.runJasperProcess(). It sets e.g.
+		 * PARAM_PRINTER_NAME, PARAM_PRINT_FORMAT, PARAM_PRINT_INFO
+		 */
+		Map<String, Object> parameterPI = getProcessInfoParameters(pi.getParameter());
+		// parameters are saved as map and direct
+		params.put(JCTX_IDEMPIERE_PARAMETER, parameterP);
+		params.put(JCTX_IDEMPIERE_PARAMETER_PI, parameterPI);
+		params.putAll(parameterP);
+		params.putAll(parameterPI);
+		params.put(JCTX_SUBREPORT_DIR, "");
+		params.put(JCTX_AD_PINSTANCE_ID, new Integer(pi.getAD_PInstance_ID()));
+		params.put(JCTX_AD_CLIENT_ID, new Integer(Env.getAD_Client_ID(ctx)));
+		params.put(JCTX_AD_ROLE_ID, new Integer(Env.getAD_Role_ID(ctx)));
+		params.put(JCTX_AD_USER_ID, new Integer(Env.getAD_User_ID(ctx)));
+
+		Language currLang = initPrinterSettings(ctx, parameterPI);
+		// Locale object (JasperReports standard e.g. to access ResourceBundles)
+		params.put(JRParameter.REPORT_LOCALE, currLang.getLocale());
+		// String, e.g. "de_DE" or "en_US"
+		params.put(JCTX_AD_LANGUAGE, currLang.getAD_Language());
+
+        // put context into params
+        params.put(JCTX_CONTEXT, ctx);
+        
+		params.putAll(createTabParams(ctx, pi));
+		return params;
+	}
+
+	/**
+	 * Inits the values for {@link #m_directPrint} and {@link #m_jasperFilepath}
+	 * from the AD_Process record for this JasperReports Process.
+	 * 
+	 * @param pi
+	 * @param trxName
+	 */
+	private void initFromAD_Process(ProcessInfo pi, String trxName) {
+		// read some later used jasper report configuration values
+		m_directPrint = false;
+		CPreparedStatement pstmt = null;
+		ResultSet rs = null;
+		{
+			String sql = "SELECT pr.JasperReport, pr.IsDirectPrint " + "FROM AD_Process pr, AD_PInstance pi "
+					+ "WHERE pr.AD_Process_ID = pi.AD_Process_ID " + " AND pi.AD_PInstance_ID=?";
+			try {
+				pstmt = DB.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, trxName);
+				pstmt.setInt(1, pi.getAD_PInstance_ID());
+				rs = pstmt.executeQuery();
+				boolean isPrintPreview = pi.isPrintPreview();
+				if (rs.next()) {
+					m_jasperFilepath = rs.getString(1);
+					if ("Y".equalsIgnoreCase(rs.getString(2)) && !Ini.isPropertyBool(Ini.P_PRINTPREVIEW)
+							&& !isPrintPreview)
+						m_directPrint = true;
+				} else {
+					throw new AdempiereException("data not found; sql = " + sql);
+				}
+			} catch (SQLException e) {
+				throw new DBException(e, sql);
+			} finally {
+				DB.close(rs, pstmt);
+				rs = null;
+				pstmt = null;
+			}
+		}
+		
+		// TODO create file resolver from the m_jasperFilepath
+		m_fileResolver = new ReportFileResolverClasspath(null);
+		m_fileResolver = new ReportFileResolverFileSystem(m_fileResolver);
+		m_fileResolver = new ReportFileResolverImage(m_fileResolver);
+	}
+
+	/**
+	 * initializes the printer setting objects from the ProcessInfo parameters
+	 * and extracts the document language.
+	 * 
+	 * @param parameterPI
+	 * @return
+	 */
+	private Language initPrinterSettings(Properties ctx, Map<String, Object> parameterPI) {
+		// read some values from environment like my print format etc.
+		Language currLang = Env.getLanguage(ctx);
+		m_printerName = (String) parameterPI.get(ServerReportCtl.PARAM_PRINTER_NAME);
+		m_printFormat = (MPrintFormat) parameterPI.get(ServerReportCtl.PARAM_PRINT_FORMAT);
+		m_printInfo = (PrintInfo) parameterPI.get(ServerReportCtl.PARAM_PRINT_INFO);
+		// Set the language of the print format if we're printing a document
+		if (m_printFormat != null && m_printInfo != null && m_printInfo.isDocument())
+			currLang = m_printFormat.getLanguage();
+		// Set printer name unless already set.
+		if (m_printFormat != null && m_printerName == null)
+			m_printerName = m_printFormat.getPrinterName();
+		return currLang;
+	}
+
+	/**
+	 * Collects informations about the window and tab which called the process
+	 * (if any), its active record, its filter and sorting.
+	 * 
+	 * @param ctx
+	 * @param pi
+	 * @param params
+	 */
+	private Map<String, Object> createTabParams(Properties ctx, ProcessInfo pi) {
+		Map<String, Object> params=new HashMap<String, Object>();
+		
+		if (pi.getRecord_ID() > 0)
+			params.put(JCTX_RECORD_ID, new Integer(pi.getRecord_ID()));
+
+		// IDEMPIERE-270, IDEMPIERE-1718 - inherit search filter from window / tbayen
+		// find the right Tab entry in the Context
+		int tabNo = -1;
+		try {
+			while (true) {
+				int tableID = Integer.parseInt(Env.getContext(ctx, pi.getWindowNo(), ++tabNo, GridTab.CTX_AD_Table_ID));
+				if (tableID == pi.getTable_ID())
+					break;
+			}
+		} catch (NumberFormatException ex) {
+			tabNo = -1;
+		}
+        if(tabNo>=0){
+        	// You can use these parameters as a "query chunk" with the $P!{...} syntax
+        	String sql=Env.getContext(ctx, pi.getWindowNo(), tabNo, GridTab.CTX_SQL);
+			/*
+			 * I rely on the format of this sql query string like it is done in
+			 * GridTable.createSelectSQL().
+			 */
+			final String marker1 = " WHERE ", marker2 = " ORDER BY ";
+			String whereClause = sql.substring(sql.indexOf(marker1) + marker1.length(), sql.indexOf(marker2));
+			if (Util.isEmpty(whereClause, true))
+				whereClause = "true";
+			params.put(JCTX_TAB_WHERE, whereClause);
+
+			String orderbyClause = sql.substring(sql.indexOf(marker2) + marker2.length());
+			if (Util.isEmpty(orderbyClause, true))
+				orderbyClause = "1";
+			params.put(JCTX_TAB_ORDER, orderbyClause);
+
+			String sortClause = Env.getContext(ctx, pi.getWindowNo(), tabNo, GridTab.CTX_GUISort);
+			String joinClause = "";
+			if (Util.isEmpty(sortClause, true)) {
+				sortClause = "1";
+			} else {
+				/*
+				 * If I want to follow a Lookup for sorting it is a bit
+				 * complicated to collect everything I need. This implementation
+				 * could be improved. It should work well for most table
+				 * references but e.g. not for reference lists.
+				 */
+				int myTableID = Env.getContextAsInt(ctx, pi.getWindowNo(), tabNo, GridTab.CTX_AD_Tab_ID);
+				String myTableName = MTable.getTableName(ctx, myTableID);
+				String tableName = sortClause.substring(0, sortClause.indexOf('.'));
+				if (!myTableName.equals(tableName)) {
+					String columnName = sortClause.substring(sortClause.indexOf('.') + 1, sortClause.indexOf(' '));
+					joinClause = "JOIN SORT_" + tableName + " ON(" + tableName + "." + tableName + "_ID = "
+							+ myTableName + "." + columnName + ")";
+				}
+			}
+			params.put(JCTX_GUI_SORT, sortClause);
+			params.put(JCTX_GUI_JOIN, joinClause);
+			
+			// records can be choosen ony by one (up to now only in zk)
+			if(pi.getRecord_IDs()!=null && pi.getRecord_IDs().length>0){
+				StringBuilder ridString=new StringBuilder();
+				for (int rid : pi.getRecord_IDs()) {
+					if(ridString.length()>0)
+						ridString.append(", ");
+					ridString.append(rid);
+				}
+				params.put(JCTX_RECORD_IDS, ridString);
+			}else
+				params.put(JCTX_RECORD_IDS, "NULL");
+		}
+        return params;
+	}
+
+	private Map<String, Object> getProcessInfoParameters(ProcessInfoParameter[] para) {
+		Map<String, Object> params = new HashMap<String, Object>();
+		if (para == null)
+			return null;
+		for (int i = 0; i < para.length; i++) {
+			params.put(para[i].getParameterName(), para[i].getParameter());
+			if (para[i].getParameter_To() != null) {
+				params.put(para[i].getParameterName() + "To", para[i].getParameter_To());
+				// for compatibility:
+				params.put(para[i].getParameterName() + "1", para[i].getParameter());
+				params.put(para[i].getParameterName() + "2", para[i].getParameter_To());
+			}
+		}
+		return params;
+	}
+
+	/**
+	 * Load Process Parameters into a map
+	 * 
+	 * @param AD_PInstance_ID
+	 * @param trxName
+	 */
 	private static Map<String, Object> getProcessParameters(int AD_PInstance_ID, String trxName) {
 		Map<String, Object> params = new HashMap<String, Object>();
 		// @formatter:off
@@ -244,13 +597,13 @@ public class ReportStarter implements ProcessCall, ClientProcess
 				// info contains e.g. a name if value is an reference id
 				params.put(name + "_Info", rs.getString(8));
 				if (valTo != null) {
-					params.put(name+"To", valTo);
+					params.put(name + "To", valTo);
 					params.put(name + "_InfoTo", rs.getString(9));
 					// only for compatibility:
-					params.put(name + "1", val);
-					params.put(name + "2", valTo);
-					params.put(name + "_Info1", rs.getString(8));
-					params.put(name + "_Info2", rs.getString(9));
+					// params.put(name + "1", val);
+					// params.put(name + "2", valTo);
+					// params.put(name + "_Info1", rs.getString(8));
+					// params.put(name + "_Info2", rs.getString(9));
 				}
 			}
 		} catch (SQLException e) {
@@ -260,20 +613,14 @@ public class ReportStarter implements ProcessCall, ClientProcess
 		}
 		return params;
 	}
-	
+
 	@Override
 	public void setProcessUI(IProcessUI processUI) {
-		m_processUI = processUI;
+		//m_processUI = processUI;
 	}
 
-
 	// TODO if (reportPath.startsWith("@#LocalHttpAddr@")) {
-	// TODO RESOURCE_PATH for compatibility
-    // TODO query anpassen, wenn mehrere Record id gesetzt sind
-    // TODO take language from print format
-    // TODO take printer name from print format
-    // TODO resource bundles
-	// TODO direct print
-	// TODO export into different types
-	// TODO wofür ist onrows da?
+	// TODO query anpassen, wenn mehrere Record id gesetzt sind
+	// TODO resource bundles
+	// TODO absolute File Paths ermöglichen (und cachen)
 }
