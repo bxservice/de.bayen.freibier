@@ -34,7 +34,7 @@ public class X_BAY_InterestCalculation extends PO implements I_BAY_InterestCalcu
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20140118L;
+	private static final long serialVersionUID = 20140129L;
 
     /** Standard Constructor */
     public X_BAY_InterestCalculation (Properties ctx, int BAY_InterestCalculation_ID, String trxName)

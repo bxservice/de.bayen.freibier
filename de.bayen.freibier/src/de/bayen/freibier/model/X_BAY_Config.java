@@ -30,7 +30,7 @@ public class X_BAY_Config extends PO implements I_BAY_Config, I_Persistent
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20140118L;
+	private static final long serialVersionUID = 20140129L;
 
     /** Standard Constructor */
     public X_BAY_Config (Properties ctx, int BAY_Config_ID, String trxName)

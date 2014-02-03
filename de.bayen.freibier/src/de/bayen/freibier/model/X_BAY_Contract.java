@@ -33,7 +33,7 @@ public class X_BAY_Contract extends PO implements I_BAY_Contract, I_Persistent
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20140118L;
+	private static final long serialVersionUID = 20140129L;
 
     /** Standard Constructor */
     public X_BAY_Contract (Properties ctx, int BAY_Contract_ID, String trxName)
@@ -44,6 +44,8 @@ public class X_BAY_Contract extends PO implements I_BAY_Contract, I_Persistent
 			setBAY_Contract_ID (0);
 			setIsSOTrx (true);
 // Y
+			setLoanActive (true);
+// 'Y'
 			setName (null);
 			setValue (null);
         } */
@@ -290,6 +292,27 @@ public class X_BAY_Contract extends PO implements I_BAY_Contract, I_Persistent
 	public boolean isSOTrx () 
 	{
 		Object oo = get_Value(COLUMNNAME_IsSOTrx);
+		if (oo != null) 
+		{
+			 if (oo instanceof Boolean) 
+				 return ((Boolean)oo).booleanValue(); 
+			return "Y".equals(oo);
+		}
+		return false;
+	}
+
+	/** Set Loan Active.
+		@param LoanActive Loan Active	  */
+	public void setLoanActive (boolean LoanActive)
+	{
+		set_Value (COLUMNNAME_LoanActive, Boolean.valueOf(LoanActive));
+	}
+
+	/** Get Loan Active.
+		@return Loan Active	  */
+	public boolean isLoanActive () 
+	{
+		Object oo = get_Value(COLUMNNAME_LoanActive);
 		if (oo != null) 
 		{
 			 if (oo instanceof Boolean) 

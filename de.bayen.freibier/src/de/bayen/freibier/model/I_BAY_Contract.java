@@ -224,6 +224,15 @@ public interface I_BAY_Contract
 	  */
 	public boolean isSOTrx();
 
+    /** Column name LoanActive */
+    public static final String COLUMNNAME_LoanActive = "LoanActive";
+
+	/** Set Loan Active	  */
+	public void setLoanActive (boolean LoanActive);
+
+	/** Get Loan Active	  */
+	public boolean isLoanActive();
+
     /** Column name Name */
     public static final String COLUMNNAME_Name = "Name";
 

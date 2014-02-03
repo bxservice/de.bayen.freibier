@@ -32,7 +32,7 @@ public class X_BAY_Umsatzstatistik extends PO implements I_BAY_Umsatzstatistik, 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20140118L;
+	private static final long serialVersionUID = 20140129L;
 
     /** Standard Constructor */
     public X_BAY_Umsatzstatistik (Properties ctx, int BAY_Umsatzstatistik_ID, String trxName)
