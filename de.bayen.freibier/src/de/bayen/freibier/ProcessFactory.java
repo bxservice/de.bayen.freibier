@@ -28,6 +28,8 @@ public class ProcessFactory implements IProcessFactory {
 						return (ProcessCall) clazz.newInstance();
 					}
 				} catch (Exception e) {
+					if(e instanceof ClassNotFoundException)
+						return null;
 					throw new AdempiereException(e);
 				}
 			}
