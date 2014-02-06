@@ -107,11 +107,17 @@ public class InvoiceBatchProcess extends SvrProcess
 			if (line.getC_Invoice_ID() != 0 || line.getC_InvoiceLine_ID() != 0)
 				continue;
 			
-			if ((m_oldDocumentNo != null 
-					&& !m_oldDocumentNo.equals(line.getDocumentNo()))
-				|| m_oldC_BPartner_ID != line.getC_BPartner_ID()
-				|| m_oldC_BPartner_Location_ID != line.getC_BPartner_Location_ID())
-				completeInvoice();
+			/*
+			 * Die folgende Abfrage habe ich auskommentiert, weil wir aus jeder
+			 * einzelnen Stapelzeile eine einzelne Rechnung haben wollen. Im
+			 * ursprünglichen Code wurden Zeilen des gleichen GEschäftspartners
+			 * in einem Beleg zusamemngefasst.
+			 */
+//			if ((m_oldDocumentNo != null 
+//					&& !m_oldDocumentNo.equals(line.getDocumentNo()))
+//				|| m_oldC_BPartner_ID != line.getC_BPartner_ID()
+//				|| m_oldC_BPartner_Location_ID != line.getC_BPartner_Location_ID())
+			completeInvoice();
 			//	New Invoice
 			if (m_invoice == null)
 			{
@@ -158,6 +164,13 @@ public class InvoiceBatchProcess extends SvrProcess
 							}
 						}
 					}
+					/*
+					 * Ich möchte die Beschreibung der Zeile an der Rechnung
+					 * haben und nicht die des Batches. Das sollte deshalb kein
+					 * Problem sein, weil ich weiter oben dafür gesorgt habe,
+					 * das keine Belege mit mehreren Zeilen erzeugt werden.
+					 */
+					m_invoice.setDescription(line.getDescription());
 				}
 				if (!m_invoice.save())
 					throw new AdempiereUserError("Cannot save Invoice: "+line.getDocumentNo());
