@@ -88,6 +88,7 @@ LEFT JOIN C_BPartner USING (C_BPartner_ID)
 LEFT JOIN c_bpartner_location ON(
   c_bpartner.c_bpartner_id=c_bpartner_location.c_bpartner_id 
   AND c_bpartner_location.isbillto='Y'  /* Rechnungsadresse */
+  AND c_bpartner_location.isActive='Y'
   )
 LEFT JOIN c_location USING(c_location_id)
 LEFT JOIN c_country USING(c_country_id)
