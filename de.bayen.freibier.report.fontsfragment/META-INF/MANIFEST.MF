@@ -1,0 +1,11 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: JasperReports Fonts
+Bundle-SymbolicName: de.bayen.freibier.report.fontsfragment
+Bundle-Version: 1.0.0.qualifier
+Fragment-Host: de.bayen.freibier.report.libraries;bundle-version="1.0.0"
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-ClassPath: lib/fontextension-breip.jar,
+ lib/fontextension-elegance.jar,
+ lib/fontextension-liberationmono.jar,
+ lib/fontextension-liberationsans.jar

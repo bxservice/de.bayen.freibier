@@ -27,6 +27,7 @@ import net.sf.jasperreports.engine.util.FileResolver;
 import net.sf.jasperreports.engine.util.LocalJasperReportsContext;
 
 import org.adempiere.exceptions.AdempiereException;
+import org.compiere.util.CLogger;
 
 /**
  * Abstract base class for JasperReports {@link FileResolver}s.
@@ -34,6 +35,11 @@ import org.adempiere.exceptions.AdempiereException;
  * @author tbayen
  */
 abstract class ReportFileResolver implements FileResolver {
+
+	// not yet used
+	protected final static boolean deactivateCache=true;
+
+	protected transient CLogger log = CLogger.getCLogger(getClass());
 
 	public static final String SUFFIX_JASPER = "jasper";
 	public static final String SUFFIX_JRXML = "jrxml";
@@ -48,7 +54,7 @@ abstract class ReportFileResolver implements FileResolver {
 	 */
 	static File cacheDir = null;
 
-	private FileResolver parentFileResover;
+	protected FileResolver parentFileResover;
 
 	/**
 	 * Constructor for a JasperReport FileResolver. If parent is not null the

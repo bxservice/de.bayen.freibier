@@ -18,9 +18,9 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 
-import org.compiere.util.Ini;
-
 import net.sf.jasperreports.engine.util.FileResolver;
+
+import org.compiere.util.Ini;
 
 /**
  * Reads JasperReport report files (and other resources) from the filesystem.
@@ -60,7 +60,9 @@ public class ReportFileResolverFileSystem extends ReportFileResolver {
 		String fullSuffix = suffix != null ? "." + suffix : "";
 		String fullPath = REPORT_HOME + "/" + path + name + fullSuffix;
 		try {
-			return new FileInputStream(fullPath);
+			FileInputStream strm = new FileInputStream(fullPath);
+			log.warning("loading file from " + fullPath);
+			return strm;
 		} catch (FileNotFoundException e) {
 			return null;
 		}

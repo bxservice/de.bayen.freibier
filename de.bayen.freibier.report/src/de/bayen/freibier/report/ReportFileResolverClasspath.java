@@ -29,7 +29,7 @@ import net.sf.jasperreports.engine.util.FileResolver;
  * @author tbayen
  */
 public class ReportFileResolverClasspath extends ReportFileResolver {
-
+	
 	protected static final String DEFAULT_RESOURCEPATH = ReportFileResolver.class.getPackage().getName()
 			.replace('.', '/')
 			+ "/";
@@ -46,7 +46,10 @@ public class ReportFileResolverClasspath extends ReportFileResolver {
 	protected InputStream loadOriginalFileAsStream(String path, String name, String suffix) {
 		String fullSuffix = suffix != null ? "." + suffix : "";
 		String fullPath = DEFAULT_RESOURCEPATH + name + fullSuffix;
-		return getClass().getClassLoader().getResourceAsStream(fullPath);
+		InputStream strm = getClass().getClassLoader().getResourceAsStream(fullPath);
+		log.warning("loading file from classpath " + fullPath);
+		return strm;
+
 	}
 
 }
