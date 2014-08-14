@@ -39,9 +39,9 @@ import org.compiere.util.Env;
  * The main difference is that from the view of JasperReports this FileResolver
  * allows to give an fixed filename and JasperReports can be configured to cache
  * the image. If you use a logo image in your page header then the logo will be
- * loeader only once into your pdf. If you use an ecpression type of Input
- * Stream then JasperReports can never be sure that the Image is the same and
- * will save every single image instance into the output file.
+ * loader only once into your pdf. If you use an expression type of InputStream
+ * then JasperReports can never be sure that the Image is the same and will save
+ * every single image instance into the output file.
  * 
  * @author tbayen
  */
@@ -54,25 +54,29 @@ public class ReportFileResolverImage extends ReportFileResolver {
 	}
 
 	@Override
-	protected boolean checkCacheFreshness(File cacheFile, String path, String name, String suffix) {
+	protected boolean checkCacheFreshness(File cacheFile, String path,
+			String name, String suffix) {
 		// Images are always cached forever
 		// (someone can implement a database refresh method if needed)
 		if (name == null || !name.startsWith(AD_IMAGE_PREFIX))
 			return true;
-		if(parentFileResover instanceof ReportFileResolver){
-			return ((ReportFileResolver)parentFileResover).checkCacheFreshness(cacheFile, path, name, suffix);
+		if (parentFileResover instanceof ReportFileResolver) {
+			return ((ReportFileResolver) parentFileResover)
+					.checkCacheFreshness(cacheFile, path, name, suffix);
 		}
 		// unknown resolver type: It is the surest not to cache that
 		return false;
 	}
 
 	@Override
-	protected InputStream loadOriginalFileAsStream(String path, String name, String suffix) {
+	protected InputStream loadOriginalFileAsStream(String path, String name,
+			String suffix) {
 		if (name == null || !name.startsWith(AD_IMAGE_PREFIX))
 			return null;
 		int AD_Image_ID = new Integer(name.substring(AD_IMAGE_PREFIX.length()));
-		MImage image = new Query(Env.getCtx(), MImage.Table_Name, MImage.COLUMNNAME_AD_Image_ID + "=? ", null)
-				.setParameters(AD_Image_ID).firstOnly();
+		MImage image = new Query(Env.getCtx(), MImage.Table_Name,
+				MImage.COLUMNNAME_AD_Image_ID + "=? ", null).setParameters(
+				AD_Image_ID).firstOnly();
 		InputStream strm = new ByteArrayInputStream(image.getData());
 		return strm;
 	}

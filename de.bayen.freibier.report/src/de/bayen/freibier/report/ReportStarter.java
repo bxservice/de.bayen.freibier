@@ -184,6 +184,8 @@ public class ReportStarter implements ProcessCall, ClientProcess {
 			// use the right way to output the report
 			if (pi.isExport()) {
 				buildReportExport(pi, jasperContext, jasperPrint);
+			} else if (pi.isBatch()) {
+				buildReportAsPDF(pi, jasperPrint);
 			} else if (!m_directPrint) {
 				// view the report
 				JRViewerProvider viewerLauncher = Service.locator()
@@ -192,8 +194,6 @@ public class ReportStarter implements ProcessCall, ClientProcess {
 
 				// create pdf for archive
 				// TODO check if this is really needed
-				buildReportAsPDF(pi, jasperPrint);
-			} else if (pi.isBatch()) {
 				buildReportAsPDF(pi, jasperPrint);
 			} else {
 				buildReportDirectPrint(pi, jasperPrint);
@@ -382,7 +382,13 @@ public class ReportStarter implements ProcessCall, ClientProcess {
 			StringBuilder prefix = new StringBuilder();
 			for (char ch : jasperPrint.getName().toCharArray())
 				prefix.append(Character.isLetterOrDigit(ch) ? ch : '_');
-			File PDF = File.createTempFile(prefix.toString(), ".pdf");
+			File PDF;
+			if (pi.getPDFFileName() != null) {
+				PDF = new File(pi.getPDFFileName());
+			} else {
+				PDF=File.createTempFile(prefix.toString(), ".pdf");
+			}
+
 			DefaultJasperReportsContext jrContext = DefaultJasperReportsContext
 					.getInstance();
 			LocalJasperReportsContext ljrContext = new LocalJasperReportsContext(
