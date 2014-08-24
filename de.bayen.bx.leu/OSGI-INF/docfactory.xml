@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" name="de.bayen.bx.leu.acct.DocFactory">
+   <implementation class="de.bayen.bx.leu.acct.DocFactory"/>
+   <service>
+      <provide interface="org.adempiere.base.IDocFactory"/>
+   </service>
+   <property name="service.ranking" type="Integer" value="1"/>
+   <property name="gaap" type="String" value="*"/>
+</scr:component>
