@@ -73,7 +73,6 @@ import org.adempiere.report.jasper.JRViewerProvider;
 import org.adempiere.util.IProcessUI;
 import org.compiere.model.MClient;
 import org.compiere.model.MPInstance;
-import org.compiere.model.MProcess;
 import org.compiere.model.MRole;
 import org.compiere.model.MSysConfig;
 import org.compiere.model.MUser;
