@@ -43,12 +43,12 @@ ceiling((SELECT sum(taxbaseamt) FROM taxlines WHERE RevenueBaseCode='45' AND IsS
 )
 SELECT
 taxfields.*,
-(f81b) AS l43,
-(f81b) AS l45,
-(f81b) AS l54,
-(f81b) - (f66) AS l63,
-(f81b) - (f66) AS l66,
-(f81b) - (f66) AS f83,
+(COALESCE(f81b,0)) AS l43,
+(COALESCE(f81b,0)) AS l45,
+(COALESCE(f81b,0)) AS l54,
+(COALESCE(f81b,0)) - (f66) AS l63,
+(COALESCE(f81b,0)) - (COALESCE(f66,0)) AS l66,
+(COALESCE(f81b,0)) - (COALESCE(f66,0)) AS f83,
 org.Name AS orgName,
 AD_OrgInfo.phone AS orgPhone,
 AD_OrgInfo.email AS orgEMail,
@@ -130,7 +130,7 @@ JOIN C_Year py ON ( p.C_Year_ID=py.C_Year_ID )]]>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{f81}]]></textFieldExpression>
 			</textField>
-			<textField pattern="#,##0.00#">
+			<textField pattern="#,##0.00#" isBlankWhenNull="true">
 				<reportElement style="Monospace Form Fill" x="462" y="461" width="108" height="20" uuid="fe986333-9eb4-4fbe-b67e-399e7628a8b0"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font size="10"/>
@@ -239,7 +239,7 @@ JOIN C_Year py ON ( p.C_Year_ID=py.C_Year_ID )]]>
 				<textElement textAlignment="Center" verticalAlignment="Middle"/>
 				<textFieldExpression><![CDATA[($F{periodno}.intValue()==7?"X":"")]]></textFieldExpression>
 			</textField>
-			<textField pattern="#,##0.00#">
+			<textField pattern="#,##0.00#" isBlankWhenNull="true">
 				<reportElement style="Monospace Form Fill" x="462" y="764" width="108" height="20" uuid="e9d0b922-e97c-4f65-94cf-3088eede93bc"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font size="10"/>

@@ -43,12 +43,12 @@ ceiling((SELECT sum(taxbaseamt) FROM taxlines WHERE RevenueBaseCode='45' AND IsS
 )
 SELECT
 taxfields.*,
-(f81b) AS l43,
-(f81b) AS l45,
-(f81b) AS l54,
-(f81b) - (f66) AS l63,
-(f81b) - (f66) AS l66,
-(f81b) - (f66) AS f83,
+(COALESCE(f81b,0)) AS l43,
+(COALESCE(f81b,0)) AS l45,
+(COALESCE(f81b,0)) AS l54,
+(COALESCE(f81b,0)) - (f66) AS l63,
+(COALESCE(f81b,0)) - (COALESCE(f66,0)) AS l66,
+(COALESCE(f81b,0)) - (COALESCE(f66,0)) AS f83,
 org.Name AS orgName,
 AD_OrgInfo.phone AS orgPhone,
 AD_OrgInfo.email AS orgEMail,
