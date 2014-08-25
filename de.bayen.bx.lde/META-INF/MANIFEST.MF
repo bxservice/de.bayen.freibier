@@ -7,5 +7,9 @@ Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Require-Bundle: de.bayen.bx.leu;bundle-version="1.0.4",
  org.adempiere.base;bundle-version="2.0.0",
  de.bayen.freibier.report;bundle-version="1.0.1",
- de.bayen.freibier.report.libraries;bundle-version="1.0.0"
+ de.bayen.freibier.report.libraries;bundle-version="1.0.0",
+ org.adempiere.plugin.utils;bundle-version="2.0.0"
 Service-Component: OSGI-INF/reportfileresolverfactory.xml
+Import-Package: org.osgi.framework;version="1.6.0",
+ org.osgi.util.tracker;version="1.5.0"
+Bundle-Activator: de.bayen.bx.lde.Activator
