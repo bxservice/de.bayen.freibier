@@ -27,7 +27,6 @@
 <stringAttribute key="product" value="org.adempiere.server.server_product"/>
 <setAttribute key="selected_features">
 <setEntry value="de.bayen.bx.bxs:default"/>
-<setEntry value="de.bayen.bx.interchange_feature:default"/>
 <setEntry value="org.adempiere.base:default"/>
 <setEntry value="org.adempiere.bundles.external:default"/>
 <setEntry value="org.adempiere.payment.processor:default"/>

@@ -1,0 +1,59 @@
+#!/bin/bash
+set -e
+set -u
+
+# copies the database from a production system to a local database
+# this can be used e.g. for testing purposes
+
+COMMAND=${1:-help}
+INSTALLATION=${2:-test}
+LINUXUSER=`./simpleDB installations read ${INSTALLATION} username`
+SERVER=`./simpleDB installations read ${INSTALLATION} servername`
+POSTGRESUSER=`./simpleDB installations read ${INSTALLATION} postgresuser`
+SSHTARGET=${LINUXUSER}@${SERVER}
+LOCALDBSERVER=localhost
+LOCALDBUSER=adempiere
+LOCALDB=${INSTALLATION}
+IDEMPIERESOURCEDIR=/home/tbayen/Java/workspaces/idempiere-interchange/migration
+
+if [ "${COMMAND}" == "db2local" ]
+then
+  ssh ${SSHTARGET} ./backup.sh
+  psql -h ${LOCALDBSERVER} -U ${LOCALDBUSER} ${LOCALDB} -c "DROP DATABASE IF EXISTS ${LOCALDB}_killme;"
+  psql -h ${LOCALDBSERVER} -U ${LOCALDBUSER} postgres -c "ALTER DATABASE ${LOCALDB} RENAME TO ${LOCALDB}_killme;"
+  psql -h ${LOCALDBSERVER} -U ${LOCALDBUSER} postgres -c "CREATE DATABASE ${LOCALDB} WITH ENCODING='UTF-8' OWNER=${LOCALDBUSER};"
+  LASTBACKUP=`ssh ${SSHTARGET} "ls -t backup | head -n 1"`
+  scp ${SSHTARGET}:backup/${LASTBACKUP} /tmp/${LASTBACKUP}
+  zcat /tmp/${LASTBACKUP} | psql -h ${LOCALDBSERVER} -U ${LOCALDBUSER} ${LOCALDB} -f -
+
+
+elif [ "${COMMAND}" == "migrateLocal" ]
+then
+  ./syncApplied.sh ${LOCALDB} "-h ${LOCALDBSERVER} -p 5432" ${LOCALDBUSER} ${IDEMPIERESOURCEDIR}
+
+
+elif [ "${COMMAND}" == "deploy" ]
+then
+  ./deploy.sh install ${LINUXUSER} ${SERVER} ${POSTGRESUSER} ${IDEMPIERESOURCEDIR}
+
+
+elif [ "${COMMAND}" == "help" ]
+then
+  cat <<ENDTEXT
+iDempiere cloud director written by Thomas Bayen
+
+usage:
+  cloudDirector help                  - this help text
+  cloudDirector db2local instname     - copy database from cloud server to local system. 
+                                        The installation name is used as the local database name. Be
+                                        sure that the database is not in use and no local server or
+                                        PGAdmin is running.
+  cloudDirector migrateLocal instname - migrate the local database copy of this installation to the 
+                                        actual (local) trunk version.
+  cloudDirector deploy instname       - copy the actual iDempiere installation package and plugins
+                                        to the cloud server, apply migration scripts and restart the 
+                                        server.
+ENDTEXT
+else
+  echo "Wrong command. Try <help>."
+fi
