@@ -123,7 +123,7 @@ JOIN C_Year py ON ( p.C_Year_ID=py.C_Year_ID )]]>
 				</reportElement>
 				<imageExpression><![CDATA["USt_1_A-2014-2.gif"]]></imageExpression>
 			</image>
-			<textField pattern="#,##0.00#">
+			<textField pattern="#,##0.00#" isBlankWhenNull="true">
 				<reportElement style="Monospace Form Fill" x="454" y="235" width="108" height="20" uuid="fe986333-9eb4-4fbe-b67e-399e7628a8b0"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle"/>
 				<textFieldExpression><![CDATA[$F{f66}]]></textFieldExpression>
