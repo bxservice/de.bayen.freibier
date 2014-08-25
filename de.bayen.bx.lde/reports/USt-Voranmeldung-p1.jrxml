@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version last-->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Umsatzsteuer-Voranmeldung-p1" pageWidth="595" pageHeight="842" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" uuid="c494e5d9-548c-4abc-8811-6cd7f9f874f6">
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.topMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.bottomMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.leftMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="BXService local"/>
+	<template><![CDATA["Report Styles.jrtx"]]></template>
+	<parameter name="AD_Client_ID" class="java.lang.Integer" isForPrompting="false">
+		<defaultValueExpression><![CDATA[1000000]]></defaultValueExpression>
+	</parameter>
+	<parameter name="C_Period_ID" class="java.lang.Integer" isForPrompting="false">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+		<defaultValueExpression><![CDATA[1000005]]></defaultValueExpression>
+	</parameter>
+	<parameter name="AD_Org_ID" class="java.lang.Integer" isForPrompting="false">
+		<defaultValueExpression><![CDATA[1000000]]></defaultValueExpression>
+	</parameter>
+	<queryString language="SQL">
+		<![CDATA[WITH taxlines AS (
+SELECT RV_C_InvoiceTax.*, C_Period.Name AS PeriodName
+FROM RV_C_InvoiceTax
+JOIN C_Period ON ( 
+  C_Period.StartDate<=RV_C_InvoiceTax.DateAcct 
+  AND C_Period.EndDate>=RV_C_InvoiceTax.DateAcct 
+  AND C_Period.AD_Client_ID=RV_C_InvoiceTax.AD_Client_ID
+)
+WHERE RV_C_InvoiceTax.AD_Client_ID=$P{AD_Client_ID}::integer  AND C_Period_ID= $P{C_Period_ID}::integer 
+),
+taxfields AS (
+SELECT
+ceiling((SELECT sum(taxbaseamt) FROM taxlines WHERE RevenueBaseCode='81' AND IsSOTrx='Y' )) AS f81,
+(SELECT sum(taxamt)     FROM taxlines WHERE SalesTaxCode='81b'   AND IsSOTrx='Y' ) AS f81b,
+(SELECT sum(taxamt)     FROM taxlines WHERE PurchaseTaxCode='66' AND IsSOTrx='N' ) AS f66,
+ceiling((SELECT sum(taxbaseamt) FROM taxlines WHERE RevenueBaseCode='21' AND IsSOTrx='Y' )) AS f21,
+ceiling((SELECT sum(taxbaseamt) FROM taxlines WHERE RevenueBaseCode='45' AND IsSOTrx='Y' )) AS f45
+)
+SELECT
+taxfields.*,
+(f81b) AS l43,
+(f81b) AS l45,
+(f81b) AS l54,
+(f81b) - (f66) AS l63,
+(f81b) - (f66) AS l66,
+(f81b) - (f66) AS f83,
+org.Name AS orgName,
+AD_OrgInfo.phone AS orgPhone,
+AD_OrgInfo.email AS orgEMail,
+AD_OrgInfo.nationalTaxID AS orgNationalTaxID,
+orgLoc.address1 AS orgAddress1,
+orgLoc.address2 AS orgAddress2,
+orgLoc.address3 AS orgAddress3,
+orgLoc.city AS orgCity,
+orgLoc.postal AS orgPostal,
+fa.Name AS faName,
+fa.Name2 AS faName2,
+faLoc.address1 AS faAddress1,
+faLoc.address2 AS faAddress2,
+faLoc.address3 AS faAddress3,
+faLoc.city AS faCity,
+faLoc.postal AS faPostal,
+p.PeriodNo,
+py.FiscalYear
+FROM taxfields
+JOIN AD_Org org ON ( org.AD_Org_ID= $P{AD_Org_ID}::integer )
+JOIN AD_OrgInfo ON ( AD_OrgInfo.AD_Org_ID= $P{AD_Org_ID}::integer )
+JOIN C_Location orgLoc ON(orgLoc.C_Location_ID=AD_OrgInfo.C_Location_ID)
+JOIN C_BPartner fa ON ( fa.C_BPartner_ID=AD_OrgInfo.TaxAuthority_ID AND fa.isActive='Y' )
+JOIN C_BPartner_Location faBpl ON ( faBpl.C_BPartner_ID = fa.C_BPartner_ID AND faBpl.isBillTo='Y' AND faBpl.isActive='Y' )
+JOIN C_Location faLoc ON (faLoc.C_Location_ID=faBpl.C_Location_ID)
+JOIN C_Period p ON ( p.C_Period_ID= $P{C_Period_ID}::integer )
+JOIN C_Year py ON ( p.C_Year_ID=py.C_Year_ID )]]>
+	</queryString>
+	<field name="f81" class="java.math.BigDecimal"/>
+	<field name="f81b" class="java.math.BigDecimal"/>
+	<field name="f66" class="java.math.BigDecimal"/>
+	<field name="f21" class="java.math.BigDecimal"/>
+	<field name="f45" class="java.math.BigDecimal"/>
+	<field name="orgname" class="java.lang.String"/>
+	<field name="faname" class="java.lang.String"/>
+	<field name="orgphone" class="java.lang.String"/>
+	<field name="orgemail" class="java.lang.String"/>
+	<field name="orgaddress1" class="java.lang.String"/>
+	<field name="orgaddress2" class="java.lang.String"/>
+	<field name="orgaddress3" class="java.lang.String"/>
+	<field name="orgcity" class="java.lang.String"/>
+	<field name="orgpostal" class="java.lang.String"/>
+	<field name="faname2" class="java.lang.String"/>
+	<field name="faaddress1" class="java.lang.String"/>
+	<field name="faaddress2" class="java.lang.String"/>
+	<field name="faaddress3" class="java.lang.String"/>
+	<field name="facity" class="java.lang.String"/>
+	<field name="fapostal" class="java.lang.String"/>
+	<field name="periodno" class="java.math.BigDecimal"/>
+	<field name="fiscalyear" class="java.lang.String"/>
+	<field name="l43" class="java.math.BigDecimal"/>
+	<field name="l45" class="java.math.BigDecimal"/>
+	<field name="l54" class="java.math.BigDecimal"/>
+	<field name="l63" class="java.math.BigDecimal"/>
+	<field name="l66" class="java.math.BigDecimal"/>
+	<field name="f83" class="java.math.BigDecimal"/>
+	<field name="orgnationaltaxid" class="java.lang.String"/>
+	<detail>
+		<band height="842" splitType="Stretch">
+			<property name="local_mesure_unitheight" value="pixel"/>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<image>
+				<reportElement x="0" y="0" width="585" height="841" uuid="6ceb7b21-e96f-42a1-a115-01563b477ef2">
+					<property name="local_mesure_unitx" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="local_mesure_unity" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<imageExpression><![CDATA["USt_1_A-2014-1.png"]]></imageExpression>
+			</image>
+			<textField pattern="#,##0.###;(#,##0.###-)" isBlankWhenNull="true">
+				<reportElement style="Monospace Form Fill" x="337" y="462" width="84" height="19" uuid="0d926c39-cccc-4cd2-90e1-5db8c17a4a7d"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{f81}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00#">
+				<reportElement style="Monospace Form Fill" x="462" y="461" width="108" height="20" uuid="fe986333-9eb4-4fbe-b67e-399e7628a8b0"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{f81b}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.###;(#,##0.###-)" isBlankWhenNull="true">
+				<reportElement style="Monospace Form Fill" x="336" y="726" width="85" height="19" uuid="37e42ccf-80dd-4151-b265-a263647ca990"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{f21}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.###;(#,##0.###-)" isBlankWhenNull="true">
+				<reportElement style="Monospace Form Fill" x="336" y="746" width="85" height="19" uuid="a2d488e3-b488-4db9-909f-ee0963b6c1f9"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{f45}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Monospace Form Fill" x="66" y="120" width="229" height="72" uuid="af367183-734f-456a-a7b6-b805f3d70f9e"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{faname}+"\n\n"+
+($F{faaddress1}!=null?$F{faaddress1}+"\n":"")+
+($F{faaddress2}!=null?$F{faaddress2}+"\n":"")+
+($F{faaddress3}!=null?$F{faaddress3}+"\n":"")+
+"\n"+
+($F{fapostal}!=null?$F{fapostal}+" ":"")+
+($F{facity}!=null?$F{facity}+"\n":"")]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Monospace Form Fill" x="66" y="230" width="228" height="76" uuid="c864a691-39f0-4396-b2f1-d50006b96ae0"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{orgname}+"\n"+
+($F{orgaddress1}!=null?$F{orgaddress1}:"")+
+($F{orgaddress2}!=null?", "+$F{orgaddress2}:"")+
+($F{orgaddress3}!=null?", "+$F{orgaddress3}:"")+
+"\n"+
+($F{orgpostal}!=null?$F{orgpostal}+" ":"")+
+($F{orgcity}!=null?$F{orgcity}+"\n":"")+
+($F{orgphone}!=null?"Tel. "+$F{orgphone}+"\n":"")+
+($F{orgemail}!=null?"EMail "+$F{orgemail}:"")]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Monospace Form Fill" x="358" y="142" width="22" height="18" uuid="ab0fe110-d876-413c-bbba-421f80262dad"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[($F{periodno}.intValue()==1?"X":"")]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Monospace Form Fill" x="358" y="231" width="22" height="18" uuid="5fc799a2-16eb-4b49-adce-3a90eb38babe"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[($F{periodno}.intValue()==6?"X":"")]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Monospace Form Fill" x="358" y="160" width="22" height="18" uuid="80b36621-ad31-45b3-8610-3c9eba68c7bd"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[($F{periodno}.intValue()==2?"X":"")]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Monospace Form Fill" x="358" y="178" width="22" height="18" uuid="1cc9c906-1e92-4261-9982-6670138660b2"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[($F{periodno}.intValue()==3?"X":"")]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Monospace Form Fill" x="358" y="196" width="22" height="18" uuid="cf7187e8-fa93-4d95-928a-be69d1d965a2"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[($F{periodno}.intValue()==4?"X":"")]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Monospace Form Fill" x="358" y="214" width="22" height="18" uuid="8b1ffcca-50b1-4ccd-9578-154eff9fa5fb"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[($F{periodno}.intValue()==5?"X":"")]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Monospace Form Fill" x="437" y="196" width="22" height="18" uuid="fec6c2e6-0471-4656-9a46-64f7c64d38e8"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[($F{periodno}.intValue()==10?"X":"")]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Monospace Form Fill" x="437" y="214" width="22" height="18" uuid="8df4244c-bac8-46c9-b987-88d984e98e6f"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[($F{periodno}.intValue()==11?"X":"")]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Monospace Form Fill" x="437" y="231" width="22" height="18" uuid="8ba644fe-0eb6-4517-8104-836c7f2fd96a"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[($F{periodno}.intValue()==12?"X":"")]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Monospace Form Fill" x="437" y="178" width="22" height="18" uuid="da205291-219b-4136-b9d4-3eee1f3d9123"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[($F{periodno}.intValue()==9?"X":"")]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Monospace Form Fill" x="437" y="160" width="22" height="18" uuid="b9b9764a-e0b8-4f5c-a06d-8d6e7071127f"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[($F{periodno}.intValue()==8?"X":"")]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Monospace Form Fill" x="437" y="142" width="22" height="18" uuid="91e64a4b-f228-489c-8e38-495cfb011b15"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[($F{periodno}.intValue()==7?"X":"")]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00#">
+				<reportElement style="Monospace Form Fill" x="462" y="764" width="108" height="20" uuid="e9d0b922-e97c-4f65-94cf-3088eede93bc"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{l43}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Monospace Form Fill" x="90" y="52" width="136" height="20" uuid="90490903-230b-4dc4-a623-7d36b0d27f20"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{orgnationaltaxid}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>
