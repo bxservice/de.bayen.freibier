@@ -15,6 +15,7 @@ package de.bayen.freibier.report;
 
 import java.io.File;
 import java.io.InputStream;
+import java.net.URL;
 
 import net.sf.jasperreports.engine.util.FileResolver;
 
@@ -30,26 +31,35 @@ import net.sf.jasperreports.engine.util.FileResolver;
  */
 public class ReportFileResolverClasspath extends ReportFileResolver {
 	
-	protected static final String DEFAULT_RESOURCEPATH = ReportFileResolver.class.getPackage().getName()
-			.replace('.', '/')
-			+ "/";
+	protected String getDefaultResourcepath() {
+//		return ReportFileResolver.class.getPackage().getName()
+//				.replace('.', '/')
+//				+ "/";
+		return "reports/";
+	}
 
 	public ReportFileResolverClasspath(FileResolver parent) {
 		super(parent);
 	}
 
-	protected boolean checkCacheFreshness(File cacheFile, String path, String name, String suffix) {
-		// classpath never changes
-		return true;
+	protected Boolean checkCacheFreshness(File cacheFile, String path,
+			String name, String suffix) {
+		String fullSuffix = suffix != null ? "." + suffix : "";
+		String fullPath =  getDefaultResourcepath() + name + fullSuffix;
+		URL url = getClass().getClassLoader().getResource(fullPath);
+		if (url == null)
+			return null;
+		else
+			// classpath never changes
+			return true;
 	}
 
 	protected InputStream loadOriginalFileAsStream(String path, String name, String suffix) {
 		String fullSuffix = suffix != null ? "." + suffix : "";
-		String fullPath = DEFAULT_RESOURCEPATH + name + fullSuffix;
+		String fullPath = getDefaultResourcepath() + name + fullSuffix;
 		InputStream strm = getClass().getClassLoader().getResourceAsStream(fullPath);
 		log.warning("loading file from classpath " + fullPath);
 		return strm;
-
 	}
 
 }

@@ -19,7 +19,7 @@ public class ReportFileResolverAttachment extends ReportFileResolver {
 	}
 	
 	@Override
-	protected boolean checkCacheFreshness(File cacheFile, String path,
+	protected Boolean checkCacheFreshness(File cacheFile, String path,
 			String name, String suffix) {
 		// Attachments are never cached because they can change in the database
 		// (someone can implement a database refresh method if needed)
@@ -35,7 +35,7 @@ public class ReportFileResolverAttachment extends ReportFileResolver {
 			return ((ReportFileResolver)parentFileResover).checkCacheFreshness(cacheFile, path, name, suffix);
 		}
 		// unknown resolver type: It is the surest not to cache that
-		return false;
+		return null;
 	}
 
 	@Override

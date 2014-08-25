@@ -47,11 +47,15 @@ public class ReportFileResolverFileSystem extends ReportFileResolver {
 	}
 
 	@Override
-	protected boolean checkCacheFreshness(File cacheFile, String path, String name, String suffix) {
+	protected Boolean checkCacheFreshness(File cacheFile, String path, String name, String suffix) {
 		String fullSuffix = suffix != null ? "." + suffix : "";
 		String fullPath = REPORT_HOME + "/" + path + name + fullSuffix;
-		if (cacheFile == null || !cacheFile.exists())
-			return false;
+		if (cacheFile == null || !cacheFile.exists()){
+			if(new File(fullPath).exists())
+				return false;
+			else
+				return null;
+		}
 		return cacheFile.lastModified() > new File(fullPath).lastModified();
 	}
 

@@ -526,11 +526,12 @@ public class ReportStarter implements ProcessCall, ClientProcess {
 		// TODO create file resolver from the m_jasperFilepath
 		m_fileResolver = new ReportFileResolverClasspath(null);
 		m_fileResolver = new ReportFileResolverFileSystem(m_fileResolver);
-		MProcess process = new MProcess(Env.getCtx(), pi.getAD_Process_ID(),
-				null);
-		m_fileResolver = new ReportFileResolverAttachment(m_fileResolver,
-				process);
+//		MProcess process = new MProcess(Env.getCtx(), pi.getAD_Process_ID(),
+//				null);
+//		m_fileResolver = new ReportFileResolverAttachment(m_fileResolver,
+//				process);
 		m_fileResolver = new ReportFileResolverImage(m_fileResolver);
+		m_fileResolver = new ReportFileResolverServices(m_fileResolver);
 	}
 
 	/**
@@ -706,12 +707,12 @@ public class ReportStarter implements ProcessCall, ClientProcess {
 				String name = rs.getString(1);
 				Object val = rs.getString(2);
 				if (val == null)
-					val = rs.getBigDecimal(4);
+					val = name.endsWith("_ID") ? rs.getInt(4) : rs.getBigDecimal(4);
 				if (val == null)
 					val = rs.getDate(6);
 				Object valTo = rs.getString(3);
 				if (valTo == null)
-					valTo = rs.getBigDecimal(5);
+					valTo = name.endsWith("_ID") ? rs.getInt(5) : rs.getBigDecimal(5);
 				if (valTo == null)
 					valTo = rs.getDate(7);
 				params.put(name, val);

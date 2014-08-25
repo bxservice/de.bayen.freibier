@@ -34,7 +34,7 @@ import org.compiere.util.CLogger;
  * 
  * @author tbayen
  */
-abstract class ReportFileResolver implements FileResolver {
+abstract public class ReportFileResolver implements FileResolver {
 
 	// not yet used
 	protected final static boolean deactivateCache=true;
@@ -82,7 +82,7 @@ abstract class ReportFileResolver implements FileResolver {
 
 	@Override
 	public File resolveFile(String fileName) {
-		System.out.println("resolveFile(\"" + fileName + "\"");
+		//System.out.println("resolveFile(\"" + fileName + "\"");
 		// parse the filename
 		fileName.replace('\\', '/');
 		int i1 = fileName.lastIndexOf("/");
@@ -115,7 +115,7 @@ abstract class ReportFileResolver implements FileResolver {
 		File cacheFile = new File(cacheDir + "/" + path + name + fullSuffix);
 
 		// check if the file is actual (classpath resources never change)
-		if (cacheFile.exists() && checkCacheFreshness(cacheFile, path, name, suffix))
+		if (cacheFile.exists() && checkCacheFreshness(cacheFile, path, name, suffix)==Boolean.TRUE)
 			return cacheFile;
 
 		// copy file to cache
@@ -137,7 +137,8 @@ abstract class ReportFileResolver implements FileResolver {
 	 * Checks if the file in the cache is still fresh. This method should be
 	 * overloaded to use different checking methods for different types of file
 	 * retrieval. If the file sources never change it can just return
-	 * <code>true</code>;
+	 * <code>true</code>; If this FileResolver does not know about this file it
+	 * returns <code>null</code>.
 	 * 
 	 * @param cacheFile
 	 * @param path
@@ -145,7 +146,7 @@ abstract class ReportFileResolver implements FileResolver {
 	 * @param suffix
 	 * @return
 	 */
-	abstract protected boolean checkCacheFreshness(File cacheFile, String path, String name, String suffix);
+	abstract protected Boolean checkCacheFreshness(File cacheFile, String path, String name, String suffix);
 
 	/**
 	 * This method loads the original file from whereever the specific

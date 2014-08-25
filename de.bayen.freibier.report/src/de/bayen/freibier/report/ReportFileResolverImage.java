@@ -54,7 +54,7 @@ public class ReportFileResolverImage extends ReportFileResolver {
 	}
 
 	@Override
-	protected boolean checkCacheFreshness(File cacheFile, String path,
+	protected Boolean checkCacheFreshness(File cacheFile, String path,
 			String name, String suffix) {
 		// Images are always cached forever
 		// (someone can implement a database refresh method if needed)
@@ -65,7 +65,7 @@ public class ReportFileResolverImage extends ReportFileResolver {
 					.checkCacheFreshness(cacheFile, path, name, suffix);
 		}
 		// unknown resolver type: It is the surest not to cache that
-		return false;
+		return null;
 	}
 
 	@Override
