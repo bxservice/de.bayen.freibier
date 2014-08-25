@@ -121,7 +121,7 @@ JOIN C_Year py ON ( p.C_Year_ID=py.C_Year_ID )]]>
 					<property name="local_mesure_unitheight" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
-				<imageExpression><![CDATA["USt_1_A-2014-1.png"]]></imageExpression>
+				<imageExpression><![CDATA["USt_1_A-2014-1.gif"]]></imageExpression>
 			</image>
 			<textField pattern="#,##0.###;(#,##0.###-)" isBlankWhenNull="true">
 				<reportElement style="Monospace Form Fill" x="337" y="462" width="84" height="19" uuid="0d926c39-cccc-4cd2-90e1-5db8c17a4a7d"/>

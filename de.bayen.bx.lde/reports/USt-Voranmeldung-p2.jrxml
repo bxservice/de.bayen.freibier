@@ -121,7 +121,7 @@ JOIN C_Year py ON ( p.C_Year_ID=py.C_Year_ID )]]>
 					<property name="local_mesure_unitheight" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
-				<imageExpression><![CDATA["USt_1_A-2014-2.png"]]></imageExpression>
+				<imageExpression><![CDATA["USt_1_A-2014-2.gif"]]></imageExpression>
 			</image>
 			<textField pattern="#,##0.00#">
 				<reportElement style="Monospace Form Fill" x="454" y="235" width="108" height="20" uuid="fe986333-9eb4-4fbe-b67e-399e7628a8b0"/>
@@ -156,6 +156,11 @@ JOIN C_Year py ON ( p.C_Year_ID=py.C_Year_ID )]]>
 			<textField>
 				<reportElement style="Monospace Form Fill" x="45" y="750" width="222" height="20" uuid="aee456bd-f586-4148-be0b-4aa899611ac5"/>
 				<textFieldExpression><![CDATA[$F{orgcity}+", den "+new SimpleDateFormat("dd.MM.yyyy").format(new Date())]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Monospace Form Fill" x="107" y="19" width="136" height="20" uuid="592cc1a8-d58b-435e-afef-20b9e377c0b2"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{orgnationaltaxid}]]></textFieldExpression>
 			</textField>
 		</band>
 	</detail>
