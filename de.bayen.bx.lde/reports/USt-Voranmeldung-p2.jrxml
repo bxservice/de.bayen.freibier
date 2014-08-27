@@ -35,20 +35,28 @@ WHERE RV_C_InvoiceTax.AD_Client_ID=$P{AD_Client_ID}::integer  AND C_Period_ID= $
 ),
 taxfields AS (
 SELECT
+ceiling((SELECT sum(taxbaseamt) FROM taxlines WHERE RevenueBaseCode='21' AND IsSOTrx='Y' )) AS f21,
+ceiling((SELECT sum(taxbaseamt) FROM taxlines WHERE RevenueBaseCode='41' AND IsSOTrx='Y' )) AS f41,
+ceiling((SELECT sum(taxbaseamt) FROM taxlines WHERE RevenueBaseCode='43' AND IsSOTrx='Y' )) AS f43,
+ceiling((SELECT sum(taxbaseamt) FROM taxlines WHERE RevenueBaseCode='45' AND IsSOTrx='Y' )) AS f45,
+ceiling((SELECT sum(taxbaseamt) FROM taxlines WHERE RevenueBaseCode='48' AND IsSOTrx='Y' )) AS f48,
+ceiling((SELECT sum(taxbaseamt) FROM taxlines WHERE RevenueBaseCode='52' AND IsSOTrx='Y' )) AS f52,
+(SELECT sum(taxamt) FROM taxlines WHERE SalesTaxCode='53'   AND IsSOTrx='Y' ) AS f53,
+(SELECT sum(taxamt) FROM taxlines WHERE PurchaseTaxCode='67' AND IsSOTrx='N' ) AS f67,
+(SELECT sum(taxamt)     FROM taxlines WHERE PurchaseTaxCode='66' AND IsSOTrx='N' ) AS f66,
 ceiling((SELECT sum(taxbaseamt) FROM taxlines WHERE RevenueBaseCode='81' AND IsSOTrx='Y' )) AS f81,
 (SELECT sum(taxamt)     FROM taxlines WHERE SalesTaxCode='81b'   AND IsSOTrx='Y' ) AS f81b,
-(SELECT sum(taxamt)     FROM taxlines WHERE PurchaseTaxCode='66' AND IsSOTrx='N' ) AS f66,
-ceiling((SELECT sum(taxbaseamt) FROM taxlines WHERE RevenueBaseCode='21' AND IsSOTrx='Y' )) AS f21,
-ceiling((SELECT sum(taxbaseamt) FROM taxlines WHERE RevenueBaseCode='45' AND IsSOTrx='Y' )) AS f45
+ceiling((SELECT sum(taxbaseamt) FROM taxlines WHERE RevenueBaseCode='86' AND IsSOTrx='Y' )) AS f86,
+(SELECT sum(taxamt)     FROM taxlines WHERE SalesTaxCode='86b'   AND IsSOTrx='Y' ) AS f86b
 )
 SELECT
 taxfields.*,
-(COALESCE(f81b,0)) AS l43,
-(COALESCE(f81b,0)) AS l45,
-(COALESCE(f81b,0)) AS l54,
-(COALESCE(f81b,0)) - (f66) AS l63,
-(COALESCE(f81b,0)) - (COALESCE(f66,0)) AS l66,
-(COALESCE(f81b,0)) - (COALESCE(f66,0)) AS f83,
+(COALESCE(f81b,0)+COALESCE(f86b,0)) AS l43,
+(COALESCE(f81b,0)+COALESCE(f86b,0)) AS l45,
+(COALESCE(f81b,0)+COALESCE(f86b,0)+COALESCE(f53,0)) AS l54,
+(COALESCE(f81b,0)+COALESCE(f86b,0)+COALESCE(f53,0)-COALESCE(f66,0)-COALESCE(f67,0)) AS l63,
+(COALESCE(f81b,0)+COALESCE(f86b,0)+COALESCE(f53,0)-COALESCE(f66,0)-COALESCE(f67,0)) AS l66,
+(COALESCE(f81b,0)+COALESCE(f86b,0)+COALESCE(f53,0)-COALESCE(f66,0)-COALESCE(f67,0)) AS l83,
 org.Name AS orgName,
 AD_OrgInfo.phone AS orgPhone,
 AD_OrgInfo.email AS orgEMail,
@@ -104,8 +112,16 @@ JOIN C_Year py ON ( p.C_Year_ID=py.C_Year_ID )]]>
 	<field name="l54" class="java.math.BigDecimal"/>
 	<field name="l63" class="java.math.BigDecimal"/>
 	<field name="l66" class="java.math.BigDecimal"/>
-	<field name="f83" class="java.math.BigDecimal"/>
 	<field name="orgnationaltaxid" class="java.lang.String"/>
+	<field name="f41" class="java.math.BigDecimal"/>
+	<field name="f43" class="java.math.BigDecimal"/>
+	<field name="f48" class="java.math.BigDecimal"/>
+	<field name="f52" class="java.math.BigDecimal"/>
+	<field name="f53" class="java.math.BigDecimal"/>
+	<field name="f67" class="java.math.BigDecimal"/>
+	<field name="f86" class="java.math.BigDecimal"/>
+	<field name="f86b" class="java.math.BigDecimal"/>
+	<field name="l83" class="java.math.BigDecimal"/>
 	<detail>
 		<band height="842" splitType="Stretch">
 			<property name="local_mesure_unitheight" value="pixel"/>
@@ -161,6 +177,23 @@ JOIN C_Year py ON ( p.C_Year_ID=py.C_Year_ID )]]>
 				<reportElement style="Monospace Form Fill" x="107" y="19" width="136" height="20" uuid="592cc1a8-d58b-435e-afef-20b9e377c0b2"/>
 				<textElement verticalAlignment="Middle"/>
 				<textFieldExpression><![CDATA[$F{orgnationaltaxid}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.###;(#,##0.###-)" isBlankWhenNull="true">
+				<reportElement style="Monospace Form Fill" x="325" y="108" width="84" height="19" uuid="c6bf92c5-d03e-4c4d-801d-43cec63241e2"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{f52}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00#">
+				<reportElement style="Monospace Form Fill" x="454" y="108" width="108" height="20" uuid="9b8ca4a2-f61f-4aac-811a-4078aad64ebe"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{f53}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00#">
+				<reportElement style="Monospace Form Fill" x="454" y="288" width="108" height="20" uuid="8522c77a-05e8-4348-b993-04a703d5b39c"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{f67}]]></textFieldExpression>
 			</textField>
 		</band>
 	</detail>
