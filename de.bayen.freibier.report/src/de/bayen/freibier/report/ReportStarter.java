@@ -73,6 +73,7 @@ import org.adempiere.report.jasper.JRViewerProvider;
 import org.adempiere.util.IProcessUI;
 import org.compiere.model.MClient;
 import org.compiere.model.MPInstance;
+import org.compiere.model.MProcess;
 import org.compiere.model.MRole;
 import org.compiere.model.MSysConfig;
 import org.compiere.model.MUser;
@@ -523,14 +524,12 @@ public class ReportStarter implements ProcessCall, ClientProcess {
 		}
 
 		// TODO create file resolver from the m_jasperFilepath
-		m_fileResolver = new ReportFileResolverClasspath(null);
-		m_fileResolver = new ReportFileResolverFileSystem(m_fileResolver);
-//		MProcess process = new MProcess(Env.getCtx(), pi.getAD_Process_ID(),
-//				null);
-//		m_fileResolver = new ReportFileResolverAttachment(m_fileResolver,
-//				process);
+		//m_fileResolver = new ReportFileResolverClasspath(null);
 		m_fileResolver = new ReportFileResolverImage(m_fileResolver);
 		m_fileResolver = new ReportFileResolverServices(m_fileResolver);
+		m_fileResolver = new ReportFileResolverFileSystem(m_fileResolver);
+		MProcess process = new MProcess(Env.getCtx(), pi.getAD_Process_ID(), null);
+		m_fileResolver = new ReportFileResolverAttachment(m_fileResolver, process);
 	}
 
 	/**
