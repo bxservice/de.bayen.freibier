@@ -57,8 +57,7 @@ JOIN AD_OrgInfo orgInfo ON ( org.AD_Org_ID=orgInfo.AD_Org_ID )
 JOIN C_Location orgLoc ON(orgLoc.C_Location_ID=orgInfo.C_Location_ID)
 JOIN C_BPartner fa ON ( fa.C_BPartner_ID=orgInfo.TaxAuthority_ID AND fa.isActive='Y' )
 JOIN C_Period p ON ( p.C_Period_ID= $P{C_Period_ID}::integer )
-JOIN C_Year py ON ( p.C_Year_ID=py.C_Year_ID )
-]]>
+JOIN C_Year py ON ( p.C_Year_ID=py.C_Year_ID )]]>
 	</queryString>
 	<field name="orgname" class="java.lang.String"/>
 	<field name="taxid" class="java.lang.String"/>
@@ -80,10 +79,27 @@ JOIN C_Year py ON ( p.C_Year_ID=py.C_Year_ID )
 	<field name="fiscalyear" class="java.lang.String"/>
 	<field name="orgtaxid" class="java.lang.String"/>
 	<background>
-		<band splitType="Stretch"/>
+		<band height="801" splitType="Stretch">
+			<property name="local_mesure_unitheight" value="pixel"/>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<textField pattern="dd.MM.yyyy HH:mm">
+				<reportElement style="Footer Font" x="0" y="780" width="133" height="12" uuid="f581602e-cc27-4e2c-9470-cf864964e7c7"/>
+				<textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report">
+				<reportElement style="Footer Font" x="535" y="780" width="22" height="12" uuid="8ad43562-bd2f-468a-bb6f-f1ca6d6d839d"/>
+				<textElement textAlignment="Left"/>
+				<textFieldExpression><![CDATA[" von " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Footer Font" x="493" y="780" width="42" height="12" uuid="fc694bc8-ca02-4ff5-998e-d335ad18fed7"/>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression><![CDATA["Seite " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+		</band>
 	</background>
 	<title>
-		<band height="183" splitType="Stretch">
+		<band height="195" splitType="Stretch">
 			<staticText>
 				<reportElement style="Report Header" x="0" y="0" width="554" height="36" uuid="ee618fd1-0d4b-416c-be2b-6a3a344a38d4"/>
 				<textElement textAlignment="Center">
@@ -92,14 +108,14 @@ JOIN C_Year py ON ( p.C_Year_ID=py.C_Year_ID )
 				<text><![CDATA[Zusammenfassende Meldung]]></text>
 			</staticText>
 			<textField>
-				<reportElement style="Report Monospace Font" x="384" y="36" width="156" height="20" uuid="947fe9bb-d68d-4b2a-a481-8b214cc03a2e"/>
+				<reportElement style="Report Monospace Font" x="384" y="49" width="156" height="20" uuid="947fe9bb-d68d-4b2a-a481-8b214cc03a2e"/>
 				<textElement>
 					<font size="10"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{faname}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement style="Report Monospace Font" x="0" y="96" width="240" height="84" uuid="a2e0309b-7b30-4e72-81e3-170d802f7a63"/>
+				<reportElement style="Report Monospace Font" x="0" y="109" width="240" height="84" uuid="a2e0309b-7b30-4e72-81e3-170d802f7a63"/>
 				<textElement>
 					<font size="10"/>
 				</textElement>
@@ -114,27 +130,27 @@ JOIN C_Year py ON ( p.C_Year_ID=py.C_Year_ID )
 ($F{orgemail}!=null?"EMail "+$F{orgemail}:"")]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement style="Report Monospace Font" x="96" y="36" width="108" height="20" uuid="a873fbb7-62e1-4a41-a3f9-1ac3b08a5881"/>
+				<reportElement style="Report Monospace Font" x="96" y="49" width="108" height="20" uuid="a873fbb7-62e1-4a41-a3f9-1ac3b08a5881"/>
 				<textFieldExpression><![CDATA[$F{nationaltaxid}]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement x="0" y="36" width="96" height="20" uuid="c4768db7-dd02-41b5-9661-c6b399bbe8a8"/>
+				<reportElement x="0" y="49" width="96" height="20" uuid="c4768db7-dd02-41b5-9661-c6b399bbe8a8"/>
 				<text><![CDATA[Steuernummer]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="324" y="36" width="60" height="20" uuid="3125bea1-b5dd-4ca2-bf74-423b9effccd8"/>
+				<reportElement x="324" y="49" width="60" height="20" uuid="3125bea1-b5dd-4ca2-bf74-423b9effccd8"/>
 				<text><![CDATA[Finanzamt:]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="0" y="56" width="204" height="20" uuid="a3f81162-c42a-4474-9555-7c7b910ea4ad"/>
+				<reportElement x="0" y="69" width="204" height="20" uuid="a3f81162-c42a-4474-9555-7c7b910ea4ad"/>
 				<text><![CDATA[Umsatzsteuer-Identifikationsnummer]]></text>
 			</staticText>
 			<textField>
-				<reportElement style="Report Monospace Font" x="204" y="56" width="108" height="20" uuid="8aa0d68f-4999-4788-93a6-df96197b1d89"/>
+				<reportElement style="Report Monospace Font" x="204" y="69" width="108" height="20" uuid="8aa0d68f-4999-4788-93a6-df96197b1d89"/>
 				<textFieldExpression><![CDATA[$F{orgtaxid}]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement x="0" y="76" width="240" height="20" uuid="1a789c79-ba0b-4c41-874a-880a854cff1a"/>
+				<reportElement x="0" y="89" width="240" height="20" uuid="1a789c79-ba0b-4c41-874a-880a854cff1a"/>
 				<textElement verticalAlignment="Middle">
 					<font isUnderline="true"/>
 				</textElement>
@@ -213,21 +229,6 @@ Dreiecksgeschäfte=2]]></text>
 		</band>
 	</detail>
 	<pageFooter>
-		<band height="16" splitType="Stretch">
-			<textField>
-				<reportElement style="Footer Font" x="492" y="0" width="42" height="12" uuid="7a775a06-4ca7-4714-9be7-f56e4fd4afb4"/>
-				<textElement textAlignment="Right"/>
-				<textFieldExpression><![CDATA["Seite " + $V{PAGE_NUMBER}]]></textFieldExpression>
-			</textField>
-			<textField evaluationTime="Report">
-				<reportElement style="Footer Font" x="534" y="0" width="22" height="12" uuid="71e3f252-fb2a-4317-b79b-c49f300ba7c4"/>
-				<textElement textAlignment="Left"/>
-				<textFieldExpression><![CDATA[" of " + $V{PAGE_NUMBER}]]></textFieldExpression>
-			</textField>
-			<textField pattern="dd.MM.yyyy HH:mm">
-				<reportElement style="Footer Font" x="-1" y="0" width="133" height="12" uuid="9649be5a-1012-47ee-87de-83bda9b7c885"/>
-				<textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
-			</textField>
-		</band>
+		<band height="16" splitType="Stretch"/>
 	</pageFooter>
 </jasperReport>
