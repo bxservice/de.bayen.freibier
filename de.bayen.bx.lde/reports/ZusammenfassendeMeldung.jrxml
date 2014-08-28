@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version last-->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Zusammenfassende Meldung" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="eafe6287-970c-4133-ad72-ea55c6c4b652">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="BXService local"/>
+	<template><![CDATA["Report Styles.jrtx"]]></template>
+	<parameter name="AD_Client_ID" class="java.lang.Integer" isForPrompting="false">
+		<defaultValueExpression><![CDATA[1000000]]></defaultValueExpression>
+	</parameter>
+	<parameter name="C_Period_ID" class="java.lang.Integer" isForPrompting="false">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+		<defaultValueExpression><![CDATA[1000005]]></defaultValueExpression>
+	</parameter>
+	<parameter name="AD_Org_ID" class="java.lang.Integer" isForPrompting="false">
+		<defaultValueExpression><![CDATA[1000000]]></defaultValueExpression>
+	</parameter>
+	<queryString language="SQL">
+		<![CDATA[WITH zeilen AS (
+SELECT
+  TaxID,
+  CEILING(SUM(TaxBaseAmt)) AS TaxBaseAmtCeiling,
+  CASE
+    WHEN C_Tax.RevenueBaseCode='41' THEN NULL
+    WHEN C_Tax.RevenueBaseCode='21' THEN 1
+  END AS SonstLeisDreieck
+FROM RV_C_InvoiceTax
+JOIN C_Period ON ( 
+  C_Period.StartDate<=RV_C_InvoiceTax.DateAcct 
+  AND C_Period.EndDate>=RV_C_InvoiceTax.DateAcct 
+  AND C_Period.AD_Client_ID=RV_C_InvoiceTax.AD_Client_ID
+)
+JOIN C_Tax ON ( RV_C_InvoiceTax.C_Tax_ID=C_Tax.C_Tax_ID )
+WHERE RV_C_InvoiceTax.AD_Client_ID= $P{AD_Client_ID}::integer AND C_Period.C_Period_ID= $P{C_Period_ID}::integer 
+  AND C_Tax.RevenueBaseCode IN ('21','41')
+GROUP BY TaxID, C_Tax.RevenueBaseCode
+)
+SELECT
+  orgInfo.nationalTaxID,
+  org.Name AS orgName,
+  orgInfo.phone AS orgPhone,
+  orgInfo.email AS orgEMail,
+  orgInfo.TaxID as orgTaxID,
+  orgInfo.nationalTaxID AS orgNationalTaxID,
+  orgLoc.address1 AS orgAddress1,
+  orgLoc.address2 AS orgAddress2,
+  orgLoc.address3 AS orgAddress3,
+  orgLoc.city AS orgCity,
+  orgLoc.postal AS orgPostal,
+  fa.Name AS faName,
+  fa.Name2 AS faName2,
+  p.Name AS periodName,
+  p.PeriodNo,
+  py.FiscalYear,
+  zeilen.*
+FROM zeilen
+JOIN AD_Org org ON ( org.AD_Org_ID= $P{AD_Org_ID}::integer )
+JOIN AD_OrgInfo orgInfo ON ( org.AD_Org_ID=orgInfo.AD_Org_ID )
+JOIN C_Location orgLoc ON(orgLoc.C_Location_ID=orgInfo.C_Location_ID)
+JOIN C_BPartner fa ON ( fa.C_BPartner_ID=orgInfo.TaxAuthority_ID AND fa.isActive='Y' )
+JOIN C_Period p ON ( p.C_Period_ID= $P{C_Period_ID}::integer )
+JOIN C_Year py ON ( p.C_Year_ID=py.C_Year_ID )
+]]>
+	</queryString>
+	<field name="orgname" class="java.lang.String"/>
+	<field name="taxid" class="java.lang.String"/>
+	<field name="taxbaseamtceiling" class="java.math.BigDecimal"/>
+	<field name="sonstleisdreieck" class="java.lang.Integer"/>
+	<field name="nationaltaxid" class="java.lang.String"/>
+	<field name="periodname" class="java.lang.String"/>
+	<field name="orgphone" class="java.lang.String"/>
+	<field name="orgemail" class="java.lang.String"/>
+	<field name="orgnationaltaxid" class="java.lang.String"/>
+	<field name="orgaddress1" class="java.lang.String"/>
+	<field name="orgaddress2" class="java.lang.String"/>
+	<field name="orgaddress3" class="java.lang.String"/>
+	<field name="orgcity" class="java.lang.String"/>
+	<field name="orgpostal" class="java.lang.String"/>
+	<field name="faname" class="java.lang.String"/>
+	<field name="faname2" class="java.lang.String"/>
+	<field name="periodno" class="java.math.BigDecimal"/>
+	<field name="fiscalyear" class="java.lang.String"/>
+	<field name="orgtaxid" class="java.lang.String"/>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="183" splitType="Stretch">
+			<staticText>
+				<reportElement style="Report Header" x="0" y="0" width="554" height="36" uuid="ee618fd1-0d4b-416c-be2b-6a3a344a38d4"/>
+				<textElement textAlignment="Center">
+					<font isUnderline="true"/>
+				</textElement>
+				<text><![CDATA[Zusammenfassende Meldung]]></text>
+			</staticText>
+			<textField>
+				<reportElement style="Report Monospace Font" x="384" y="36" width="156" height="20" uuid="947fe9bb-d68d-4b2a-a481-8b214cc03a2e"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{faname}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Report Monospace Font" x="0" y="96" width="240" height="84" uuid="a2e0309b-7b30-4e72-81e3-170d802f7a63"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{orgname}+"\n"+
+($F{orgaddress1}!=null?$F{orgaddress1}:"")+
+($F{orgaddress2}!=null?", "+$F{orgaddress2}:"")+
+($F{orgaddress3}!=null?", "+$F{orgaddress3}:"")+
+"\n"+
+($F{orgpostal}!=null?$F{orgpostal}+" ":"")+
+($F{orgcity}!=null?$F{orgcity}+"\n":"")+
+($F{orgphone}!=null?"Tel. "+$F{orgphone}+"\n":"")+
+($F{orgemail}!=null?"EMail "+$F{orgemail}:"")]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Report Monospace Font" x="96" y="36" width="108" height="20" uuid="a873fbb7-62e1-4a41-a3f9-1ac3b08a5881"/>
+				<textFieldExpression><![CDATA[$F{nationaltaxid}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="36" width="96" height="20" uuid="c4768db7-dd02-41b5-9661-c6b399bbe8a8"/>
+				<text><![CDATA[Steuernummer]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="324" y="36" width="60" height="20" uuid="3125bea1-b5dd-4ca2-bf74-423b9effccd8"/>
+				<text><![CDATA[Finanzamt:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="0" y="56" width="204" height="20" uuid="a3f81162-c42a-4474-9555-7c7b910ea4ad"/>
+				<text><![CDATA[Umsatzsteuer-Identifikationsnummer]]></text>
+			</staticText>
+			<textField>
+				<reportElement style="Report Monospace Font" x="204" y="56" width="108" height="20" uuid="8aa0d68f-4999-4788-93a6-df96197b1d89"/>
+				<textFieldExpression><![CDATA[$F{orgtaxid}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="76" width="240" height="20" uuid="1a789c79-ba0b-4c41-874a-880a854cff1a"/>
+				<textElement verticalAlignment="Middle">
+					<font isUnderline="true"/>
+				</textElement>
+				<text><![CDATA[Meldung für:]]></text>
+			</staticText>
+		</band>
+	</title>
+	<pageHeader>
+		<band height="38" splitType="Stretch">
+			<property name="local_mesure_unitheight" value="pixel"/>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<staticText>
+				<reportElement style="Report Standard Font" x="96" y="1" width="144" height="36" uuid="d77c85ca-1b8e-4a1d-bef6-5ca50f9a313c"/>
+				<text><![CDATA[USt-ID Nr. des Erwerbers in einem anderen EU- Mitgliedsstaat]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="252" y="1" width="144" height="36" uuid="235b20ee-9e4e-45f5-838b-7f78c6ad3511"/>
+				<text><![CDATA[Summe der Bemessungsgrundlagen (volle Euro)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="432" y="0" width="122" height="36" uuid="e97958e4-2667-4472-a38a-ddcf4a910f77"/>
+				<text><![CDATA[Sonstige Leistungen=1
+Dreiecksgeschäfte=2]]></text>
+			</staticText>
+			<line>
+				<reportElement x="0" y="36" width="554" height="1" uuid="6d6f955b-d12a-4f24-a50e-e47268d3219e">
+					<property name="local_mesure_unitx" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+			</line>
+			<staticText>
+				<reportElement style="Report Standard Font" x="12" y="1" width="72" height="36" uuid="7d0ab4f5-7a68-4bf3-b3fc-be96a2d5b547"/>
+				<text><![CDATA[Länder-Kennzeichen]]></text>
+			</staticText>
+		</band>
+	</pageHeader>
+	<detail>
+		<band height="37" splitType="Stretch">
+			<property name="local_mesure_unitheight" value="pixel"/>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<textField>
+				<reportElement style="Report Monospace Font" x="108" y="0" width="132" height="24" uuid="5a719216-d567-47d9-954f-d8c4590ec5b8"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[($F{taxid}!=null?$F{taxid}.substring(2):null)]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Report Monospace Font" x="252" y="0" width="72" height="24" uuid="56cd6c3e-eb80-4070-9334-34827d1e4031"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{taxbaseamtceiling}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Report Monospace Font" x="432" y="0" width="96" height="24" uuid="18e08d7c-d365-4ae6-8e46-b8f579dfc7c7"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{sonstleisdreieck}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Report Monospace Font" x="24" y="0" width="45" height="24" uuid="733bb0b5-8dad-446c-b109-b842c0e3b2d9"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[($F{taxid}!=null?$F{taxid}.substring(0,2):null)]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="0" y="24" width="554" height="1" uuid="06a60a0f-f71a-431a-90b5-40cb96992c00">
+					<property name="local_mesure_unity" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="local_mesure_unitx" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<graphicElement>
+					<pen lineWidth="0.5" lineStyle="Dotted" lineColor="#808080"/>
+				</graphicElement>
+			</line>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="16" splitType="Stretch">
+			<textField>
+				<reportElement style="Footer Font" x="492" y="0" width="42" height="12" uuid="7a775a06-4ca7-4714-9be7-f56e4fd4afb4"/>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression><![CDATA["Seite " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report">
+				<reportElement style="Footer Font" x="534" y="0" width="22" height="12" uuid="71e3f252-fb2a-4317-b79b-c49f300ba7c4"/>
+				<textElement textAlignment="Left"/>
+				<textFieldExpression><![CDATA[" of " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+			<textField pattern="dd.MM.yyyy HH:mm">
+				<reportElement style="Footer Font" x="-1" y="0" width="133" height="12" uuid="9649be5a-1012-47ee-87de-83bda9b7c885"/>
+				<textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageFooter>
+</jasperReport>

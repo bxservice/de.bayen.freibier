@@ -12,15 +12,15 @@
 	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
 	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="BXService local"/>
 	<template><![CDATA["Report Styles.jrtx"]]></template>
+	<parameter name="AD_Org_ID" class="java.lang.Integer" isForPrompting="false">
+		<defaultValueExpression><![CDATA[1000000]]></defaultValueExpression>
+	</parameter>
 	<parameter name="AD_Client_ID" class="java.lang.Integer" isForPrompting="false">
 		<defaultValueExpression><![CDATA[1000000]]></defaultValueExpression>
 	</parameter>
 	<parameter name="C_Period_ID" class="java.lang.Integer" isForPrompting="false">
 		<parameterDescription><![CDATA[]]></parameterDescription>
 		<defaultValueExpression><![CDATA[1000005]]></defaultValueExpression>
-	</parameter>
-	<parameter name="AD_Org_ID" class="java.lang.Integer" isForPrompting="false">
-		<defaultValueExpression><![CDATA[1000000]]></defaultValueExpression>
 	</parameter>
 	<queryString language="SQL">
 		<![CDATA[WITH taxlines AS (
@@ -56,7 +56,7 @@ taxfields.*,
 (COALESCE(f81b,0)+COALESCE(f86b,0)+COALESCE(f53,0)) AS l54,
 (COALESCE(f81b,0)+COALESCE(f86b,0)+COALESCE(f53,0)-COALESCE(f66,0)-COALESCE(f67,0)) AS l63,
 (COALESCE(f81b,0)+COALESCE(f86b,0)+COALESCE(f53,0)-COALESCE(f66,0)-COALESCE(f67,0)) AS l66,
-(COALESCE(f81b,0)+COALESCE(f86b,0)+COALESCE(f53,0)-COALESCE(f66,0)-COALESCE(f67,0)) AS l83,
+(COALESCE(f81b,0)+COALESCE(f86b,0)+COALESCE(f53,0)-COALESCE(f66,0)-COALESCE(f67,0)) AS f83,
 org.Name AS orgName,
 AD_OrgInfo.phone AS orgPhone,
 AD_OrgInfo.email AS orgEMail,
@@ -121,7 +121,7 @@ JOIN C_Year py ON ( p.C_Year_ID=py.C_Year_ID )]]>
 	<field name="f67" class="java.math.BigDecimal"/>
 	<field name="f86" class="java.math.BigDecimal"/>
 	<field name="f86b" class="java.math.BigDecimal"/>
-	<field name="l83" class="java.math.BigDecimal"/>
+	<field name="f83" class="java.math.BigDecimal"/>
 	<detail>
 		<band height="842" splitType="Stretch">
 			<property name="local_mesure_unitheight" value="pixel"/>
@@ -166,19 +166,6 @@ JOIN C_Year py ON ( p.C_Year_ID=py.C_Year_ID )]]>
 					<font size="10"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{f45}]]></textFieldExpression>
-			</textField>
-			<textField>
-				<reportElement style="Monospace Form Fill" x="66" y="120" width="229" height="72" uuid="af367183-734f-456a-a7b6-b805f3d70f9e"/>
-				<textElement>
-					<font size="10"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$F{faname}+"\n\n"+
-($F{faaddress1}!=null?$F{faaddress1}+"\n":"")+
-($F{faaddress2}!=null?$F{faaddress2}+"\n":"")+
-($F{faaddress3}!=null?$F{faaddress3}+"\n":"")+
-"\n"+
-($F{fapostal}!=null?$F{fapostal}+" ":"")+
-($F{facity}!=null?$F{facity}+"\n":"")]]></textFieldExpression>
 			</textField>
 			<textField>
 				<reportElement style="Monospace Form Fill" x="66" y="230" width="228" height="76" uuid="c864a691-39f0-4396-b2f1-d50006b96ae0"/>
@@ -301,6 +288,19 @@ JOIN C_Year py ON ( p.C_Year_ID=py.C_Year_ID )]]>
 					<font size="10"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{f86b}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Monospace Form Fill" x="66" y="120" width="229" height="72" uuid="ecaab33f-73cc-47bb-888a-c64ab44e5760"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{faname}+"\n\n"+
+($F{faaddress1}!=null?$F{faaddress1}+"\n":"")+
+($F{faaddress2}!=null?$F{faaddress2}+"\n":"")+
+($F{faaddress3}!=null?$F{faaddress3}+"\n":"")+
+"\n"+
+($F{fapostal}!=null?$F{fapostal}+" ":"")+
+($F{facity}!=null?$F{facity}+"\n":"")]]></textFieldExpression>
 			</textField>
 		</band>
 	</detail>

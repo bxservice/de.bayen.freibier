@@ -5,4 +5,6 @@
 	<style name="Report Standard Font" fontName="DejaVu Sans"/>
 	<style name="Report Monospace Font" fontName="DejaVu Sans Mono"/>
 	<style name="Monospace Form Fill" forecolor="#0000FF" fontName="DejaVu Sans Mono" isBold="true"/>
+	<style name="Report Header" style="Report Standard Font" fontName="deja vu sans" fontSize="26"/>
+	<style name="Footer Font" fontName="deja vu sans" fontSize="5"/>
 </jasperTemplate>

@@ -56,7 +56,7 @@ taxfields.*,
 (COALESCE(f81b,0)+COALESCE(f86b,0)+COALESCE(f53,0)) AS l54,
 (COALESCE(f81b,0)+COALESCE(f86b,0)+COALESCE(f53,0)-COALESCE(f66,0)-COALESCE(f67,0)) AS l63,
 (COALESCE(f81b,0)+COALESCE(f86b,0)+COALESCE(f53,0)-COALESCE(f66,0)-COALESCE(f67,0)) AS l66,
-(COALESCE(f81b,0)+COALESCE(f86b,0)+COALESCE(f53,0)-COALESCE(f66,0)-COALESCE(f67,0)) AS l83,
+(COALESCE(f81b,0)+COALESCE(f86b,0)+COALESCE(f53,0)-COALESCE(f66,0)-COALESCE(f67,0)) AS f83,
 org.Name AS orgName,
 AD_OrgInfo.phone AS orgPhone,
 AD_OrgInfo.email AS orgEMail,
@@ -121,7 +121,7 @@ JOIN C_Year py ON ( p.C_Year_ID=py.C_Year_ID )]]>
 	<field name="f67" class="java.math.BigDecimal"/>
 	<field name="f86" class="java.math.BigDecimal"/>
 	<field name="f86b" class="java.math.BigDecimal"/>
-	<field name="l83" class="java.math.BigDecimal"/>
+	<field name="f83" class="java.math.BigDecimal"/>
 	<detail>
 		<band height="842" splitType="Stretch">
 			<property name="local_mesure_unitheight" value="pixel"/>
@@ -144,27 +144,27 @@ JOIN C_Year py ON ( p.C_Year_ID=py.C_Year_ID )]]>
 				<textElement textAlignment="Right" verticalAlignment="Middle"/>
 				<textFieldExpression><![CDATA[$F{f66}]]></textFieldExpression>
 			</textField>
-			<textField pattern="#,##0.00#">
+			<textField pattern="#,##0.00#" isBlankWhenNull="true">
 				<reportElement style="Monospace Form Fill" x="454" y="35" width="108" height="20" uuid="1b05aaeb-e1d3-40cb-a28c-b98778bb792a"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle"/>
 				<textFieldExpression><![CDATA[$F{l45}]]></textFieldExpression>
 			</textField>
-			<textField pattern="#,##0.00#">
+			<textField pattern="#,##0.00#" isBlankWhenNull="true">
 				<reportElement style="Monospace Form Fill" x="454" y="199" width="108" height="20" uuid="0549e8d0-26a0-4f2b-bc77-d9ad8e85308e"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle"/>
 				<textFieldExpression><![CDATA[$F{l54}]]></textFieldExpression>
 			</textField>
-			<textField pattern="#,##0.00#">
+			<textField pattern="#,##0.00#" isBlankWhenNull="true">
 				<reportElement style="Monospace Form Fill" x="454" y="361" width="108" height="20" uuid="5e67fed5-4329-492a-ab2d-51261c4b5ca2"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle"/>
 				<textFieldExpression><![CDATA[$F{l63}]]></textFieldExpression>
 			</textField>
-			<textField pattern="#,##0.00#">
+			<textField pattern="#,##0.00#" isBlankWhenNull="true">
 				<reportElement style="Monospace Form Fill" x="454" y="416" width="108" height="20" uuid="ea8d9f77-b0f5-4291-a087-63d7e92a4546"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle"/>
 				<textFieldExpression><![CDATA[$F{l66}]]></textFieldExpression>
 			</textField>
-			<textField pattern="#,##0.00#">
+			<textField pattern="#,##0.00#" isBlankWhenNull="true">
 				<reportElement style="Monospace Form Fill" x="454" y="452" width="108" height="20" uuid="c8e86087-8429-42be-a8d8-3f64fd377683"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle"/>
 				<textFieldExpression><![CDATA[$F{f83}]]></textFieldExpression>
@@ -173,7 +173,7 @@ JOIN C_Year py ON ( p.C_Year_ID=py.C_Year_ID )]]>
 				<reportElement style="Monospace Form Fill" x="45" y="750" width="222" height="20" uuid="aee456bd-f586-4148-be0b-4aa899611ac5"/>
 				<textFieldExpression><![CDATA[$F{orgcity}+", den "+new SimpleDateFormat("dd.MM.yyyy").format(new Date())]]></textFieldExpression>
 			</textField>
-			<textField>
+			<textField isBlankWhenNull="true">
 				<reportElement style="Monospace Form Fill" x="107" y="19" width="136" height="20" uuid="592cc1a8-d58b-435e-afef-20b9e377c0b2"/>
 				<textElement verticalAlignment="Middle"/>
 				<textFieldExpression><![CDATA[$F{orgnationaltaxid}]]></textFieldExpression>
@@ -185,12 +185,12 @@ JOIN C_Year py ON ( p.C_Year_ID=py.C_Year_ID )]]>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{f52}]]></textFieldExpression>
 			</textField>
-			<textField pattern="#,##0.00#">
+			<textField pattern="#,##0.00#" isBlankWhenNull="true">
 				<reportElement style="Monospace Form Fill" x="454" y="108" width="108" height="20" uuid="9b8ca4a2-f61f-4aac-811a-4078aad64ebe"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle"/>
 				<textFieldExpression><![CDATA[$F{f53}]]></textFieldExpression>
 			</textField>
-			<textField pattern="#,##0.00#">
+			<textField pattern="#,##0.00#" isBlankWhenNull="true">
 				<reportElement style="Monospace Form Fill" x="454" y="288" width="108" height="20" uuid="8522c77a-05e8-4348-b993-04a703d5b39c"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle"/>
 				<textFieldExpression><![CDATA[$F{f67}]]></textFieldExpression>
