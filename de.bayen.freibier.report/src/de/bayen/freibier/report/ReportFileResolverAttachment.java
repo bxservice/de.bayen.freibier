@@ -6,6 +6,8 @@ import java.io.InputStream;
 
 import net.sf.jasperreports.engine.util.FileResolver;
 
+import org.adempiere.exceptions.AdempiereException;
+import org.compiere.model.MAttachment;
 import org.compiere.model.MAttachmentEntry;
 import org.compiere.model.PO;
 
@@ -25,7 +27,12 @@ public class ReportFileResolverAttachment extends ReportFileResolver {
 		// (someone can implement a database refresh method if needed)
 		String fullSuffix = suffix != null ? "." + suffix : "";
 		String fullPath = (path!=null&&path.length()>0? path+ "/":"") + name + fullSuffix;
-		MAttachmentEntry[] entries = record.getAttachment().getEntries();
+		if(record==null)
+			throw new AdempiereException("no record choosen for report attachment");
+		MAttachment attachment = record.getAttachment();
+		if(attachment==null)
+			return null;
+		MAttachmentEntry[] entries = attachment.getEntries();
 		for (MAttachmentEntry entry : entries) {
 			if(entry.getName().equals(fullPath)){
 				return false;
@@ -43,7 +50,12 @@ public class ReportFileResolverAttachment extends ReportFileResolver {
 			String suffix) {
 		String fullSuffix = suffix != null ? "." + suffix : "";
 		String fullPath = (path!=null&&path.length()>0? path+ "/":"") + name + fullSuffix;
-		MAttachmentEntry[] entries = record.getAttachment().getEntries();
+		if(record==null)
+			throw new AdempiereException("no record choosen for report attachment");
+		MAttachment attachment = record.getAttachment();
+		if(attachment==null)
+			return null;
+		MAttachmentEntry[] entries = attachment.getEntries();
 		for (MAttachmentEntry entry : entries) {
 			if(entry.getName().equals(fullPath)){
 				ByteArrayInputStream strm = new ByteArrayInputStream(entry.getData());
