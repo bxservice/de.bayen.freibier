@@ -122,6 +122,7 @@ public class ReportStarter implements ProcessCall, ClientProcess {
 	public static final String JCTX_AD_LANGUAGE = "AD_Language";
 	public static final String JCTX_CONTEXT = "CONTEXT";
 	public static final String JCTX_RECORD_ID = "RECORD_ID";
+	public static final String JCTX_TABLE_ID = "TABLE_ID";
 	public static final String JCTX_TAB_WHERE = "TAB_WHERE";
 	public static final String JCTX_TAB_ORDER = "TAB_ORDER";
 	public static final String JCTX_GUI_SORT = "GUI_SORT";
@@ -572,6 +573,8 @@ public class ReportStarter implements ProcessCall, ClientProcess {
 
 		if (pi.getRecord_ID() > 0)
 			params.put(JCTX_RECORD_ID, new Integer(pi.getRecord_ID()));
+		if(pi.getTable_ID() > 0)
+			params.put(JCTX_TABLE_ID, new Integer(pi.getTable_ID()));
 
 		// IDEMPIERE-270, IDEMPIERE-1718 - inherit search filter from window /
 		// tbayen
