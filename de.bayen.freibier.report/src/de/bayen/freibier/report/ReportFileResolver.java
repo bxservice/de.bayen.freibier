@@ -122,9 +122,14 @@ abstract public class ReportFileResolver implements FileResolver {
 		InputStream originalFileStream = loadOriginalFileAsStream(path, name, suffix);
 		if (originalFileStream == null) {
 			if (SUFFIX_JASPER.equals(suffix)) {
-				File jrxmlFile = loadFile(path, name, SUFFIX_JRXML);
-				if (jrxmlFile != null)
-					return compileJrxml(cacheDir + "/" + path + name);
+				File cacheFileJrxml = new File(cacheDir+"/"+path+name+"."+SUFFIX_JRXML);
+				if(checkCacheFreshness(cacheFileJrxml, path, name, "."+SUFFIX_JRXML)==Boolean.TRUE)
+					return cacheFile;
+				else{
+					File jrxmlFile = loadFile(path, name, SUFFIX_JRXML);
+					if (jrxmlFile != null)
+						return compileJrxml(cacheDir + "/" + path + name);
+				}
 			}
 			return null;
 		} else {

@@ -48,19 +48,37 @@ public class ReportFileResolverFileSystem extends ReportFileResolver {
 
 	@Override
 	protected Boolean checkCacheFreshness(File cacheFile, String path, String name, String suffix) {
+		if(SUFFIX_JASPER.equals(suffix))
+			return null;
+		
 		String fullSuffix = suffix != null ? "." + suffix : "";
 		String fullPath = REPORT_HOME + "/" + path + name + fullSuffix;
+		File file = new File(fullPath);
+		if(!file.exists())
+			return null;
 		if (cacheFile == null || !cacheFile.exists()){
-			if(new File(fullPath).exists())
-				return false;
-			else
-				return null;
+			return false;
+		}else{
+			return cacheFile.lastModified() > file.lastModified();
 		}
-		return cacheFile.lastModified() > new File(fullPath).lastModified();
 	}
 
 	@Override
 	protected InputStream loadOriginalFileAsStream(String path, String name, String suffix) {
+		/*
+		 * In most cases it it not a good idea to save *.jasper files in
+		 * filesystem. They tend to be created with a wrong version of
+		 * JasperReports. If you really want to save the compiling time the
+		 * cache needs with the first call you can create a plugin. Not reading
+		 * *.jasper files here allows to set a symbolic link from the "reports/"
+		 * directory to your JasperStudio project directory.
+		 * 
+		 * If you really think it is needed to read *.jasper files one can make
+		 * this feature configurable.
+		 */
+		if(SUFFIX_JASPER.equals(suffix))
+			return null;
+		//
 		String fullSuffix = suffix != null ? "." + suffix : "";
 		String fullPath = REPORT_HOME + "/" + path + name + fullSuffix;
 		try {
