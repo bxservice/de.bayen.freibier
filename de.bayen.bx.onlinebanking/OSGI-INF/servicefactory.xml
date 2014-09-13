@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" name="de.bayen.bx.onlinebanking.ServiceFactory">
+   <implementation class="de.bayen.bx.onlinebanking.ServiceFactory"/>
+   <property name="service.ranking" type="Integer" value="10"/>
+   <service>
+      <provide interface="org.adempiere.base.IProcessFactory"/>
+      <provide interface="org.adempiere.base.IBankStatementLoaderFactory"/>
+      <provide interface="org.adempiere.base.IModelFactory"/>
+      <provide interface="org.adempiere.base.IModelValidatorFactory"/>
+   </service>
+</scr:component>

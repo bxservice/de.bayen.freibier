@@ -1,0 +1,22 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: de.bayen.bx.onlinebanking
+Bundle-SymbolicName: de.bayen.bx.onlinebanking
+Bundle-Version: 1.0.1.qualifier
+Bundle-Activator: de.bayen.bx.onlinebanking.Activator
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Import-Package: org.adempiere.base,
+ org.adempiere.exceptions,
+ org.adempiere.model,
+ org.adempiere.util,
+ org.compiere.impexp,
+ org.compiere.model,
+ org.compiere.process,
+ org.compiere.util,
+ org.osgi.framework;version="1.3.0"
+Bundle-ActivationPolicy: lazy
+Bundle-Vendor: Thomas Bayen, BX Service GmbH
+Service-Component: OSGI-INF/servicefactory.xml,OSGI-INF/calloutfactory.xml,
+ OSGI-INF/bankstatementmatcherfactory.xml
+Bundle-ClassPath: .,
+ libs/hbci4java-2.5.13-SNAPSHOT.jar
