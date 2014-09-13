@@ -1,0 +1,5 @@
+name;servername;certdir;certfile;keyfile;cacertfile;rootpw;adminuser;adminpw;postgrespw
+bxservice;bxservice.bx-erp.de;;;;;;;;
+interchange;interchange.bx-erp.de;;;;;;;;
+sigmundbauer;sigmundbauer.bx-erp.de;/home/tbayen/Projekte/Certs/ca;sigmundbauer-bx-erp-de-cert.pem;sigmundbauer-bx-erp-de-key.pem;cacert.pem;ixak7Bie5u;teingakeW8;zeeJi4oosh;uu0OoLukoh
+tiny;tiny.bx-erp.de;/home/tbayen/Projekte/Certs/ca;tiny-bx-erp-de-cert.pem;tiny-bx-erp-de-key.pem;cacert.pem;xe3Yeeph4j;oax9aiJ8oh;Apu9sheigh;shuTi1oVie

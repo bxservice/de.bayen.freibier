@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# Holt Daten aus der Datenbank der Installationen
+# Diese Implementierung benutzt eine CSV-Textdatei, kann aber später auch durch
+# eine andere Implementierung ersetzt werden.
+# 
+# Beispiel:
+# ./simpleDB installations read interchange postgresuser
+#
+# Format der Datei (erste Spalte ist der Schlüssel):
+# name;servername;username;postgresuser
+
+TABLE=$1
+COMMAND=$2
+KEY=$3
+COLUMN=$4
+
+
+if [ "${COMMAND}" == "read" ]
+then
+  cat ${TABLE}-db.txt | csvtool -t ';' -u ';' namedcol name,${COLUMN} - | grep ^${KEY} | csvtool -t ';' col 2 -
+
+
+elif [ "${COMMAND}" == "list" ]
+then
+  cat ${TABLE}-db.txt | csvtool -t ';' -u ';' namedcol name -
+
+
+else
+  cat<<ENDTEXT
+usage:
+  simpleDB installations list
+  simpleDB installations read interchange postgresuser
+ENDTEXT
+fi

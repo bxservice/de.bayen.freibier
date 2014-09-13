@@ -8,9 +8,10 @@ set -u
 COMMAND=${1:-help}
 INSTALLATION=${2:-test}
 LINUXUSER=`./simpleDB installations read ${INSTALLATION} username`
-SERVER=`./simpleDB installations read ${INSTALLATION} servername`
+SERVER=`./simpleDB installations read ${INSTALLATION} server`
+SERVERNAME=`./simpleDB server read ${SERVER} servername`
 POSTGRESUSER=`./simpleDB installations read ${INSTALLATION} postgresuser`
-SSHTARGET=${LINUXUSER}@${SERVER}
+SSHTARGET=${LINUXUSER}@${SERVERNAME}
 LOCALDBSERVER=localhost
 LOCALDBUSER=adempiere
 LOCALDB=${INSTALLATION}
@@ -20,6 +21,8 @@ if [ "${COMMAND}" == "db2local" ]
 then
   ssh ${SSHTARGET} ./backup.sh
   psql -h ${LOCALDBSERVER} -U ${LOCALDBUSER} ${LOCALDB} -c "DROP DATABASE IF EXISTS ${LOCALDB}_killme;"
+  # kill all other connections to this database
+  psql -h ${LOCALDBSERVER} -U ${LOCALDBUSER} postgres -c "SELECT pg_terminate_backend(procpid) FROM  pg_stat_activity WHERE procpid <> pg_backend_pid() AND datname = '${LOCALDB}'"
   psql -h ${LOCALDBSERVER} -U ${LOCALDBUSER} postgres -c "ALTER DATABASE ${LOCALDB} RENAME TO ${LOCALDB}_killme;"
   psql -h ${LOCALDBSERVER} -U ${LOCALDBUSER} postgres -c "CREATE DATABASE ${LOCALDB} WITH ENCODING='UTF-8' OWNER=${LOCALDBUSER};"
   LASTBACKUP=`ssh ${SSHTARGET} "ls -t backup | head -n 1"`
@@ -37,6 +40,11 @@ then
   ./deploy.sh install ${LINUXUSER} ${SERVER} ${POSTGRESUSER} ${IDEMPIERESOURCEDIR}
 
 
+elif [ "${COMMAND}" == "list" ]
+then
+  ./simpleDB installations list
+
+
 elif [ "${COMMAND}" == "help" ]
 then
   cat <<ENDTEXT
@@ -44,6 +52,7 @@ iDempiere cloud director written by Thomas Bayen
 
 usage:
   cloudDirector help                  - this help text
+  cloudDirector list                  - lists all installation names
   cloudDirector db2local instname     - copy database from cloud server to local system. 
                                         The installation name is used as the local database name. Be
                                         sure that the database is not in use and no local server or
