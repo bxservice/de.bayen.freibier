@@ -1,7 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Created with Jaspersoft Studio version last-->
-<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Zusammenfassende Meldung" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="eafe6287-970c-4133-ad72-ea55c6c4b652">
+<!-- Created with Jaspersoft Studio version 5.6.1.final using JasperReports Library version 5.6.1  -->
+<!-- 2014-09-07T21:49:17 -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Zusammenfassende Meldung" pageWidth="595" pageHeight="842" columnWidth="511" leftMargin="56" rightMargin="28" topMargin="28" bottomMargin="28" uuid="eafe6287-970c-4133-ad72-ea55c6c4b652">
 	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="BXService local"/>
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.topMargin" value="cm"/>
+	<property name="com.jaspersoft.studio.unit.bottomMargin" value="cm"/>
+	<property name="com.jaspersoft.studio.unit.leftMargin" value="cm"/>
+	<property name="com.jaspersoft.studio.unit.rightMargin" value="cm"/>
+	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
 	<template><![CDATA["Report Styles.jrtx"]]></template>
 	<parameter name="AD_Client_ID" class="java.lang.Integer" isForPrompting="false">
 		<defaultValueExpression><![CDATA[1000000]]></defaultValueExpression>
@@ -57,7 +67,8 @@ JOIN AD_OrgInfo orgInfo ON ( org.AD_Org_ID=orgInfo.AD_Org_ID )
 JOIN C_Location orgLoc ON(orgLoc.C_Location_ID=orgInfo.C_Location_ID)
 JOIN C_BPartner fa ON ( fa.C_BPartner_ID=orgInfo.TaxAuthority_ID AND fa.isActive='Y' )
 JOIN C_Period p ON ( p.C_Period_ID= $P{C_Period_ID}::integer )
-JOIN C_Year py ON ( p.C_Year_ID=py.C_Year_ID )]]>
+JOIN C_Year py ON ( p.C_Year_ID=py.C_Year_ID )
+WHERE zeilen.TaxBaseAmtCeiling != 0]]>
 	</queryString>
 	<field name="orgname" class="java.lang.String"/>
 	<field name="taxid" class="java.lang.String"/>
@@ -79,20 +90,15 @@ JOIN C_Year py ON ( p.C_Year_ID=py.C_Year_ID )]]>
 	<field name="fiscalyear" class="java.lang.String"/>
 	<field name="orgtaxid" class="java.lang.String"/>
 	<background>
-		<band height="801" splitType="Stretch">
+		<band height="785" splitType="Stretch">
 			<property name="local_mesure_unitheight" value="pixel"/>
 			<property name="com.jaspersoft.studio.unit.height" value="px"/>
 			<textField pattern="dd.MM.yyyy HH:mm">
-				<reportElement style="Footer Font" x="0" y="780" width="133" height="12" uuid="f581602e-cc27-4e2c-9470-cf864964e7c7"/>
+				<reportElement style="Footer Font" x="0" y="773" width="133" height="12" uuid="f581602e-cc27-4e2c-9470-cf864964e7c7"/>
 				<textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
 			</textField>
-			<textField evaluationTime="Report">
-				<reportElement style="Footer Font" x="535" y="780" width="22" height="12" uuid="8ad43562-bd2f-468a-bb6f-f1ca6d6d839d"/>
-				<textElement textAlignment="Left"/>
-				<textFieldExpression><![CDATA[" von " + $V{PAGE_NUMBER}]]></textFieldExpression>
-			</textField>
 			<textField>
-				<reportElement style="Footer Font" x="493" y="780" width="42" height="12" uuid="fc694bc8-ca02-4ff5-998e-d335ad18fed7"/>
+				<reportElement style="Footer Font" x="468" y="773" width="42" height="12" uuid="fc694bc8-ca02-4ff5-998e-d335ad18fed7"/>
 				<textElement textAlignment="Right"/>
 				<textFieldExpression><![CDATA["Seite " + $V{PAGE_NUMBER}]]></textFieldExpression>
 			</textField>
@@ -101,14 +107,14 @@ JOIN C_Year py ON ( p.C_Year_ID=py.C_Year_ID )]]>
 	<title>
 		<band height="195" splitType="Stretch">
 			<staticText>
-				<reportElement style="Report Header" x="0" y="0" width="554" height="36" uuid="ee618fd1-0d4b-416c-be2b-6a3a344a38d4"/>
+				<reportElement style="Report Header" x="0" y="0" width="504" height="36" uuid="ee618fd1-0d4b-416c-be2b-6a3a344a38d4"/>
 				<textElement textAlignment="Center">
 					<font isUnderline="true"/>
 				</textElement>
 				<text><![CDATA[Zusammenfassende Meldung]]></text>
 			</staticText>
 			<textField>
-				<reportElement style="Report Monospace Font" x="384" y="49" width="156" height="20" uuid="947fe9bb-d68d-4b2a-a481-8b214cc03a2e"/>
+				<reportElement style="Report Monospace Font" x="360" y="48" width="144" height="20" uuid="947fe9bb-d68d-4b2a-a481-8b214cc03a2e"/>
 				<textElement>
 					<font size="10"/>
 				</textElement>
@@ -138,7 +144,7 @@ JOIN C_Year py ON ( p.C_Year_ID=py.C_Year_ID )]]>
 				<text><![CDATA[Steuernummer]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="324" y="49" width="60" height="20" uuid="3125bea1-b5dd-4ca2-bf74-423b9effccd8"/>
+				<reportElement x="300" y="48" width="60" height="20" uuid="3125bea1-b5dd-4ca2-bf74-423b9effccd8"/>
 				<text><![CDATA[Finanzamt:]]></text>
 			</staticText>
 			<staticText>
@@ -167,16 +173,16 @@ JOIN C_Year py ON ( p.C_Year_ID=py.C_Year_ID )]]>
 				<text><![CDATA[USt-ID Nr. des Erwerbers in einem anderen EU- Mitgliedsstaat]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="252" y="1" width="144" height="36" uuid="235b20ee-9e4e-45f5-838b-7f78c6ad3511"/>
+				<reportElement x="252" y="1" width="132" height="36" uuid="235b20ee-9e4e-45f5-838b-7f78c6ad3511"/>
 				<text><![CDATA[Summe der Bemessungsgrundlagen (volle Euro)]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="432" y="0" width="122" height="36" uuid="e97958e4-2667-4472-a38a-ddcf4a910f77"/>
+				<reportElement x="384" y="1" width="122" height="36" uuid="e97958e4-2667-4472-a38a-ddcf4a910f77"/>
 				<text><![CDATA[Sonstige Leistungen=1
 Dreiecksgeschäfte=2]]></text>
 			</staticText>
 			<line>
-				<reportElement x="0" y="36" width="554" height="1" uuid="6d6f955b-d12a-4f24-a50e-e47268d3219e">
+				<reportElement x="0" y="37" width="505" height="1" uuid="6d6f955b-d12a-4f24-a50e-e47268d3219e">
 					<property name="local_mesure_unitx" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="px"/>
 					<property name="local_mesure_unitwidth" value="pixel"/>
@@ -204,7 +210,7 @@ Dreiecksgeschäfte=2]]></text>
 				<textFieldExpression><![CDATA[$F{taxbaseamtceiling}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement style="Report Monospace Font" x="432" y="0" width="96" height="24" uuid="18e08d7c-d365-4ae6-8e46-b8f579dfc7c7"/>
+				<reportElement style="Report Monospace Font" x="396" y="0" width="96" height="24" uuid="18e08d7c-d365-4ae6-8e46-b8f579dfc7c7"/>
 				<textElement textAlignment="Center" verticalAlignment="Middle"/>
 				<textFieldExpression><![CDATA[$F{sonstleisdreieck}]]></textFieldExpression>
 			</textField>
@@ -214,7 +220,7 @@ Dreiecksgeschäfte=2]]></text>
 				<textFieldExpression><![CDATA[($F{taxid}!=null?$F{taxid}.substring(0,2):null)]]></textFieldExpression>
 			</textField>
 			<line>
-				<reportElement x="0" y="24" width="554" height="1" uuid="06a60a0f-f71a-431a-90b5-40cb96992c00">
+				<reportElement x="0" y="24" width="506" height="1" uuid="06a60a0f-f71a-431a-90b5-40cb96992c00">
 					<property name="local_mesure_unity" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="px"/>
 					<property name="local_mesure_unitx" value="pixel"/>
@@ -231,4 +237,16 @@ Dreiecksgeschäfte=2]]></text>
 	<pageFooter>
 		<band height="16" splitType="Stretch"/>
 	</pageFooter>
+	<summary>
+		<band height="1">
+			<property name="local_mesure_unitheight" value="pixel"/>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<break>
+				<reportElement x="0" y="0" width="99" height="1" uuid="16764f4b-04d1-4de9-ada3-aa6a6c374c47">
+					<property name="local_mesure_unity" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+				</reportElement>
+			</break>
+		</band>
+	</summary>
 </jasperReport>

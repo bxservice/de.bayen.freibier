@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Created with Jaspersoft Studio version last-->
+<!-- Created with Jaspersoft Studio version 5.6.1.final using JasperReports Library version 5.6.1  -->
+<!-- 2014-09-07T16:02:07 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Umsatzsteuer-Voranmeldung-p1" pageWidth="595" pageHeight="842" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" uuid="c494e5d9-548c-4abc-8811-6cd7f9f874f6">
 	<property name="com.jaspersoft.studio.unit." value="pixel"/>
 	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
@@ -144,28 +145,28 @@ JOIN C_Year py ON ( p.C_Year_ID=py.C_Year_ID )]]>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font size="10"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{f81}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{f81}.equals(BigDecimal.ZERO)?null:$F{f81}]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00#" isBlankWhenNull="true">
 				<reportElement style="Monospace Form Fill" x="462" y="461" width="108" height="20" uuid="fe986333-9eb4-4fbe-b67e-399e7628a8b0"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font size="10"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{f81b}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{f81b}.equals(BigDecimal.ZERO)?null:$F{f81b}]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.###;(#,##0.###-)" isBlankWhenNull="true">
 				<reportElement style="Monospace Form Fill" x="336" y="726" width="85" height="19" uuid="37e42ccf-80dd-4151-b265-a263647ca990"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font size="10"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{f21}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{f21}.equals(BigDecimal.ZERO)?null:$F{f21}]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.###;(#,##0.###-)" isBlankWhenNull="true">
 				<reportElement style="Monospace Form Fill" x="336" y="746" width="85" height="19" uuid="a2d488e3-b488-4db9-909f-ee0963b6c1f9"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font size="10"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{f45}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{f45}.equals(BigDecimal.ZERO)?null:$F{f45}]]></textFieldExpression>
 			</textField>
 			<textField>
 				<reportElement style="Monospace Form Fill" x="66" y="230" width="228" height="76" uuid="c864a691-39f0-4396-b2f1-d50006b96ae0"/>
@@ -259,35 +260,35 @@ JOIN C_Year py ON ( p.C_Year_ID=py.C_Year_ID )]]>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font size="10"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{f41}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{f41}.equals(BigDecimal.ZERO)?null:$F{f41}]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.###;(#,##0.###-)" isBlankWhenNull="true">
 				<reportElement style="Monospace Form Fill" x="337" y="406" width="84" height="19" uuid="20362e47-64cb-48a8-9ddb-a073aeb0ba2b"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font size="10"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{f43}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{f43}.equals(BigDecimal.ZERO)?null:$F{f43}]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.###;(#,##0.###-)" isBlankWhenNull="true">
 				<reportElement style="Monospace Form Fill" x="337" y="425" width="84" height="19" uuid="2f2e8092-0d79-4b0a-891a-0ab77cc843c7"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font size="10"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{f48}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{f48}.equals(BigDecimal.ZERO)?null:$F{f48}]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.###;(#,##0.###-)" isBlankWhenNull="true">
 				<reportElement style="Monospace Form Fill" x="336" y="479" width="84" height="19" uuid="c937c0a5-c284-4416-9541-df0417060445"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font size="10"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{f86}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{f86}.equals(BigDecimal.ZERO)?null:$F{f86}]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00#" isBlankWhenNull="true">
 				<reportElement style="Monospace Form Fill" x="462" y="478" width="108" height="20" uuid="6e8edc02-22cc-464e-a8f5-6fe690538523"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font size="10"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{f86b}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{f86b}.equals(BigDecimal.ZERO)?null:$F{f86b}]]></textFieldExpression>
 			</textField>
 			<textField>
 				<reportElement style="Monospace Form Fill" x="66" y="120" width="229" height="72" uuid="ecaab33f-73cc-47bb-888a-c64ab44e5760"/>

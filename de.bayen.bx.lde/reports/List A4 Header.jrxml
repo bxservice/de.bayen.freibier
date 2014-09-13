@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 5.6.1.final using JasperReports Library version 5.6.1  -->
+<!-- 2014-09-07T13:48:27 -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="List Header" pageWidth="510" pageHeight="842" columnWidth="510" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" uuid="c3e1d1f3-0fe0-4a69-a9a1-f220fd61495c">
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.topMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.bottomMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.leftMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="BXService local"/>
+	<template><![CDATA[$P{SUBREPORT_DIR}+"Report Styles.jrtx"]]></template>
+	<parameter name="C_Period_ID" class="java.lang.Integer" isForPrompting="false">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+		<defaultValueExpression><![CDATA[1000005]]></defaultValueExpression>
+	</parameter>
+	<parameter name="AD_Client_ID" class="java.lang.Integer" isForPrompting="false">
+		<defaultValueExpression><![CDATA[1000000]]></defaultValueExpression>
+	</parameter>
+	<parameter name="SUBREPORT_DIR" class="java.lang.String" isForPrompting="false">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+		<defaultValueExpression><![CDATA["C_Invoice_list/"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="AD_Org_ID" class="java.lang.Integer" isForPrompting="false">
+		<defaultValueExpression><![CDATA[1000000]]></defaultValueExpression>
+	</parameter>
+	<parameter name="AD_PInstance_ID" class="java.lang.Integer" isForPrompting="false"/>
+	<parameter name="AD_Language" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["de_DE"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="REPORT_TITLE" class="java.lang.String" isForPrompting="false">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+	</parameter>
+	<queryString language="SQL">
+		<![CDATA[WITH param AS(
+SELECT
+	$P{AD_PInstance_ID}::integer AS p_AD_PInstance_ID,
+	$P{AD_Language}::text AS  p_AD_Language,
+	$P{AD_Org_ID}::integer AS p_AD_Org_ID,
+    $P{REPORT_TITLE}::text AS p_ReportTitle,
+    $P{C_Period_ID}::integer AS p_C_Period_ID
+)
+SELECT 
+  COALESCE(p_ReportTitle, AD_Process_Trl.Name, 'Bericht') AS reportName,
+  AD_Org.Name AS orgName,
+  AD_OrgInfo.Logo_ID::integer,
+  per.Name AS periodName
+FROM AD_PInstance 
+RIGHT JOIN param ON (AD_PInstance_ID=p_AD_PInstance_ID)
+LEFT JOIN AD_Process using(AD_Process_ID)
+LEFT JOIN AD_Process_Trl ON ( 
+	AD_Process_Trl.AD_Process_ID=AD_Process.AD_Process_ID 
+	AND AD_Process_Trl.AD_Language=p_AD_Language
+)
+LEFT JOIN AD_Org ON (AD_Org.AD_Org_ID = p_AD_Org_ID)
+LEFT JOIN AD_OrgInfo ON (AD_OrgInfo.AD_Org_ID = p_AD_Org_ID)
+LEFT JOIN C_Period per ON ( per.C_Period_ID=p_C_Period_ID )
+]]>
+	</queryString>
+	<field name="reportname" class="java.lang.String"/>
+	<field name="orgname" class="java.lang.String"/>
+	<field name="logo_id" class="java.lang.Integer"/>
+	<field name="periodname" class="java.lang.String"/>
+	<title>
+		<band height="42" splitType="Stretch">
+			<property name="local_mesure_unitheight" value="pixel"/>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<textField>
+				<reportElement style="Report Header" mode="Opaque" x="0" y="0" width="510" height="36" backcolor="#C0C0C0" uuid="5b98f898-64f5-4198-9821-7912fa87b28a">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{reportname}+($F{periodname}==null?"":" - "+$F{periodname})]]></textFieldExpression>
+			</textField>
+			<image>
+				<reportElement x="3" y="3" width="144" height="24" backcolor="#FFFFFF" uuid="553e4f85-a562-4863-853d-c53076ae1d77">
+					<property name="local_mesure_unitx" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="local_mesure_unity" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<imageExpression><![CDATA["AD_Image:"+Integer.toString($F{logo_id})+".png"]]></imageExpression>
+			</image>
+			<textField>
+				<reportElement key="" style="Header Font" x="363" y="3" width="144" height="24" uuid="3be0cec3-ec9c-40ab-8bed-7632d9e74448">
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression><![CDATA[$F{orgname}]]></textFieldExpression>
+			</textField>
+		</band>
+	</title>
+</jasperReport>

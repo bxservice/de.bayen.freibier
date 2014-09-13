@@ -1,0 +1,349 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 5.6.1.final using JasperReports Library version 5.6.1  -->
+<!-- 2014-09-07T00:39:51 -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="List RV_Fact_Acct" pageWidth="510" pageHeight="842" columnWidth="510" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" uuid="b5db27a8-6f78-4683-8806-33f854a720b0">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="BXService local"/>
+	<template><![CDATA[$P{SUBREPORT_DIR}+"Report Styles.jrtx"]]></template>
+	<parameter name="SUBREPORT_DIR" class="java.lang.String" isForPrompting="false">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+		<defaultValueExpression><![CDATA["C_Invoice_list/"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="AD_Client_ID" class="java.lang.Integer" isForPrompting="false">
+		<defaultValueExpression><![CDATA[1000000]]></defaultValueExpression>
+	</parameter>
+	<parameter name="AD_User_ID" class="java.lang.Integer" isForPrompting="false">
+		<defaultValueExpression><![CDATA[1000002]]></defaultValueExpression>
+	</parameter>
+	<parameter name="AD_Language" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["de_DE"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="AD_PInstance_ID" class="java.lang.Integer" isForPrompting="false">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+	</parameter>
+	<parameter name="AD_Org_ID" class="java.lang.Integer" isForPrompting="false">
+		<defaultValueExpression><![CDATA[1000000]]></defaultValueExpression>
+	</parameter>
+	<parameter name="C_Period_ID" class="java.lang.Integer">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+	</parameter>
+	<parameter name="StartDate" class="java.util.Date"/>
+	<parameter name="EndDate" class="java.util.Date"/>
+	<parameter name="IsSOTrx" class="java.lang.String" isForPrompting="false">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+		<defaultValueExpression><![CDATA["Y"]]></defaultValueExpression>
+	</parameter>
+	<queryString language="SQL">
+		<![CDATA[WITH params AS (
+  SELECT 
+	$P{AD_Client_ID}::integer AS p_AD_Client_ID,
+    $P{AD_Language} ::text AS p_AD_Language,
+  /* optional */
+  $P{C_Period_ID}::integer AS p_C_Period_ID,
+	COALESCE($P{StartDate}::date, 
+		(SELECT startDate FROM C_Period WHERE C_Period_ID=$P{C_Period_ID}::integer)
+	) AS p_startDate,
+	COALESCE($P{EndDate}::date, 
+		(SELECT endDate FROM C_Period WHERE C_Period_ID=$P{C_Period_ID}::integer)
+	) AS p_endDate
+),
+docs AS (
+SELECT
+	/* C_Invoice */
+	318 AS AD_Table_ID,
+	C_Invoice_ID AS Record_ID,
+	d.AD_Client_ID, d.AD_Org_ID,
+	d.IsActive, d.CreatedBy, d.Created, d.Updatedby, d.Updated,
+	d.IsApproved, d.IsPrinted, d.Processed, d.Posted, d.ProcessedOn,
+	dt.Name AS docTypeName,
+	dt.printName AS docTypePrintName,
+	d.DocumentNo, d.DateAcct, d.DateInvoiced AS DateTrx,
+	d.Description,
+	d.DocStatus, d.Reversal_ID
+	FROM C_Invoice d
+	CROSS JOIN params
+	LEFT JOIN C_DocType dt ON (d.C_DocType_ID=dt.C_DocType_ID)
+	WHERE d.AD_Client_ID=p_AD_Client_ID
+UNION SELECT
+	/* GL_Journal */
+	224 AS AD_Table_ID,
+	GL_Journal_ID AS Record_ID,
+	d.AD_Client_ID, d.AD_Org_ID,
+	d.IsActive, d.CreatedBy, d.Created, d.Updatedby, d.Updated,
+	d.IsApproved, d.IsPrinted, d.Processed, d.Posted, d.ProcessedOn,
+	dt.Name AS docTypeName,
+	dt.printName AS docTypePrintName,
+	d.DocumentNo, d.DateAcct, d.DateDoc AS DateTrx,
+	d.Description,
+	d.DocStatus, d.Reversal_ID
+	FROM GL_Journal d
+	CROSS JOIN params
+	LEFT JOIN C_DocType dt ON (d.C_DocType_ID=dt.C_DocType_ID)
+	WHERE d.AD_Client_ID=p_AD_Client_ID
+UNION SELECT
+	/* C_Payment */
+	335 AS AD_Table_ID,
+	C_Payment_ID AS Record_ID,
+	d.AD_Client_ID, d.AD_Org_ID,
+	d.IsActive, d.CreatedBy, d.Created, d.Updatedby, d.Updated,
+	d.IsApproved, null AS IsPrinted, d.Processed, d.Posted, d.ProcessedOn,
+	dt.Name AS docTypeName,
+	dt.printName AS docTypePrintName,
+	d.DocumentNo, d.DateAcct, d.DateTrx AS DateTrx,
+	d.Description,
+	d.DocStatus, d.Reversal_ID
+	FROM C_Payment d
+	CROSS JOIN params
+	LEFT JOIN C_DocType dt ON (d.C_DocType_ID=dt.C_DocType_ID)
+	WHERE d.AD_Client_ID=p_AD_Client_ID
+UNION SELECT
+	/* C_BankStatement */
+	392 AS AD_Table_ID,
+	C_BankStatement_ID AS Record_ID,
+	d.AD_Client_ID, d.AD_Org_ID,
+	d.IsActive, d.CreatedBy, d.Created, d.Updatedby, d.Updated,
+	d.IsApproved, null AS IsPrinted, d.Processed, d.Posted, d.ProcessedOn,
+	AD_Table_Trl.Name AS docTypeName,
+	AD_Table_Trl.Name AS docTypePrintName,
+	d.Name AS DocumentNo, d.DateAcct, d.StatementDate AS DateTrx,
+	d.Description,
+	d.DocStatus, null AS Reversal_ID
+	FROM C_BankStatement d
+	CROSS JOIN params
+	LEFT JOIN AD_Table_Trl ON(AD_Table_Trl.AD_Table_ID=392 AND AD_Table_Trl.AD_Language=p_AD_Language)
+	WHERE d.AD_Client_ID=p_AD_Client_ID
+UNION SELECT
+	/* C_AllocationHdr */
+	735 AS AD_Table_ID,
+	C_AllocationHdr_ID AS Record_ID,
+	d.AD_Client_ID, d.AD_Org_ID,
+	d.IsActive, d.CreatedBy, d.Created, d.Updatedby, d.Updated,
+	d.IsApproved, null AS IsPrinted, d.Processed, d.Posted, d.ProcessedOn,
+	AD_Table_Trl.Name AS docTypeName,
+	AD_Table_Trl.Name AS docTypePrintName,
+	d.DocumentNo, d.DateAcct, d.DateTrx AS DateTrx,
+	d.Description,
+	d.DocStatus,
+	CASE
+		WHEN d.Reversal_ID IS NOT NULL THEN d.Reversal_ID
+		WHEN ( 
+			/* An Allocation can link only reversed documents but is not reversed itself.
+			 * I don't want to see that. In this case I set the Reversal_ID to my own ID.
+			 */
+			SELECT count(*)
+			FROM C_AllocationLine
+			--LEFT JOIN C_Order ON (C_Order.C_Order_ID=C_AllocationLine.C_Order_ID)
+			LEFT JOIN C_Invoice ON (C_Invoice.C_Invoice_ID=C_AllocationLine.C_Invoice_ID)
+			LEFT JOIN C_Payment ON (C_Payment.C_Payment_ID=C_AllocationLine.C_Payment_ID)
+			WHERE (C_AllocationLine.C_AllocationHdr_ID=d.C_AllocationHdr_ID)
+			AND ((C_AllocationLine.C_Payment_ID IS NOT NULL AND C_Payment.Reversal_ID IS NULL)
+			OR (C_AllocationLine.C_Invoice_ID IS NOT NULL AND C_Invoice.Reversal_ID IS NULL))
+			--   OR (C_AllocationLine.C_Order_ID IS NOT NULL AND C_Order.Reversal_ID IS NULL)
+			--  AND C_AllocationLine.Amount=0
+		) > 0 THEN null
+		ELSE d.C_AllocationHdr_ID  /* myself */
+	END AS Reversal_ID
+	FROM C_AllocationHdr d
+	CROSS JOIN params
+	LEFT JOIN AD_Table_Trl ON(AD_Table_Trl.AD_Table_ID=735 AND AD_Table_Trl.AD_Language=p_AD_Language)
+	WHERE d.AD_Client_ID=p_AD_Client_ID
+)
+
+SELECT
+  SUM(CASE WHEN f.DateAcct>=p_startDate AND f.DateAcct<=p_endDate THEN f.AmtAcctDr ELSE null END) AS AmtAcctDr,
+  SUM(CASE WHEN f.DateAcct>=p_startDate AND f.DateAcct<=p_endDate THEN f.AmtAcctCr ELSE null END) AS AmtAcctCr,
+  /* Salden - geht das auch effektiver? */
+  (SELECT sum(f2.AmtAcct) FROM RV_Fact_Acct f2 WHERE f2.AD_Client_ID=p_AD_Client_ID 
+       AND f2.AccountValue=f.AccountValue
+       AND f2.DateAcct<p_startDate
+  ) AS AmtAccountRunningTotalStart,
+  (SELECT sum(f2.AmtAcct) FROM RV_Fact_Acct f2 WHERE f2.AD_Client_ID=p_AD_Client_ID 
+       AND f2.AccountValue=f.AccountValue
+       AND f2.DateAcct<=p_endDate
+  ) AS AmtAccountRunningTotalEnd,
+  f.AccountValue,
+  f.name AS AccountName
+FROM params
+CROSS JOIN RV_Fact_Acct f
+LEFT JOIN docs ON (docs.AD_Table_ID=f.AD_Table_ID AND docs.Record_ID=f.Record_ID)
+WHERE f.AD_Client_ID=p_AD_Client_ID
+  AND docs.Reversal_ID IS NULL /* no reversed postings */
+/* Das würde nur die in dieser Periode bebuchten Konten anzeigen
+AND f.DateAcct>=p_startDate AND f.DateAcct<=p_endDate
+*/
+GROUP BY
+  p_AD_Client_ID,
+  p_startDate,
+  p_endDate,
+  f.AccountValue,
+  f.name
+ORDER BY f.AccountValue]]>
+	</queryString>
+	<field name="amtacctdr" class="java.math.BigDecimal"/>
+	<field name="amtacctcr" class="java.math.BigDecimal"/>
+	<field name="accountvalue" class="java.lang.String"/>
+	<field name="accountname" class="java.lang.String"/>
+	<field name="amtaccountrunningtotalstart" class="java.math.BigDecimal"/>
+	<field name="amtaccountrunningtotalend" class="java.math.BigDecimal"/>
+	<variable name="amtaccountrunningtotalstart1" class="java.math.BigDecimal" calculation="Sum">
+		<variableExpression><![CDATA[$F{amtaccountrunningtotalstart}]]></variableExpression>
+	</variable>
+	<variable name="amtacctdr1" class="java.math.BigDecimal" calculation="Sum">
+		<variableExpression><![CDATA[$F{amtacctdr}]]></variableExpression>
+	</variable>
+	<variable name="amtacctcr1" class="java.math.BigDecimal" calculation="Sum">
+		<variableExpression><![CDATA[$F{amtacctcr}]]></variableExpression>
+	</variable>
+	<variable name="amtaccountrunningtotalend1" class="java.math.BigDecimal" calculation="Sum">
+		<variableExpression><![CDATA[$F{amtaccountrunningtotalend}]]></variableExpression>
+	</variable>
+	<columnHeader>
+		<band height="15">
+			<property name="local_mesure_unitheight" value="pixel"/>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<staticText>
+				<reportElement style="List Header 10" x="-2" y="0" width="218" height="15" uuid="fa8454d6-be6b-45e2-a7da-c14c18463267">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement verticalAlignment="Middle"/>
+				<text><![CDATA[Konto]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="List Header 10" x="216" y="0" width="72" height="15" uuid="a934be1d-af80-48a7-b033-b8d67d23f9f4">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<text><![CDATA[Beginn  ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="List Header 10" x="288" y="0" width="72" height="15" uuid="2aef65f2-bc22-4beb-872f-e650c9ea0652">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<text><![CDATA[S  ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="List Header 10" x="360" y="0" width="72" height="15" uuid="8b9fa8c5-089d-4a16-aff9-9db20372eb65">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<text><![CDATA[H  ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="List Header 10" x="432" y="0" width="78" height="15" uuid="2eb4253b-3a8e-4443-a6ee-79c71e1d6ccc">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<text><![CDATA[Saldo  ]]></text>
+			</staticText>
+			<line>
+				<reportElement x="0" y="14" width="510" height="1" uuid="99b7c001-e347-41a2-9616-1d71a8a0ea41">
+					<property name="local_mesure_unitx" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="local_mesure_unity" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+			</line>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="15" splitType="Stretch">
+			<property name="local_mesure_unitheight" value="pixel"/>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<textField>
+				<reportElement style="List 10" x="0" y="0" width="36" height="15" uuid="572dec52-37ed-4556-9d32-15275ab981fe">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{accountvalue}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="List 10" x="36" y="0" width="240" height="15" uuid="98e49387-39dc-4591-b75c-0bffc1aef9b1">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{accountname}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00 €;-#,##0.00 €" isBlankWhenNull="true">
+				<reportElement style="List 10" mode="Opaque" x="216" y="0" width="72" height="15" uuid="f1b50b34-7fa6-458d-9d21-eb9c0953b47d">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{amtaccountrunningtotalstart}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00 €;-#,##0.00 €" isBlankWhenNull="true">
+				<reportElement style="List 10" x="288" y="0" width="72" height="15" uuid="f0e3c641-f6df-4df6-b67e-ba5d92768d70">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{amtacctdr}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00 €;-#,##0.00 €" isBlankWhenNull="true">
+				<reportElement style="List 10" x="432" y="0" width="72" height="15" uuid="2596b416-6679-4c93-bb4e-5b3df793107a">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{amtaccountrunningtotalend}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00 €;-#,##0.00 €" isBlankWhenNull="true">
+				<reportElement style="List 10" x="360" y="0" width="72" height="15" uuid="8476f92e-4e45-4669-b2d7-ca38721f584b">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{amtacctcr}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<summary>
+		<band height="15">
+			<property name="local_mesure_unitheight" value="pixel"/>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<textField pattern="#,##0.00 €;-#,##0.00 €" isBlankWhenNull="true">
+				<reportElement style="List Header 10" x="216" y="0" width="72" height="15" uuid="33c12193-bad4-462c-8a6a-0a7e8dfb8301">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$V{amtaccountrunningtotalstart1}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00 €;-#,##0.00 €" isBlankWhenNull="true">
+				<reportElement style="List Header 10" x="288" y="0" width="72" height="15" uuid="6f1d3c64-17c3-4bbf-9bb9-b005a9d77b19">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$V{amtacctdr1}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00 €;-#,##0.00 €" isBlankWhenNull="true">
+				<reportElement style="List Header 10" x="360" y="0" width="72" height="15" uuid="2db3206e-6a17-47fd-8e0b-fa71bb033b09">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$V{amtacctcr1}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00 €;-#,##0.00 €" isBlankWhenNull="true">
+				<reportElement style="List Header 10" x="432" y="0" width="72" height="15" uuid="b6cc2d0e-22f6-48ca-8f1f-62b77ba91f85">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$V{amtaccountrunningtotalend1}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="0" y="0" width="510" height="1" uuid="1cae1772-3b13-488d-ae6c-1e6d97af29f6">
+					<property name="local_mesure_unitx" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="local_mesure_unity" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+			</line>
+		</band>
+	</summary>
+</jasperReport>

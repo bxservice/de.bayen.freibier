@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version last-->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="List Header" pageWidth="512" pageHeight="842" columnWidth="512" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" uuid="c3e1d1f3-0fe0-4a69-a9a1-f220fd61495c">
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="BXService local"/>
+	<template><![CDATA[$P{SUBREPORT_DIR}+"Report Styles.jrtx"]]></template>
+	<parameter name="SUBREPORT_DIR" class="java.lang.String" isForPrompting="false">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+		<defaultValueExpression><![CDATA["C_Invoice_list/"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="AD_Client_ID" class="java.lang.Integer" isForPrompting="false">
+		<defaultValueExpression><![CDATA[1000000]]></defaultValueExpression>
+	</parameter>
+	<parameter name="AD_User_ID" class="java.lang.Integer" isForPrompting="false">
+		<defaultValueExpression><![CDATA[1000002]]></defaultValueExpression>
+	</parameter>
+	<parameter name="AD_Language" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["de_DE"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="AD_PInstance_ID" class="java.lang.Integer" isForPrompting="false"/>
+	<parameter name="AD_Org_ID" class="java.lang.Integer" isForPrompting="false">
+		<defaultValueExpression><![CDATA[1000000]]></defaultValueExpression>
+	</parameter>
+	<parameter name="C_Period_ID" class="java.lang.Integer">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+	</parameter>
+	<parameter name="StartDate" class="java.util.Date"/>
+	<parameter name="EndDate" class="java.util.Date"/>
+	<parameter name="IsSOTrx" class="java.lang.String" isForPrompting="false">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+	</parameter>
+	<parameter name="PAGE_NUMBER" class="java.lang.Integer" isForPrompting="false">
+		<defaultValueExpression><![CDATA[1]]></defaultValueExpression>
+	</parameter>
+	<queryString language="SQL">
+		<![CDATA[WITH p AS(
+SELECT
+	$P{C_Period_ID}::integer AS p_C_Period_ID,
+	$P{StartDate}::date AS p_startDate,
+	$P{EndDate}::date AS p_endDate,
+	$P{AD_Language}::text AS  p_AD_Language,
+	$P{AD_User_ID}::integer AS p_AD_User_ID
+)
+SELECT
+	AD_User.Name AS userName,
+	p_startDate AS startDate,
+	p_endDate AS endDate,
+	C_Period.Name AS periodName
+FROM AD_User
+	CROSS JOIN p
+	LEFT JOIN C_Period ON ( C_Period.C_Period_ID = p_C_Period_ID )
+WHERE AD_User.AD_User_ID=p_AD_User_ID]]>
+	</queryString>
+	<field name="username" class="java.lang.String"/>
+	<field name="startdate" class="java.sql.Date"/>
+	<field name="enddate" class="java.sql.Date"/>
+	<field name="periodname" class="java.lang.String"/>
+	<title>
+		<band height="24" splitType="Stretch">
+			<property name="local_mesure_unitheight" value="pixel"/>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<textField>
+				<reportElement style="Footer Font" x="0" y="12" width="510" height="12" uuid="994a9473-c253-424c-81b6-60533658c43d"/>
+				<textElement textAlignment="Center">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[($F{periodname}==null?"":"Periode: "+$F{periodname}+"   ")+
+($F{startdate}==null?"":new java.text.SimpleDateFormat("dd.MM.yy").format($F{startdate}))+
+($F{startdate}==null&&$F{enddate}==null?"":" - ")+
+($F{enddate}==null?"":new java.text.SimpleDateFormat("dd.MM.yy").format($F{enddate}))]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Footer Font" x="0" y="0" width="510" height="12" uuid="1126745c-cf38-4392-9029-734b25cf780e"/>
+				<textElement textAlignment="Center">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[($P{IsSOTrx}==null?"":($P{IsSOTrx}.equals('Y')?"Ausgang":"Eingang"))]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Footer Font" x="468" y="12" width="42" height="12" uuid="7e72afae-906c-426f-9f3e-01b88dd088b6"/>
+				<textElement textAlignment="Right">
+					<font isItalic="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Seite " + $P{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+			<textField pattern="dd.MM.yyyy HH:mm">
+				<reportElement style="Footer Font" x="0" y="12" width="156" height="12" uuid="d6bd3414-024a-440c-8247-4cf62fb5b0a5"/>
+				<textElement>
+					<font isItalic="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[new SimpleDateFormat("dd.MM.yy   HH:mm:ss").format(new java.util.Date())]]></textFieldExpression>
+			</textField>
+			<textField pattern="dd.MM.yyyy HH:mm">
+				<reportElement style="Footer Font" x="0" y="0" width="156" height="12" uuid="06a998ec-60f7-440f-95de-2c45d690d8f1"/>
+				<textElement>
+					<font isItalic="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{username}]]></textFieldExpression>
+			</textField>
+		</band>
+	</title>
+</jasperReport>

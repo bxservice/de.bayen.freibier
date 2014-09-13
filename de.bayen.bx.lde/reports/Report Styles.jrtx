@@ -5,6 +5,13 @@
 	<style name="Report Standard Font" fontName="DejaVu Sans"/>
 	<style name="Report Monospace Font" fontName="DejaVu Sans Mono"/>
 	<style name="Monospace Form Fill" forecolor="#0000FF" fontName="DejaVu Sans Mono" isBold="true"/>
-	<style name="Report Header" style="Report Standard Font" fontName="deja vu sans" fontSize="26"/>
-	<style name="Footer Font" fontName="deja vu sans" fontSize="5"/>
+	<style name="Report Header" fontName="MPlus C1" fontSize="18" isBold="true" isUnderline="true"/>
+	<style name="Footer Font" fontName="MPlus C1" fontSize="8"/>
+	<style name="List 8" hAlign="Left" vAlign="Middle" fontName="MPlus M1" fontSize="8"/>
+	<style name="List 9" hAlign="Left" vAlign="Middle" fontName="MPlus M1" fontSize="9"/>
+	<style name="List 10" hAlign="Left" vAlign="Middle" fontName="MPlus M1" fontSize="10"/>
+	<style name="List Header 10" hAlign="Left" vAlign="Middle" fontName="MPlus C1" fontSize="10" isBold="true"/>
+	<style name="Style"/>
+	<style name="Header Font" fontName="MPlus C1" fontSize="10"/>
+	<style name="List Header 20" fontName="MPlus C1" fontSize="20"/>
 </jasperTemplate>
