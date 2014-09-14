@@ -41,7 +41,18 @@ public abstract class AbstractSvrProcess extends SvrProcess {
 
 	protected CLogger log = CLogger.getCLogger(getClass());
 	protected int[] tableIDs;
-
+	
+	/**
+	 * Constructor that sets the list of allowed tables to call this process
+	 * from.
+	 * 
+	 * The parameter gives all tables that are allowed to call this process from
+	 * a field. You can call this constructor without a parameter to allow all
+	 * tables, e.g. if this process is not to be called from a field but as a
+	 * direct process call (e.g. via the menu).
+	 * 
+	 * @param tableIDs
+	 */
 	public AbstractSvrProcess(int... tableIDs) {
 		this.tableIDs = tableIDs;
 	}
@@ -156,7 +167,7 @@ public abstract class AbstractSvrProcess extends SvrProcess {
 		if (log.isLoggable(Level.INFO))
 			log.info("Table_ID=" + Table_ID);
 		boolean tableOK = false;
-		if (tableIDs.length == 0)
+		if (tableIDs==null || tableIDs.length == 0)
 			tableOK = true;
 		else {
 			for (int i = 0; i < tableIDs.length; i++) {

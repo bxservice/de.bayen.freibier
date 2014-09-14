@@ -83,7 +83,7 @@ public class MT940Import extends AbstractSvrProcess {
 			Date endDate, I_C_BankAccount bankAccount) {
 		SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd");
 		//
-		m_callback = new MyHBCICallback(m_loader, processUI, this);
+		m_callback = new MyHBCICallback(m_loader, processUI);
 		try {
 			HBCIPassport passport = HBCIUtil.createPassport(m_loader,
 					m_callback);

@@ -19,7 +19,6 @@ import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.util.Callback;
 import org.adempiere.util.IProcessUI;
 import org.compiere.model.MBankStatementLoader;
-import org.compiere.process.SvrProcess;
 import org.compiere.util.Util;
 import org.kapott.hbci.GV.HBCIJob;
 import org.kapott.hbci.callback.AbstractHBCICallback;
@@ -45,7 +44,6 @@ public class MyHBCICallback extends AbstractHBCICallback {
 	
 	private MBankStatementLoader m_loader;
 	private IProcessUI processUI=null;
-	private SvrProcess svrProcess=null;
 
 	private boolean blocked;
 
@@ -60,10 +58,9 @@ public class MyHBCICallback extends AbstractHBCICallback {
 	 * @param loader
 	 * @param processUI
 	 */
-	public MyHBCICallback(MBankStatementLoader loader, IProcessUI processUI, SvrProcess svrProcess) {
+	public MyHBCICallback(MBankStatementLoader loader, IProcessUI processUI) {
 		this.m_loader = loader;
 		this.processUI=processUI;
-		this.svrProcess = svrProcess;
 	}
 
 
@@ -190,7 +187,7 @@ public class MyHBCICallback extends AbstractHBCICallback {
 			// TODO das hier irgendwie speichern und evtl. anzeigen oder so
 			toLog(msg);
 			break;
-		case HBCICallback.NEED_COUNTRY:
+		case HBCICallback.NEED_COUNTRY:  // 7
 			// "DE" ist bereits vorbelegt
 			break;
 		case HBCICallback.NEED_BLZ:  // 8
@@ -248,6 +245,9 @@ public class MyHBCICallback extends AbstractHBCICallback {
 			final StringBuffer resultstring=new StringBuffer();
 			blocked=true;
 			if(pin==null){
+				if(processUI==null)
+					throw new AdempiereException(
+							"no GUI for this HBCI process, but there is a question to the user: " + msg);
 				processUI.askForInput(msg, new Callback<String>() {
 					@Override
 					public void onCallback(String result) {
@@ -256,9 +256,12 @@ public class MyHBCICallback extends AbstractHBCICallback {
 					}
 				});
 				//wait for answer		
+				int timeout=2*60*5;  // 2 Minuten
 				while (blocked) {
 					try {
 						Thread.sleep(200);
+						if(timeout-- < 0)
+							throw new AdempiereException("timeout");
 					} catch (InterruptedException e) {}
 				}
 				retData.append(resultstring);
@@ -266,7 +269,7 @@ public class MyHBCICallback extends AbstractHBCICallback {
 				retData.append(pin);
 			break;
 		}
-		case HBCICallback.NEED_PT_SECMECH:
+		case HBCICallback.NEED_PT_SECMECH:  // 27
 			/*
 			 * Hier wird eine Auswahl an PinTan-Verfahren übergeben, aus denen
 			 * der Benutzer eins aussuchen soll. Ich kürze das Verfahren hier
@@ -286,7 +289,32 @@ public class MyHBCICallback extends AbstractHBCICallback {
 				throw new AdempiereException(retData.toString());
 			}
 			break;
-
+		case HBCICallback.NEED_PT_TAN: // 17
+		{
+			final StringBuffer resultstring=new StringBuffer();
+			blocked=true;
+			if(processUI==null)
+				throw new AdempiereException(
+						"no GUI for this HBCI process, but there is a question to the user: " + msg);
+			processUI.askForInput(msg, new Callback<String>() {
+				@Override
+				public void onCallback(String result) {
+					resultstring.append(result);
+					blocked=false;
+				}
+			});
+			//wait for answer		
+			int timeout=2*60*5;  // 2 Minuten
+			while (blocked) {
+				try {
+					Thread.sleep(200);
+					if(timeout-- < 0)
+						throw new AdempiereException("timeout");
+				} catch (InterruptedException e) {}
+			}
+			retData.append(resultstring);
+			break;
+		}
 		default:
 			throw new AdempiereException("unimplemented HBCI callback " + reason + ": " + msg + " - Data: "+retData.toString());
 		}

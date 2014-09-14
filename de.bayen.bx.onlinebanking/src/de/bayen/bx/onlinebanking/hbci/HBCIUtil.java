@@ -110,7 +110,6 @@ public class HBCIUtil {
 		}
 
 		HBCIUtils.init(hbciProps, callback);
-		// TODO irgendwo done() machen
 		HBCIPassport passport = AbstractHBCIPassport.getInstance();
 
 		String pVersion = loader.getDateFormat();

@@ -23,7 +23,6 @@ import org.compiere.impexp.BankStatementLoaderInterface;
 import org.compiere.model.MBankStatementLoader;
 import org.compiere.model.Query;
 
-import de.bayen.bx.onlinebanking.model.I_BAY_MT940;
 import de.bayen.bx.onlinebanking.model.X_BAY_MT940;
 import de.bayen.bx.util.IBANUtil;
 
