@@ -51,7 +51,9 @@ import org.kapott.hbci.passport.HBCIPassport;
 import org.kapott.hbci.status.HBCIStatus;
 import org.kapott.hbci.structures.Konto;
 
+import de.bayen.bx.onlinebanking.model.MBPBankAccountHelper;
 import de.bayen.bx.onlinebanking.model.X_BAY_HBCILog;
+import de.bayen.bx.onlinebanking.model.MBPBankAccountHelper.SepaSddScheme;
 import de.bayen.bx.util.IBANUtil;
 
 /**
@@ -68,10 +70,6 @@ import de.bayen.bx.util.IBANUtil;
  * @author tbayen
  */
 public class HBCIPaymentProcessor {
-
-	static public enum LastschriftTyp {
-		CORE, COR1, B2B
-	};
 
 	static private class Job {
 		HBCIJob hbciJob;
@@ -136,8 +134,6 @@ public class HBCIPaymentProcessor {
 		m_org = (MOrg) MTable.get(ctx, MOrg.Table_ID).getPO(Env.getAD_Org_ID(ctx), trxName);
 		meinKonto.name = m_org.getName();
 
-		hbciHandle.execute();  // TODO testweise leer machen
-		
 		if (isDebitPayment) {
 			/*
 			 * Ich kann vorher nicht einfach abschätzen, welche Arten von
@@ -155,18 +151,18 @@ public class HBCIPaymentProcessor {
 			 * einzigen Authorisierung zur Bank schicken. Das geht aber wohl mit
 			 * HBCI4Java so nicht.
 			 */
-			allJobs = new Job[LastschriftTyp.values().length * 2];
+			allJobs = new Job[SepaSddScheme.values().length * 2];
 			/*
 			 * jeweils ein Eintrag für Erst- (FRST) und einer für
 			 * Folgelastschriften (RCUR):
 			 */
-			allJobs[LastschriftTyp.CORE.ordinal() * 2] = initJob("MultiLastSEPA", meinKonto, isDebitPayment, true);
-			allJobs[LastschriftTyp.CORE.ordinal() * 2 + 1] = initJob("MultiLastSEPA", meinKonto, isDebitPayment, false);
-			allJobs[LastschriftTyp.COR1.ordinal() * 2] = initJob("MultiLastCOR1SEPA", meinKonto, isDebitPayment, true);
-			allJobs[LastschriftTyp.COR1.ordinal() * 2 + 1] = initJob("MultiLastCOR1SEPA", meinKonto, isDebitPayment,
+			allJobs[SepaSddScheme.CORE.ordinal() * 2] = initJob("MultiLastSEPA", meinKonto, isDebitPayment, true);
+			allJobs[SepaSddScheme.CORE.ordinal() * 2 + 1] = initJob("MultiLastSEPA", meinKonto, isDebitPayment, false);
+			allJobs[SepaSddScheme.COR1.ordinal() * 2] = initJob("MultiLastCOR1SEPA", meinKonto, isDebitPayment, true);
+			allJobs[SepaSddScheme.COR1.ordinal() * 2 + 1] = initJob("MultiLastCOR1SEPA", meinKonto, isDebitPayment,
 					false);
-			allJobs[LastschriftTyp.B2B.ordinal() * 2] = initJob("MultiLastB2BSEPA", meinKonto, isDebitPayment, true);
-			allJobs[LastschriftTyp.B2B.ordinal() * 2 + 1] = initJob("MultiLastB2BSEPA", meinKonto, isDebitPayment,
+			allJobs[SepaSddScheme.B2B.ordinal() * 2] = initJob("MultiLastB2BSEPA", meinKonto, isDebitPayment, true);
+			allJobs[SepaSddScheme.B2B.ordinal() * 2 + 1] = initJob("MultiLastB2BSEPA", meinKonto, isDebitPayment,
 					false);
 		} else {
 			// Überweisungen
@@ -300,21 +296,21 @@ public class HBCIPaymentProcessor {
 	//@Override
 	public boolean addTransaction(MBPBankAccount bpAccount, String usage, String end2endId, BigDecimal amount) {
 		// GV-Typen unterscheiden und richtigen Job aus der Tabelle suchen
-		LastschriftTyp lsArt = null;
+		SepaSddScheme lsArt = null;
 		int jobIndex = 0; // reicht für Überweisung
 		if (m_isDebitPayment) {
-			String lsString = bpAccount.get_ValueAsString("Lastschriftart");
+			String lsString = bpAccount.get_ValueAsString(MBPBankAccountHelper.COLUMNNAME_SEPASDDSCHEME);
 			if (lsString == "")
 				throw new AdempiereException("Bank Account without a SEPA Mandate Type set.");
-			lsArt = LastschriftTyp.valueOf(lsString);
+			lsArt = SepaSddScheme.valueOf(lsString);
 			jobIndex = lsArt.ordinal() * 2;
 
-			if (Boolean.TRUE.equals(bpAccount.get_ValueAsBoolean("IsTransferred"))) {
+			if (Boolean.TRUE.equals(bpAccount.get_ValueAsBoolean(MBPBankAccountHelper.COLUMNNAME_ISTRANSFERRED))) {
 				jobIndex++;
 			} else {
 				System.out.println("Erstbenutzung des Mandats: " + bpAccount.toString());
 				if (!onlyTest) {
-					bpAccount.set_ValueNoCheck("IsTransferred", Boolean.TRUE);
+					bpAccount.set_ValueNoCheck(MBPBankAccountHelper.COLUMNNAME_ISTRANSFERRED, Boolean.TRUE);
 					bpAccount.saveEx(m_trxName);
 				}
 			}
@@ -327,7 +323,7 @@ public class HBCIPaymentProcessor {
 			name = bpAccount.getC_BPartner().getName();
 		job.hbciJob.setParam("dst.name", job.count, name);
 		job.hbciJob.setParam("dst.bic", job.count, bpAccount.getC_Bank().getSwiftCode());
-		String iban = ((PO) bpAccount).get_ValueAsString("IBAN");
+		String iban = ((PO) bpAccount).get_ValueAsString(MBPBankAccountHelper.COLUMNNAME_IBAN);
 		if (Util.isEmpty(iban, true))
 			throw new AdempiereException("Keine IBAN vorhanden: " + bpAccount.toString());
 		else
@@ -344,12 +340,12 @@ public class HBCIPaymentProcessor {
 			end2endId = end2endId.substring(0, 35);
 		job.hbciJob.setParam("endtoendid", job.count, end2endId);
 		if (m_isDebitPayment) {
-			String mandateID = ((PO) bpAccount).get_ValueAsString("MndtId");
+			String mandateID = ((PO) bpAccount).get_ValueAsString(MBPBankAccountHelper.COLUMNNAME_MNDTID);
 			if(mandateID==null || mandateID.length()==0)
 				throw new AdempiereException("Mandats-ID ist leer: "+bpAccount.toString());
 			job.hbciJob.setParam("mandateid", job.count, mandateID);
 			try {
-				String dateString = isoDateFormatter.format(((PO) bpAccount).get_Value("DateDoc"));
+				String dateString = isoDateFormatter.format(((PO) bpAccount).get_Value(MBPBankAccountHelper.COLUMNNAME_DATEDOC));
 				job.hbciJob.setParam("manddateofsig", job.count, dateString);
 			} catch (IllegalArgumentException e) {
 				throw new AdempiereException("date format error: " + bpAccount.toString(), e);
