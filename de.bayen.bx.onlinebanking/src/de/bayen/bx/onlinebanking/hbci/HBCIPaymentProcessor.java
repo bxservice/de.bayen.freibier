@@ -52,6 +52,7 @@ import org.kapott.hbci.status.HBCIStatus;
 import org.kapott.hbci.structures.Konto;
 
 import de.bayen.bx.onlinebanking.model.MBPBankAccountHelper;
+import de.bayen.bx.onlinebanking.model.MOrgHelper;
 import de.bayen.bx.onlinebanking.model.X_BAY_HBCILog;
 import de.bayen.bx.onlinebanking.model.MBPBankAccountHelper.SepaSddScheme;
 import de.bayen.bx.util.IBANUtil;
@@ -81,7 +82,6 @@ public class HBCIPaymentProcessor {
 	static final DateFormat isoDateFormatter = new SimpleDateFormat("yyyy-MM-dd");
 	static final DecimalFormat amountFormatter = new DecimalFormat("#.##", new DecimalFormatSymbols(Locale.US));
 	static final boolean onlyTest = false; // only for debugging
-	static final String COLUMNNAME_AD_ORG_CREDITORIDENTIFIER = "CreditorIdentifier";
 
 	private Properties m_ctx;
 	private String m_trxName;
@@ -353,7 +353,7 @@ public class HBCIPaymentProcessor {
 			job.hbciJob.setParam("amendmandindic", job.count, Boolean.toString(false));
 			MOrgInfo orgInfo = MOrgInfo.get(m_ctx, Env.getAD_Org_ID(m_ctx), m_trxName);
 			job.hbciJob.setParam("creditorid", job.count,
-					orgInfo.get_ValueAsString(COLUMNNAME_AD_ORG_CREDITORIDENTIFIER));
+					orgInfo.get_ValueAsString(MOrgHelper.COLUMNNAME_AD_ORG_CREDITORIDENTIFIER));
 		}
 		job.count++;
 		job.total = job.total.add(amount);
