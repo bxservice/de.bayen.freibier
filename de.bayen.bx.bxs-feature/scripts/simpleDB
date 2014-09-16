@@ -18,12 +18,12 @@ COLUMN=$4
 
 if [ "${COMMAND}" == "read" ]
 then
-  cat ${TABLE}-db.txt | csvtool -t ';' -u ';' namedcol name,${COLUMN} - | grep ^${KEY} | csvtool -t ';' col 2 -
+  cat ${TABLE}-db.csv | csvtool -t ';' -u ';' namedcol name,${COLUMN} - | grep ^${KEY} | csvtool -t ';' col 2 -
 
 
 elif [ "${COMMAND}" == "list" ]
 then
-  cat ${TABLE}-db.txt | csvtool -t ';' -u ';' namedcol name -
+  cat ${TABLE}-db.csv | csvtool -t ';' -u ';' namedcol name -
 
 
 else

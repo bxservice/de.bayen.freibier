@@ -5,22 +5,25 @@
 # deploy.sh firstinstall <installation>
 # deploy.sh update <installation>
 
-# TODO:
-# let user and installation be different
 
 set -e
 set -u
 
+echo deploy.sh
 COMMAND=${1}
 INSTALLATION=${2}
-# TODO
-SSH_USER=${INSTALLATION}
+SSH_USER=`./simpleDB installations read ${INSTALLATION} username`
+echo $SSH_USER
 SERVER=`./simpleDB installations read ${INSTALLATION} server`
+echo $SERVER
 SERVERNAME=`./simpleDB server read ${SERVER} servername`
-# TODO
-DATABASE=$SSH_USER
+echo $SERVERNAME
+DATABASE=`./simpleDB installations read ${INSTALLATION} database`
+echo $DATABASE
 IDEMPIERESOURCEDIR=`./simpleDB installations read ${INSTALLATION} idempieresource`
+echo $IDEMPIERESOURCEDIR
 SSHCOMMAND="ssh ${SSH_USER}@${SERVERNAME}"
+echo $SSHCOMMAND
 CONSOLEPORT=`./simpleDB installations read ${INSTALLATION} consoleport`
 POSTGRESPW=`./simpleDB server read ${SERVER} postgrespw`
 POSTGRESUSER=`./simpleDB installations read ${INSTALLATION} postgresuser`
@@ -48,12 +51,14 @@ END
 
 serverstop () {
 	echo 'serverstop()'
-	$SSHCOMMAND sudo /etc/init.d/idempiere-${SSH_USER}.sh stop
+	set +e
+	$SSHCOMMAND sudo /etc/init.d/idempiere-${INSTALLATION}.sh stop
+	set -e
 }
 
 serverstart () {
 	echo 'serverstart()'
-	$SSHCOMMAND sudo /etc/init.d/idempiere-${SSH_USER}.sh start
+	$SSHCOMMAND sudo /etc/init.d/idempiere-${INSTALLATION}.sh start
 }
 
 # TODO das sollte als erstes auf PLUGINS umgestellt werden

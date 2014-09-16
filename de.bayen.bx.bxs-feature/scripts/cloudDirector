@@ -8,10 +8,15 @@ set -u
 COMMAND=${1:-help}
 INSTALLATION=${2:-test}
 LINUXUSER=`./simpleDB installations read ${INSTALLATION} username`
+echo $LINUXUSER
 SERVER=`./simpleDB installations read ${INSTALLATION} server`
+echo $SERVER
 SERVERNAME=`./simpleDB server read ${SERVER} servername`
+echo $SERVERNAME
 POSTGRESUSER=`./simpleDB installations read ${INSTALLATION} postgresuser`
+echo $POSTGRESUSER
 SSHTARGET=${LINUXUSER}@${SERVERNAME}
+echo $SSHTARGET
 LOCALDBSERVER=localhost
 LOCALDBUSER=adempiere
 LOCALDB=${INSTALLATION}
@@ -37,8 +42,7 @@ then
 
 elif [ "${COMMAND}" == "deploy" ]
 then
-  ./deploy.sh install ${LINUXUSER} ${SERVER} ${POSTGRESUSER} ${IDEMPIERESOURCEDIR}
-
+  ./deploy.sh install ${INSTALLATION}
 
 elif [ "${COMMAND}" == "list" ]
 then
