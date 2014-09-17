@@ -87,8 +87,12 @@ public abstract class AbstractSvrProcess extends SvrProcess {
 			String propertyName = methodName.substring(3);
 			if(PO.class.isAssignableFrom(method.getReturnType())){
 				BigDecimal value=(BigDecimal) parameterMap.get(propertyName+"_ID");
-				PO po=MTable.get(getCtx(), propertyName).getPO(value.intValueExact(), get_TrxName());
-				return po;
+				if(value==null)
+					return null;
+				else{
+					PO po=MTable.get(getCtx(), propertyName).getPO(value.intValueExact(), get_TrxName());
+					return po;
+				}
 			}else{
 				Object value = parameterMap.get(propertyName);
 				return value;
