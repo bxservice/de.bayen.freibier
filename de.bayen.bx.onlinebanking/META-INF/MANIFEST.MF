@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: de.bayen.bx.onlinebanking
 Bundle-SymbolicName: de.bayen.bx.onlinebanking
-Bundle-Version: 1.0.4.qualifier
+Bundle-Version: 1.0.5.qualifier
 Bundle-Activator: de.bayen.bx.onlinebanking.Activator
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Import-Package: com.lowagie.text,

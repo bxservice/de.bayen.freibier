@@ -52,9 +52,9 @@ import org.kapott.hbci.status.HBCIStatus;
 import org.kapott.hbci.structures.Konto;
 
 import de.bayen.bx.onlinebanking.model.MBPBankAccountHelper;
+import de.bayen.bx.onlinebanking.model.MBPBankAccountHelper.SepaSddScheme;
 import de.bayen.bx.onlinebanking.model.MOrgHelper;
 import de.bayen.bx.onlinebanking.model.X_BAY_HBCILog;
-import de.bayen.bx.onlinebanking.model.MBPBankAccountHelper.SepaSddScheme;
 import de.bayen.bx.util.IBANUtil;
 
 /**
@@ -101,7 +101,9 @@ public class HBCIPaymentProcessor {
 		this.m_isDebitPayment = isDebitPayment;
 		this.m_processUI = processUI;
 		this.m_trxName = trxName;
-
+		if(C_BankAccount == null)
+			throw new AdempiereException("bank not found in HBCI processor");
+		
 		String whereClause = MBankAccount.COLUMNNAME_C_BankAccount_ID + "=? " + " AND isActive='Y'";
 		Query query = new Query(ctx, MBankStatementLoader.Table_Name, whereClause, trxName);
 		query.setParameters(C_BankAccount.getC_BankAccount_ID());
@@ -194,6 +196,17 @@ public class HBCIPaymentProcessor {
 			int frist = 2;
 			if (jobName.contains("CORE") && isFirst)
 				frist = 5;
+			{
+				// Frist gilt immer nur bis 15:30 (be ider Volksbank)
+				GregorianCalendar heute = new GregorianCalendar();
+				if (heute.get(Calendar.HOUR_OF_DAY) >= 16
+						|| (heute.get(Calendar.HOUR_OF_DAY) == 15 
+						&& heute.get(Calendar.MINUTE) > 30)
+					){
+					frist++;
+				}
+			}
+			
 			while (frist > 0) {
 				cal.add(Calendar.DAY_OF_MONTH, 1);
 				int wochentag = cal.get(GregorianCalendar.DAY_OF_WEEK);
@@ -441,13 +454,38 @@ public class HBCIPaymentProcessor {
 				protocolRecord.setCounter(job.count);
 				protocolRecord.setTotalAmt(job.total);
 				protocolRecord.setName(job.jobName + " " + (i % 2 == 0 ? "FRST" : "RCUR"));
-				protocolRecord.setC_PaySelection_ID(paySelectionID);
-				protocolRecord.setC_PaymentBatch_ID(batchID);
+				protocolRecord.setC_PaySelection_ID(paySelectionID == null ? 0 : paySelectionID);
+				protocolRecord.setC_PaymentBatch_ID(batchID == null ? 0 : batchID);
 				
-				job.hbciJob.addToQueue();
-
 				// letzte Stelle zum Abbruch, bevor es zur Bank geht
-				if (!onlyTest) {
+				stop=false;
+				if (allJobs.length>1 && m_processUI != null) {
+					/*
+					 * Wenn ich die ÜBertragung aufteile (wegen verschiedener
+					 * SEPA-Typen), frage ich die hier nochmal einzeln ab. Das
+					 * hilft vor allem, wenn was in einer Datei schiefgeht, weil
+					 * ich die Dateien dann nicht alle neu versenden muss,
+					 * sondern die bereits versendeten ausblenden kann.
+					 */
+					stop = null;
+					m_processUI.ask("Einzeldatei über " + job.total.toString() + " versenden?", new Callback<Boolean>() {
+						public void onCallback(Boolean result) {
+								stop = !result;
+						}
+					});
+					int timeout=2*60*5;  // 2 Minuten
+					while(stop==null){  // wait for user answer
+						try {
+							Thread.sleep(200);
+							if(timeout-- < 0)
+								throw new AdempiereException("timeout");
+						} catch (InterruptedException e) {}
+					}
+				}
+				
+				if ((stop == false) && !onlyTest) {
+
+					job.hbciJob.addToQueue();
 
 					// alle Jobs in der Job-Warteschlange ausführen
 					// HBCIExecStatus ret = hbciHandle.execute();
