@@ -19,6 +19,11 @@ import java.util.Date;
 import java.util.Properties;
 import java.util.regex.Pattern;
 
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.I_C_BankAccount;
 import org.compiere.model.MBankStatementLoader;
@@ -76,7 +81,33 @@ public class MT940Import extends AbstractSvrProcess {
 		m_loader = bean.getC_BankStatementLoader();
 		I_C_BankAccount bankAccount = m_loader.getC_BankAccount();
 
+		makeTrust();  // TODO das an eine hübschere Stelle machen
+		
 		return loadBankStatementData(ctx, startDate, endDate, bankAccount);
+	}
+	// http://stackoverflow.com/questions/1201048/allowing-java-to-use-an-untrusted-certificate-for-ssl-https-connection
+	static void makeTrust(){
+		TrustManager[] trustAllCerts = new TrustManager[]{
+			    new X509TrustManager() {
+			        public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+			            return null;
+			        }
+			        public void checkClientTrusted(
+			            java.security.cert.X509Certificate[] certs, String authType) {
+			        }
+			        public void checkServerTrusted(
+			            java.security.cert.X509Certificate[] certs, String authType) {
+			        }
+			    }
+			};
+
+			// Install the all-trusting trust manager
+			try {
+			    SSLContext sc = SSLContext.getInstance("SSL");
+			    sc.init(null, trustAllCerts, new java.security.SecureRandom());
+			    HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+			} catch (Exception e) {
+			}
 	}
 
 	private String loadBankStatementData(Properties ctx, Date startDate,

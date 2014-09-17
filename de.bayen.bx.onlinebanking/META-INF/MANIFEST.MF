@@ -5,7 +5,9 @@ Bundle-SymbolicName: de.bayen.bx.onlinebanking
 Bundle-Version: 1.0.3.qualifier
 Bundle-Activator: de.bayen.bx.onlinebanking.Activator
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
-Import-Package: org.adempiere.base,
+Import-Package: com.lowagie.text,
+ com.lowagie.text.pdf,
+ org.adempiere.base,
  org.adempiere.exceptions,
  org.adempiere.model,
  org.adempiere.plugin.utils,

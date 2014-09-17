@@ -301,7 +301,7 @@ public class HBCIPaymentProcessor {
 		if (m_isDebitPayment) {
 			String lsString = bpAccount.get_ValueAsString(MBPBankAccountHelper.COLUMNNAME_SEPASDDSCHEME);
 			if (lsString == "")
-				throw new AdempiereException("Bank Account without a SEPA Mandate Type set.");
+				throw new AdempiereException("Bank Account without a SEPA Mandate Type set: "+bpAccount.getA_Name());
 			lsArt = SepaSddScheme.valueOf(lsString);
 			jobIndex = lsArt.ordinal() * 2;
 
@@ -380,8 +380,13 @@ public class HBCIPaymentProcessor {
 
 	private Boolean stop;
 
+
+	public String process() {
+		return process(null, null);
+	}
+	
 	//@Override
-	public String process(Integer paySelectionID, int batchID) {
+	public String process(Integer paySelectionID, Integer batchID) {
 		// nochmal checken und den Benutzer fragen
 		BigDecimal grandTotal = BigDecimal.ZERO;
 		int grandCount = 0;
