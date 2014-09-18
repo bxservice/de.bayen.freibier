@@ -15,7 +15,9 @@ package de.bayen.bx.onlinebanking.hbci;
 
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.Properties;
 import java.util.regex.Pattern;
 
@@ -73,8 +75,11 @@ public class MT940Import extends AbstractSvrProcess {
 		Properties ctx = getCtx();
 		ImportParameter bean = (ImportParameter) getParameterBean();
 		Date startDate = bean.getDateTrx();
-		if (startDate == null)
-			startDate = new Date(); // sonst heute
+		if (startDate == null){ // sonst gestern
+			Calendar cal=new GregorianCalendar();
+			cal.add(Calendar.DAY_OF_MONTH, -1);
+			startDate=cal.getTime();
+		}
 		Date endDate = bean.getDateTrxTo();
 		if (endDate == null)
 			endDate = new Date(); // sonst heute
