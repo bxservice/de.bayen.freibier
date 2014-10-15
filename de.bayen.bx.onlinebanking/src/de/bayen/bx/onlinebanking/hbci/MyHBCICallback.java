@@ -285,6 +285,9 @@ public class MyHBCICallback extends AbstractHBCICallback {
 			} else if (retData.indexOf("932:SmartTAN plus") != -1) {  // Volksbank Krefeld
 				retData.delete(0, retData.length());
 				retData.append("932");
+			} else if (m_loader.getBranchID()!= null && retData.indexOf(m_loader.getBranchID()+":") != -1){
+				retData.delete(0, retData.length());
+				retData.append(m_loader.getBranchID());
 			} else {
 				throw new AdempiereException(retData.toString());
 			}
