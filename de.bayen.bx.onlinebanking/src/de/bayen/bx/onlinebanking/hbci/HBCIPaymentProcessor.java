@@ -13,6 +13,9 @@
  *****************************************************************************/
 package de.bayen.bx.onlinebanking.hbci;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
@@ -40,6 +43,7 @@ import org.compiere.model.MPaySelectionLine;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
+import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.kapott.hbci.GV.AbstractSEPAGV;
@@ -48,6 +52,7 @@ import org.kapott.hbci.GV_Result.HBCIJobResult;
 import org.kapott.hbci.manager.HBCIHandler;
 import org.kapott.hbci.manager.HBCIUtils;
 import org.kapott.hbci.passport.HBCIPassport;
+import org.kapott.hbci.status.HBCIExecStatus;
 import org.kapott.hbci.status.HBCIStatus;
 import org.kapott.hbci.structures.Konto;
 
@@ -71,6 +76,8 @@ import de.bayen.bx.util.IBANUtil;
  * @author tbayen
  */
 public class HBCIPaymentProcessor {
+
+	protected CLogger log = CLogger.getCLogger(getClass());
 
 	static private class Job {
 		HBCIJob hbciJob;
@@ -334,6 +341,7 @@ public class HBCIPaymentProcessor {
 		String name = bpAccount.getA_Name();
 		if (Util.isEmpty(name, true))
 			name = bpAccount.getC_BPartner().getName();
+		name=replaceNotAllowedCharacters(name);
 		job.hbciJob.setParam("dst.name", job.count, name);
 		job.hbciJob.setParam("dst.bic", job.count, bpAccount.getC_Bank().getSwiftCode());
 		String iban = ((PO) bpAccount).get_ValueAsString(MBPBankAccountHelper.COLUMNNAME_IBAN);
@@ -341,8 +349,12 @@ public class HBCIPaymentProcessor {
 			throw new AdempiereException("Keine IBAN vorhanden: " + bpAccount.toString());
 		else
 			iban = iban.replace(" ", "");
-		if (IBANUtil.checkIBAN(iban).length() > 0)
-			throw new AdempiereException("IBAN falsch: (" + IBANUtil.checkIBAN(iban) + ")" + bpAccount.toString());
+		if (IBANUtil.checkIBAN(iban).length() > 0){
+			String errorString="IBAN falsch: (" + IBANUtil.checkIBAN(iban) + ")" + bpAccount.toString();
+			log.severe(errorString);
+			// TODO wieder Exception werfen
+			//throw new AdempiereException(errorString);
+		}
 		job.hbciJob.setParam("dst.iban", job.count, iban);
 		job.hbciJob.setParam("btg.value", job.count, amountFormatter.format(amount));
 		job.hbciJob.setParam("btg.curr", job.count, "EUR");
@@ -371,6 +383,36 @@ public class HBCIPaymentProcessor {
 		job.count++;
 		job.total = job.total.add(amount);
 		return true;
+	}
+
+	/**
+	 * Um den SEPA-Validator der ING
+	 * 
+	 * (http://www.ingsepa.com/our-help/additional-services/format-validation-tool/)
+	 * 
+	 * zu befriedigen, darf man keine Umlaute verwenden. Laut
+	 * 
+	 * http://www.hettwer-beratung.de/sepa-spezialwissen/sepa-technische-anforderungen/sepa-verwendungszweck/
+	 * 
+	 * ist es der Bank überlassen, ob sie Umlaute annimmt. Ich vermute mal, das
+	 * deutsche Banken das erlauben. Aber um sicherzugehen, konvertiere ich das
+	 * hiermit.
+	 * 
+	 * @param name
+	 * @return
+	 */
+	private String replaceNotAllowedCharacters(String name) {
+		name=name.replace("ä", "ae");
+		name=name.replace("ö", "oe");
+		name=name.replace("ü", "ue");
+		name=name.replace("Ä", "Ae");
+		name=name.replace("Ö", "Oe");
+		name=name.replace("Ü", "Ue");
+		name=name.replace("ß", "ss");
+		name=name.replace("é", "e");
+		name=name.replace("è", "e");
+		name=name.replace("&", "und");
+		return name;
 	}
 
 	//@Override
@@ -450,7 +492,13 @@ public class HBCIPaymentProcessor {
 
 				
 				protocolRecord.setAD_Org_ID(0);
-				protocolRecord.setBinaryData(painXML.getBytes());
+				byte[] sepafile = painXML.getBytes();
+				{  // write debugfile to /tmp/
+					OutputStream strm = new FileOutputStream("/tmp/sepa.xml");
+					strm.write(sepafile);
+					strm.close();
+				}
+				protocolRecord.setBinaryData(sepafile);
 				protocolRecord.setCounter(job.count);
 				protocolRecord.setTotalAmt(job.total);
 				protocolRecord.setName(job.jobName + " " + (i % 2 == 0 ? "FRST" : "RCUR"));
@@ -489,7 +537,7 @@ public class HBCIPaymentProcessor {
 
 					// alle Jobs in der Job-Warteschlange ausführen
 					// HBCIExecStatus ret = hbciHandle.execute();
-					hbciHandle.execute();
+					HBCIExecStatus execstatus = hbciHandle.execute();
 
 					protocolRecord.setProcessed(true);
 					HBCIJobResult result = job.hbciJob.getJobResult();
@@ -498,7 +546,7 @@ public class HBCIPaymentProcessor {
 						statusString=statusString.substring(0, 200);
 					protocolRecord.setStatus(statusString);
 					// Was ist das für ein Objekt?
-					if (result.isOK()) {
+					if (result.isOK() && execstatus.isOK()) {
 						protocolRecord.setIsError(false);
 						protocolRecord.setProtocol(m_callback.getLog());
 					} else {
@@ -510,6 +558,8 @@ public class HBCIPaymentProcessor {
 						status = result.getGlobStatus();
 						if (!status.isOK())
 							errorMessage += status.getErrorString();
+						if(!execstatus.isOK())
+							errorMessage += execstatus.getErrorString();
 						protocolRecord.setProtocol(m_callback.getLog() + errorMessage);
 						allErrors += errorMessage;
 					}
