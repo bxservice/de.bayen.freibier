@@ -176,6 +176,8 @@ public class MyHBCICallback extends AbstractHBCICallback {
 
 	@Override
 	public void callback(HBCIPassport passport, int reason, String msg, int dataType, StringBuffer retData) {
+		toLog("CB: "+msg);
+		toLog("RD: "+retData);
 		// System.out.println("Callback für folgendes Passport: " +
 		// passport.getClientData("init").toString() + " --> ["
 		// + reason + "] " + msg);

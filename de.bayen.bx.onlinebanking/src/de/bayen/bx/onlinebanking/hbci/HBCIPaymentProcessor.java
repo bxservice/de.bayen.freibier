@@ -129,7 +129,10 @@ public class HBCIPaymentProcessor {
 			 * eigenen Job.
 			 */
 			passport.clearBPD();
-			hbciHandle = new HBCIHandler(HBCIUtils.getParam("client.passport.hbciversion.default"), passport);
+			// TODO
+			//hbciHandle = new HBCIHandler(HBCIUtils.getParam("client.passport.hbciversion.default"), passport);
+			System.out.println(passport.getHBCIVersion());
+			hbciHandle = new HBCIHandler("300", passport);
 			passport.getBPD();
 			// Properties bpd = passport.getBPD();
 			// System.out.println(bpd.toString());
@@ -204,7 +207,7 @@ public class HBCIPaymentProcessor {
 			if (jobName.contains("CORE") && isFirst)
 				frist = 5;
 			{
-				// Frist gilt immer nur bis 15:30 (be ider Volksbank)
+				// Frist gilt immer nur bis 15:30 (bei der Volksbank)
 				GregorianCalendar heute = new GregorianCalendar();
 				if (heute.get(Calendar.HOUR_OF_DAY) >= 16
 						|| (heute.get(Calendar.HOUR_OF_DAY) == 15 
@@ -213,10 +216,14 @@ public class HBCIPaymentProcessor {
 					frist++;
 				}
 			}
+
+			int wochentag = cal.get(GregorianCalendar.DAY_OF_WEEK);
+			// das habe ich nicht ganz verstanden, aber die Volksbank arbeitet so
+			if(wochentag == Calendar.SATURDAY || wochentag == Calendar.SUNDAY) // hier ggf. andere Bankfeiertage einfügen
+				frist++;
 			
 			while (frist > 0) {
 				cal.add(Calendar.DAY_OF_MONTH, 1);
-				int wochentag = cal.get(GregorianCalendar.DAY_OF_WEEK);
 				if (wochentag == Calendar.SUNDAY)
 					continue;
 				if (wochentag == Calendar.SATURDAY)
