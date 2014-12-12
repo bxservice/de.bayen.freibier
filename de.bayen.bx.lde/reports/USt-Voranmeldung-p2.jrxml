@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 5.6.1.final using JasperReports Library version 5.6.1  -->
-<!-- 2014-09-07T16:04:13 -->
+<!-- 2014-12-12T13:54:18 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Umsatzsteuer-Voranmeldung-p1" pageWidth="595" pageHeight="842" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" uuid="c494e5d9-548c-4abc-8811-6cd7f9f874f6">
 	<property name="com.jaspersoft.studio.unit." value="pixel"/>
 	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
@@ -11,14 +11,14 @@
 	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
 	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
 	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
-	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="BXService local"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="BXService.bx-erp.de"/>
 	<template><![CDATA["Report Styles.jrtx"]]></template>
 	<parameter name="AD_Client_ID" class="java.lang.Integer" isForPrompting="false">
 		<defaultValueExpression><![CDATA[1000000]]></defaultValueExpression>
 	</parameter>
 	<parameter name="C_Period_ID" class="java.lang.Integer" isForPrompting="false">
 		<parameterDescription><![CDATA[]]></parameterDescription>
-		<defaultValueExpression><![CDATA[1000005]]></defaultValueExpression>
+		<defaultValueExpression><![CDATA[1000007]]></defaultValueExpression>
 	</parameter>
 	<parameter name="AD_Org_ID" class="java.lang.Integer" isForPrompting="false">
 		<defaultValueExpression><![CDATA[1000000]]></defaultValueExpression>
@@ -41,8 +41,8 @@ ceiling((SELECT sum(taxbaseamt) FROM taxlines WHERE RevenueBaseCode='41' AND IsS
 ceiling((SELECT sum(taxbaseamt) FROM taxlines WHERE RevenueBaseCode='43' AND IsSOTrx='Y' )) AS f43,
 ceiling((SELECT sum(taxbaseamt) FROM taxlines WHERE RevenueBaseCode='45' AND IsSOTrx='Y' )) AS f45,
 ceiling((SELECT sum(taxbaseamt) FROM taxlines WHERE RevenueBaseCode='48' AND IsSOTrx='Y' )) AS f48,
-ceiling((SELECT sum(taxbaseamt) FROM taxlines WHERE RevenueBaseCode='52' AND IsSOTrx='Y' )) AS f52,
-(SELECT sum(taxamt) FROM taxlines WHERE SalesTaxCode='53'   AND IsSOTrx='Y' ) AS f53,
+ceiling((SELECT sum(taxbaseamt) FROM taxlines WHERE RevenueBaseCode='52' AND IsSOTrx='N' )) AS f52,
+(SELECT sum(taxamt) FROM taxlines WHERE PurchaseTaxCode='53'   AND IsSOTrx='N' ) AS f53,
 (SELECT sum(taxamt) FROM taxlines WHERE PurchaseTaxCode='67' AND IsSOTrx='N' ) AS f67,
 (SELECT sum(taxamt)     FROM taxlines WHERE PurchaseTaxCode='66' AND IsSOTrx='N' ) AS f66,
 ceiling((SELECT sum(taxbaseamt) FROM taxlines WHERE RevenueBaseCode='81' AND IsSOTrx='Y' )) AS f81,

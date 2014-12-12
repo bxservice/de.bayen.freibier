@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 5.6.1.final using JasperReports Library version 5.6.1  -->
-<!-- 2014-09-07T21:33:45 -->
+<!-- 2014-12-12T14:03:59 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="UmsatzsteuerMeldung" pageWidth="595" pageHeight="842" columnWidth="511" leftMargin="56" rightMargin="28" topMargin="28" bottomMargin="28" uuid="27c273fe-a228-4756-8e63-11c5d53c4f31">
-	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="BXService local"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="BXService.bx-erp.de"/>
 	<property name="com.jaspersoft.studio.unit." value="pixel"/>
 	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
 	<property name="com.jaspersoft.studio.unit.pageWidth" value="pixel"/>
@@ -18,7 +18,7 @@
 	</parameter>
 	<parameter name="C_Period_ID" class="java.lang.Integer">
 		<parameterDescription><![CDATA[]]></parameterDescription>
-		<defaultValueExpression><![CDATA[1000005]]></defaultValueExpression>
+		<defaultValueExpression><![CDATA[1000007]]></defaultValueExpression>
 	</parameter>
 	<parameter name="AD_Org_ID" class="java.lang.Integer" isForPrompting="false">
 		<defaultValueExpression><![CDATA[1000000]]></defaultValueExpression>
@@ -54,10 +54,12 @@ SELECT
   C_Tax.Description AS taxDescription,
   C_Tax.RevenueBaseCode,
   C_Tax.SalesTaxCode,
-  C_Tax.PurchaseTaxCode
+  C_Tax.PurchaseTaxCode,
+  C_Period.Name AS periodName
 FROM RV_C_InvoiceTax
 CROSS JOIN params
 JOIN C_Tax USING(C_Tax_ID)
+JOIN C_Period ON(C_Period.C_Period_ID=params.p_C_Period_ID)
 WHERE RV_C_InvoiceTax.AD_Client_ID=p_AD_Client_ID  
 AND RV_C_InvoiceTax.DateAcct >= p_StartDate AND RV_C_InvoiceTax.DateAcct <=p_EndDate
 AND RV_C_InvoiceTax.Reversal_ID IS NULL
@@ -93,8 +95,7 @@ WHERE ( org.AD_Org_ID=p_AD_Org_ID )
 )
 SELECT *
 FROM taxlines
-CROSS JOIN orgInfo
-]]>
+CROSS JOIN orgInfo]]>
 	</queryString>
 	<field name="taxid" class="java.lang.String"/>
 	<field name="issotrx" class="java.lang.String"/>
@@ -127,6 +128,7 @@ CROSS JOIN orgInfo
 	<field name="faname2" class="java.lang.String"/>
 	<field name="taxname" class="java.lang.String"/>
 	<field name="taxdescription" class="java.lang.String"/>
+	<field name="periodname" class="java.lang.String"/>
 	<variable name="taxbaseamt1" class="java.math.BigDecimal" resetType="Group" resetGroup="SteuerCode" calculation="Sum">
 		<variableExpression><![CDATA[$F{taxbaseamt}]]></variableExpression>
 	</variable>
@@ -179,7 +181,7 @@ CROSS JOIN orgInfo
 (($F{issotrx}.equals("Y")?$F{salestaxcode}:$F{purchasetaxcode})!=null)]]></printWhenExpression>
 				<textField pattern="#,##0.00 €;-#,##0.00 €">
 					<reportElement style="List 10" x="324" y="0" width="72" height="15" forecolor="#0000FF" uuid="51424537-da23-4d68-a790-cd7267ddf1bf">
-						<printWhenExpression><![CDATA[($F{issotrx}.equals("Y")?$F{revenuebasecode}:null)!=null]]></printWhenExpression>
+						<printWhenExpression><![CDATA[$F{revenuebasecode}!=null && ($F{salestaxcode}==null || $F{issotrx}.equals("Y"))]]></printWhenExpression>
 					</reportElement>
 					<textElement textAlignment="Right" verticalAlignment="Middle">
 						<font isBold="true"/>
@@ -209,15 +211,16 @@ CROSS JOIN orgInfo
 					<textFieldExpression><![CDATA[(
 ($F{issotrx}.equals("Y")?$F{salestaxcode}:$F{purchasetaxcode})==null ||
 ($F{issotrx}.equals("Y")?$F{salestaxcode}:$F{purchasetaxcode}).endsWith("b")
-)?null:($F{issotrx}.equals("Y")?$F{salestaxcode}:$F{purchasetaxcode})
-]]></textFieldExpression>
+)?null:($F{issotrx}.equals("Y")?$F{salestaxcode}:$F{purchasetaxcode})]]></textFieldExpression>
 				</textField>
 				<textField isBlankWhenNull="true">
-					<reportElement style="List Header 10" x="300" y="0" width="24" height="15" forecolor="#0000FF" uuid="37cabb03-805a-491b-b0c4-b7f95d0b3bf6"/>
+					<reportElement style="List Header 10" x="300" y="0" width="24" height="15" forecolor="#0000FF" uuid="37cabb03-805a-491b-b0c4-b7f95d0b3bf6">
+						<printWhenExpression><![CDATA[$F{revenuebasecode}!=null && ($F{salestaxcode}==null || $F{issotrx}.equals("Y"))]]></printWhenExpression>
+					</reportElement>
 					<textElement textAlignment="Right" verticalAlignment="Middle">
 						<font isBold="true"/>
 					</textElement>
-					<textFieldExpression><![CDATA[$F{issotrx}.equals("Y")?$F{revenuebasecode}:null]]></textFieldExpression>
+					<textFieldExpression><![CDATA[$F{revenuebasecode}]]></textFieldExpression>
 				</textField>
 			</band>
 		</groupFooter>
@@ -277,8 +280,19 @@ CROSS JOIN orgInfo
 				<text><![CDATA[Umsatzsteuer-Identifikationsnummer]]></text>
 			</staticText>
 			<textField>
-				<reportElement style="Report Monospace Font" x="204" y="69" width="108" height="20" uuid="5a21eaeb-ca1b-498d-84d6-1933e58ae481"/>
+				<reportElement style="Report Monospace Font" x="204" y="69" width="96" height="20" uuid="5a21eaeb-ca1b-498d-84d6-1933e58ae481"/>
 				<textFieldExpression><![CDATA[$F{orgtaxid}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="300" y="69" width="60" height="20" uuid="3cfc2560-b05a-4444-bbc7-d937d3994386"/>
+				<text><![CDATA[Periode]]></text>
+			</staticText>
+			<textField>
+				<reportElement style="Report Monospace Font" x="360" y="69" width="144" height="20" uuid="e96d0e50-3ab3-4a93-b53a-688311b62738"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{periodname}]]></textFieldExpression>
 			</textField>
 		</band>
 	</title>
@@ -304,7 +318,7 @@ CROSS JOIN orgInfo
 			<textField pattern="#,##0.00 €;-#,##0.00 €">
 				<reportElement style="List 10" x="324" y="0" width="72" height="15" uuid="35704bfb-4f1d-4fd6-9a30-0a30e62de197">
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
-					<printWhenExpression><![CDATA[($F{issotrx}.equals("Y")?$F{revenuebasecode}:null)!=null]]></printWhenExpression>
+					<printWhenExpression><![CDATA[$F{revenuebasecode}!=null]]></printWhenExpression>
 				</reportElement>
 				<textElement textAlignment="Right" verticalAlignment="Middle"/>
 				<textFieldExpression><![CDATA[$F{taxbaseamt}]]></textFieldExpression>
