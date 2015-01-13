@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 5.6.1.final using JasperReports Library version 5.6.1  -->
-<!-- 2014-12-12T14:03:59 -->
+<!-- 2015-01-13T12:42:10 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="UmsatzsteuerMeldung" pageWidth="595" pageHeight="842" columnWidth="511" leftMargin="56" rightMargin="28" topMargin="28" bottomMargin="28" uuid="27c273fe-a228-4756-8e63-11c5d53c4f31">
 	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="BXService.bx-erp.de"/>
 	<property name="com.jaspersoft.studio.unit." value="pixel"/>
@@ -50,12 +50,15 @@ SELECT
   Posted,
   C_BP_Name,
   C_BP_Value,
+  C_Tax.C_Tax_ID AS C_Tax_ID,
   C_Tax.Name AS taxName,
   C_Tax.Description AS taxDescription,
   C_Tax.RevenueBaseCode,
   C_Tax.SalesTaxCode,
   C_Tax.PurchaseTaxCode,
-  C_Period.Name AS periodName
+  C_Period.Name AS periodName,
+  startDate,
+  endDate
 FROM RV_C_InvoiceTax
 CROSS JOIN params
 JOIN C_Tax USING(C_Tax_ID)
@@ -63,13 +66,13 @@ JOIN C_Period ON(C_Period.C_Period_ID=params.p_C_Period_ID)
 WHERE RV_C_InvoiceTax.AD_Client_ID=p_AD_Client_ID  
 AND RV_C_InvoiceTax.DateAcct >= p_StartDate AND RV_C_InvoiceTax.DateAcct <=p_EndDate
 AND RV_C_InvoiceTax.Reversal_ID IS NULL
-AND DocStatus='CO' AND Posted='Y'
+AND DocStatus IN('CO','CL') AND Posted='Y'
 ORDER BY
   IsSOTrx DESC,
   CASE WHEN IsSOTrx='Y' THEN C_Tax.RevenueBaseCode ELSE C_Tax.PurchaseTaxCode END,
+  C_Tax_ID,
   DateAcct,
-  DocumentNo,
-  C_Tax_ID
+  DocumentNo
 ),
 orgInfo AS(
 SELECT
@@ -129,6 +132,9 @@ CROSS JOIN orgInfo]]>
 	<field name="taxname" class="java.lang.String"/>
 	<field name="taxdescription" class="java.lang.String"/>
 	<field name="periodname" class="java.lang.String"/>
+	<field name="startdate" class="java.sql.Timestamp"/>
+	<field name="enddate" class="java.sql.Timestamp"/>
+	<field name="c_tax_id" class="java.math.BigDecimal"/>
 	<variable name="taxbaseamt1" class="java.math.BigDecimal" resetType="Group" resetGroup="SteuerCode" calculation="Sum">
 		<variableExpression><![CDATA[$F{taxbaseamt}]]></variableExpression>
 	</variable>
@@ -152,29 +158,7 @@ CROSS JOIN orgInfo]]>
 		</groupHeader>
 	</group>
 	<group name="SteuerCode">
-		<groupExpression><![CDATA[$F{issotrx}.equals("Y")?$F{revenuebasecode}:$F{purchasetaxcode}]]></groupExpression>
-		<groupHeader>
-			<band height="40">
-				<property name="local_mesure_unitheight" value="pixel"/>
-				<property name="com.jaspersoft.studio.unit.height" value="px"/>
-				<textField>
-					<reportElement style="List Header 10" x="0" y="0" width="504" height="15" uuid="04e31e31-e3a4-4a4e-b206-12b02def84ff">
-						<property name="local_mesure_unitheight" value="pixel"/>
-						<property name="com.jaspersoft.studio.unit.height" value="px"/>
-					</reportElement>
-					<textElement verticalAlignment="Middle"/>
-					<textFieldExpression><![CDATA[$F{taxname}]]></textFieldExpression>
-				</textField>
-				<textField>
-					<reportElement style="List 10" x="0" y="15" width="504" height="15" uuid="4d52d513-b584-448a-8a27-c9179cfed7f8">
-						<property name="local_mesure_unitheight" value="pixel"/>
-						<property name="com.jaspersoft.studio.unit.height" value="px"/>
-					</reportElement>
-					<textElement verticalAlignment="Middle"/>
-					<textFieldExpression><![CDATA[$F{taxdescription}]]></textFieldExpression>
-				</textField>
-			</band>
-		</groupHeader>
+		<groupExpression><![CDATA[("Y".equals($F{issotrx})?$F{revenuebasecode}:$F{purchasetaxcode})]]></groupExpression>
 		<groupFooter>
 			<band height="27">
 				<printWhenExpression><![CDATA[(($F{issotrx}.equals("Y")?$F{revenuebasecode}:null)!=null) || 
@@ -225,6 +209,32 @@ CROSS JOIN orgInfo]]>
 			</band>
 		</groupFooter>
 	</group>
+	<group name="C_Tax_ID">
+		<groupExpression><![CDATA[$F{c_tax_id}]]></groupExpression>
+		<groupHeader>
+			<band height="43">
+				<textField>
+					<reportElement style="List 10" x="1" y="15" width="504" height="15" uuid="4d52d513-b584-448a-8a27-c9179cfed7f8">
+						<property name="local_mesure_unitheight" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					</reportElement>
+					<textElement verticalAlignment="Middle"/>
+					<textFieldExpression><![CDATA[$F{taxdescription}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement style="List Header 10" x="1" y="0" width="504" height="15" uuid="04e31e31-e3a4-4a4e-b206-12b02def84ff">
+						<property name="local_mesure_unitheight" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					</reportElement>
+					<textElement verticalAlignment="Middle"/>
+					<textFieldExpression><![CDATA[$F{taxname}]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupHeader>
+		<groupFooter>
+			<band height="18"/>
+		</groupFooter>
+	</group>
 	<title>
 		<band height="198" splitType="Stretch">
 			<staticText>
@@ -232,7 +242,7 @@ CROSS JOIN orgInfo]]>
 				<textElement textAlignment="Center">
 					<font isUnderline="true"/>
 				</textElement>
-				<text><![CDATA[Umsatzsteuer-Voranmeldung: Nachweis nach Belegen]]></text>
+				<text><![CDATA[Umsatzsteuer-Voranmeldung: Verprobung]]></text>
 			</staticText>
 			<staticText>
 				<reportElement x="0" y="89" width="240" height="20" uuid="a775edc7-eeb6-4702-980b-22e950a5566e"/>
@@ -272,27 +282,34 @@ CROSS JOIN orgInfo]]>
 ($F{orgemail}!=null?"EMail "+$F{orgemail}:"")]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement style="Report Monospace Font" x="96" y="49" width="108" height="20" uuid="451067d7-d96a-4f21-bc8e-e90097b41e03"/>
+				<reportElement style="Report Monospace Font" x="192" y="49" width="96" height="20" uuid="451067d7-d96a-4f21-bc8e-e90097b41e03"/>
 				<textFieldExpression><![CDATA[$F{nationaltaxid}]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement x="0" y="69" width="204" height="20" uuid="4b98874f-112f-4f2e-b3dc-4a1a874d2f05"/>
+				<reportElement x="0" y="69" width="192" height="20" uuid="4b98874f-112f-4f2e-b3dc-4a1a874d2f05"/>
 				<text><![CDATA[Umsatzsteuer-Identifikationsnummer]]></text>
 			</staticText>
 			<textField>
-				<reportElement style="Report Monospace Font" x="204" y="69" width="96" height="20" uuid="5a21eaeb-ca1b-498d-84d6-1933e58ae481"/>
+				<reportElement style="Report Monospace Font" x="192" y="69" width="96" height="20" uuid="5a21eaeb-ca1b-498d-84d6-1933e58ae481"/>
 				<textFieldExpression><![CDATA[$F{orgtaxid}]]></textFieldExpression>
 			</textField>
 			<staticText>
 				<reportElement x="300" y="69" width="60" height="20" uuid="3cfc2560-b05a-4444-bbc7-d937d3994386"/>
-				<text><![CDATA[Periode]]></text>
+				<text><![CDATA[Periode:]]></text>
 			</staticText>
 			<textField>
 				<reportElement style="Report Monospace Font" x="360" y="69" width="144" height="20" uuid="e96d0e50-3ab3-4a93-b53a-688311b62738"/>
 				<textElement>
 					<font size="10"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{periodname}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[($F{periodname}==null?"":$F{periodname})]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Report Monospace Font" x="300" y="89" width="205" height="20" uuid="b3183ab6-e32e-429d-aeb1-adaf59c49e15"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[($F{startdate}==null?"":"("+(new SimpleDateFormat("dd.MM.yy").format($F{startdate}))+"-"+(new SimpleDateFormat("dd.MM.yy").format($F{enddate}))+")")]]></textFieldExpression>
 			</textField>
 		</band>
 	</title>

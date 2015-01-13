@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 5.6.1.final using JasperReports Library version 5.6.1  -->
-<!-- 2014-09-07T13:48:27 -->
+<!-- 2014-09-07T15:55:48 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="List Header" pageWidth="510" pageHeight="842" columnWidth="510" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" uuid="c3e1d1f3-0fe0-4a69-a9a1-f220fd61495c">
 	<property name="com.jaspersoft.studio.unit." value="pixel"/>
 	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
@@ -57,8 +57,7 @@ LEFT JOIN AD_Process_Trl ON (
 )
 LEFT JOIN AD_Org ON (AD_Org.AD_Org_ID = p_AD_Org_ID)
 LEFT JOIN AD_OrgInfo ON (AD_OrgInfo.AD_Org_ID = p_AD_Org_ID)
-LEFT JOIN C_Period per ON ( per.C_Period_ID=p_C_Period_ID )
-]]>
+LEFT JOIN C_Period per ON ( per.C_Period_ID=p_C_Period_ID )]]>
 	</queryString>
 	<field name="reportname" class="java.lang.String"/>
 	<field name="orgname" class="java.lang.String"/>

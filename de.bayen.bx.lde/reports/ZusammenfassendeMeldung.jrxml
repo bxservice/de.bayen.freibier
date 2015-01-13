@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 5.6.1.final using JasperReports Library version 5.6.1  -->
-<!-- 2014-09-07T21:49:17 -->
+<!-- 2015-01-13T12:38:32 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Zusammenfassende Meldung" pageWidth="595" pageHeight="842" columnWidth="511" leftMargin="56" rightMargin="28" topMargin="28" bottomMargin="28" uuid="eafe6287-970c-4133-ad72-ea55c6c4b652">
 	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="BXService local"/>
 	<property name="com.jaspersoft.studio.unit." value="pixel"/>
@@ -59,6 +59,8 @@ SELECT
   fa.Name2 AS faName2,
   p.Name AS periodName,
   p.PeriodNo,
+  p.startDate,
+  p.endDate,
   py.FiscalYear,
   zeilen.*
 FROM zeilen
@@ -89,6 +91,8 @@ WHERE zeilen.TaxBaseAmtCeiling != 0]]>
 	<field name="periodno" class="java.math.BigDecimal"/>
 	<field name="fiscalyear" class="java.lang.String"/>
 	<field name="orgtaxid" class="java.lang.String"/>
+	<field name="startdate" class="java.sql.Timestamp"/>
+	<field name="enddate" class="java.sql.Timestamp"/>
 	<background>
 		<band height="785" splitType="Stretch">
 			<property name="local_mesure_unitheight" value="pixel"/>
@@ -136,7 +140,7 @@ WHERE zeilen.TaxBaseAmtCeiling != 0]]>
 ($F{orgemail}!=null?"EMail "+$F{orgemail}:"")]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement style="Report Monospace Font" x="96" y="49" width="108" height="20" uuid="a873fbb7-62e1-4a41-a3f9-1ac3b08a5881"/>
+				<reportElement style="Report Monospace Font" x="192" y="48" width="96" height="20" uuid="a873fbb7-62e1-4a41-a3f9-1ac3b08a5881"/>
 				<textFieldExpression><![CDATA[$F{nationaltaxid}]]></textFieldExpression>
 			</textField>
 			<staticText>
@@ -148,11 +152,11 @@ WHERE zeilen.TaxBaseAmtCeiling != 0]]>
 				<text><![CDATA[Finanzamt:]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="0" y="69" width="204" height="20" uuid="a3f81162-c42a-4474-9555-7c7b910ea4ad"/>
+				<reportElement x="0" y="69" width="192" height="20" uuid="a3f81162-c42a-4474-9555-7c7b910ea4ad"/>
 				<text><![CDATA[Umsatzsteuer-Identifikationsnummer]]></text>
 			</staticText>
 			<textField>
-				<reportElement style="Report Monospace Font" x="204" y="69" width="108" height="20" uuid="8aa0d68f-4999-4788-93a6-df96197b1d89"/>
+				<reportElement style="Report Monospace Font" x="192" y="69" width="96" height="20" uuid="8aa0d68f-4999-4788-93a6-df96197b1d89"/>
 				<textFieldExpression><![CDATA[$F{orgtaxid}]]></textFieldExpression>
 			</textField>
 			<staticText>
@@ -162,6 +166,24 @@ WHERE zeilen.TaxBaseAmtCeiling != 0]]>
 				</textElement>
 				<text><![CDATA[Meldung für:]]></text>
 			</staticText>
+			<staticText>
+				<reportElement x="300" y="69" width="60" height="20" uuid="8579c98d-f9cf-42f4-ab67-182659316067"/>
+				<text><![CDATA[Periode:]]></text>
+			</staticText>
+			<textField>
+				<reportElement style="Report Monospace Font" x="360" y="69" width="144" height="20" uuid="54bb8b35-d679-4d04-9e6e-04e3f35568d6"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[($F{periodname}==null?"":$F{periodname})]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Report Monospace Font" x="300" y="89" width="205" height="20" uuid="02d2cfec-cbd8-4ae0-87d0-878199a00068"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[($F{startdate}==null?"":"("+(new SimpleDateFormat("dd.MM.yy").format($F{startdate}))+"-"+(new SimpleDateFormat("dd.MM.yy").format($F{enddate}))+")")]]></textFieldExpression>
+			</textField>
 		</band>
 	</title>
 	<pageHeader>
