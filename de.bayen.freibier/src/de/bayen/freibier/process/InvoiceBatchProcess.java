@@ -151,7 +151,7 @@ public class InvoiceBatchProcess extends SvrProcess
 							throw new AdempiereException(
 									"Not implemented for more than one Accounting Schema.");
 						MAcctSchemaElement ud1 = ass[0]
-								.getAcctSchemaElement(X_C_AcctSchema_Element.ELEMENTTYPE_UserElement1);
+								.getAcctSchemaElement(X_C_AcctSchema_Element.ELEMENTTYPE_UserColumn1);
 						String userElement1ColumnName;
 						if (ud1 != null) {
 							userElement1ColumnName = ud1.getDisplayColumnName();

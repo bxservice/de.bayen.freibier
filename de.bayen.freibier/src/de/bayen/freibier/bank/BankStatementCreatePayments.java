@@ -59,7 +59,7 @@ public class BankStatementCreatePayments extends SvrProcess {
 		if (ass.length != 1)
 			throw new AdempiereException("Not implemented for more than one Accounting Schema.");
 		MAcctSchemaElement ud1 = ass[0]
-				.getAcctSchemaElement(X_C_AcctSchema_Element.ELEMENTTYPE_UserElement1);
+				.getAcctSchemaElement(X_C_AcctSchema_Element.ELEMENTTYPE_UserColumn1);
 		if (ud1 != null)
 			m_userElement1ColumnName = ud1.getDisplayColumnName();
 	}
