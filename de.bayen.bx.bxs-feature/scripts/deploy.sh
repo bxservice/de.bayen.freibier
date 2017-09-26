@@ -13,17 +13,17 @@ echo deploy.sh
 COMMAND=${1}
 INSTALLATION=${2}
 SSH_USER=`./simpleDB installations read ${INSTALLATION} username`
-echo $SSH_USER
+#echo $SSH_USER
 SERVER=`./simpleDB installations read ${INSTALLATION} server`
-echo $SERVER
+#echo $SERVER
 SERVERNAME=`./simpleDB server read ${SERVER} servername`
-echo $SERVERNAME
+#echo $SERVERNAME
 DATABASE=`./simpleDB installations read ${INSTALLATION} database`
-echo $DATABASE
+#echo $DATABASE
 IDEMPIERESOURCEDIR=`./simpleDB installations read ${INSTALLATION} idempieresource`
-echo $IDEMPIERESOURCEDIR
+#echo $IDEMPIERESOURCEDIR
 SSHCOMMAND="ssh ${SSH_USER}@${SERVERNAME}"
-echo $SSHCOMMAND
+#echo $SSHCOMMAND
 CONSOLEPORT=`./simpleDB installations read ${INSTALLATION} consoleport`
 POSTGRESPW=`./simpleDB server read ${SERVER} postgrespw`
 POSTGRESUSER=`./simpleDB installations read ${INSTALLATION} postgresuser`
@@ -67,14 +67,14 @@ copyallpackages () {
 	# copy server package and bundles to the cloudserver
 	PLUGINS=$@
 	#echo copy idempiereServer.gtk.linux.x86_64.zip
-	rsync -P ~/buckminster.output/org.adempiere.server_2.0.0-eclipse.feature/idempiereServer.gtk.linux.x86_64.zip ${SSH_USER}@${SERVERNAME}:.
+	rsync -P ~/buckminster.output/org.adempiere.server_*-eclipse.feature/idempiereServer.gtk.linux.x86_64.zip ${SSH_USER}@${SERVERNAME}:.
 	# alternativ geht auch folgendes auf dem Server:
 	# wget http://ci.idempiere.org/job/iDempiere/ws/buckminster.output/org.adempiere.server_2.0.0-eclipse.feature/idempiereServer.gtk.linux.x86_64.zip
 	for plugin in ${PLUGINS[@]}
 	do
 		lastversion=`cd ../deploy/plugins/ && ( ls ${plugin}_*.jar -t | head -n 1 )`
 		#echo copy ${lastversion}
-		rsync -P ../deploy/plugins/${lastversion} ${SSH_USER}@${SERVERNAME}:plugins
+		rsync -P ../deploy/plugins/${lastversion} ${SSH_USER}@${SERVERNAME}:plugins/
 	done
 }
 
@@ -170,8 +170,15 @@ installbundles () {
 	$SSHCOMMAND 'echo uninstall org.adempiere.report.jasper >>.tmpconsole'
 	$SSHCOMMAND 'echo uninstall org.adempiere.report.jasper.library >>.tmpconsole'
 	$SSHCOMMAND 'echo exit >>.tmpconsole'
+	$SSHCOMMAND 'echo >>.tmpconsole'
 	# execute the osgi console
 	$SSHCOMMAND 'cd idempiere.gtk.linux.x86_64/idempiere-server/ && ( ( sleep 10 && cat ~/.tmpconsole ) | java -Dosgi.noShutdown=true -jar plugins/org.eclipse.equinox.launcher_1.*.jar -console )'
+	# sometimes we need this extra step:
+	$SSHCOMMAND 'rm -f .tmpconsole ; touch .tmpconsole'
+	$SSHCOMMAND 'echo refresh org.zkoss.zk.library >>.tmpconsole'
+	$SSHCOMMAND 'echo exit >>.tmpconsole'
+	$SSHCOMMAND 'echo >>.tmpconsole'
+	$SSHCOMMAND 'cd idempiere.gtk.linux.x86_64/idempiere-server/ && ( ( sleep 10 && cat ~/.tmpconsole ) | java -Dosgi.noShutdown=true -jar plugins/org.eclipse.equinox.launcher_1.*.jar -console )'	
 	# deinstall pre-configured packages from the osgi configuration/config.ini file
 	deinstalljasperpackages ${PLUGINS}
 }
@@ -192,14 +199,14 @@ deinstalljasperpackages () {
 
 dbmigration () {
 	echo 'dbmigration()'
-	$SSHCOMMAND './backup.sh &'
+#	$SSHCOMMAND './backup.sh &'
 	ssh -L 15432:localhost:5432 -N ${SSH_USER}@${SERVERNAME} &
 	SSH_PID=$!
 	echo "Tunnel PID: " $SSH_PID
 	sleep 5;  # wait for the connection
 	echo ./syncApplied.sh $DATABASE '-h localhost -p 15432' $POSTGRESUSER $IDEMPIERESOURCEDIR/migration
 	./syncApplied.sh $DATABASE '-h localhost -p 15432' $POSTGRESUSER $IDEMPIERESOURCEDIR/migration
-	echo kill $SSH_PID
+	kill $SSH_PID
 	echo "Tunnel closed"
 }
 
@@ -241,7 +248,9 @@ updatebundles () {
 		fi
 	done
 	$SSHCOMMAND 'echo exit >>.tmpconsole1'
+	$SSHCOMMAND 'echo >>.tmpconsole1'
 	$SSHCOMMAND 'echo exit >>.tmpconsole2'
+	$SSHCOMMAND 'echo >>.tmpconsole2'
 	# execute the osgi console
 	$SSHCOMMAND 'cd idempiere.gtk.linux.x86_64/idempiere-server/ && ( ( sleep 10 && cat ~/.tmpconsole1 ) | java -Dosgi.noShutdown=true -jar plugins/org.eclipse.equinox.launcher_1.*.jar -console )'
 	$SSHCOMMAND 'cd idempiere.gtk.linux.x86_64/idempiere-server/ && ( ( sleep 10 && cat ~/.tmpconsole2 ) | java -Dosgi.noShutdown=true -jar plugins/org.eclipse.equinox.launcher_1.*.jar -console )'
@@ -259,9 +268,9 @@ if [ "$COMMAND" == "firstinstall" ]; then
 fi
 if [ "$COMMAND" == "install" ]; then
 	serverstop
-	copyallpackages $PLUGINS
-	installserverpackage
-	installbundles $PLUGINS
+#	copyallpackages $PLUGINS
+#	installserverpackage
+#	installbundles $PLUGINS
 	dbmigration
 	serverstart
 fi

@@ -224,9 +224,9 @@ public class HBCIPaymentProcessor {
 			
 			while (frist > 0) {
 				cal.add(Calendar.DAY_OF_MONTH, 1);
-				if (wochentag == Calendar.SUNDAY)
+				if (cal.get(GregorianCalendar.DAY_OF_WEEK) == Calendar.SUNDAY)
 					continue;
-				if (wochentag == Calendar.SATURDAY)
+				if (cal.get(GregorianCalendar.DAY_OF_WEEK) == Calendar.SATURDAY)
 					continue;
 				// hier ggf. andere Bankfeiertage einfügen
 				frist--;
@@ -275,9 +275,15 @@ public class HBCIPaymentProcessor {
 		}
 		// Transaktion speichern
 		MBPBankAccount bpAccount = (MBPBankAccount) check.getC_BP_BankAccount();
-		if(check.getPayAmt().compareTo(BigDecimal.ZERO) <= 0)
-			throw new AdempiereException("checks/direct transactions are not allowed with an amount smaller than or equal zero");
-		return addTransaction(bpAccount, usage.toString(), e2eid.toString(), check.getPayAmt());
+		BigDecimal payAmt = check.getPayAmt();
+		if(payAmt.compareTo(BigDecimal.ZERO) <= 0){
+			// entweder falsch oder eine Überweisung als Lastschrift (Überweisung an Kunden)
+			//if("D".equals(check.getPaymentRule()) && m_isDebit==false)
+				payAmt=payAmt.negate();
+			//else
+			//	throw new AdempiereException("checks/direct transactions are not allowed with an amount smaller than or equal zero");
+		}
+		return addTransaction(bpAccount, usage.toString(), e2eid.toString(), payAmt);
 	}
 	
 	public void done(){

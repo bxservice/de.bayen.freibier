@@ -8,15 +8,15 @@ set -u
 COMMAND=${1:-help}
 INSTALLATION=${2:-test}
 LINUXUSER=`./simpleDB installations read ${INSTALLATION} username`
-echo $LINUXUSER
+#echo $LINUXUSER
 SERVER=`./simpleDB installations read ${INSTALLATION} server`
-echo $SERVER
+#echo $SERVER
 SERVERNAME=`./simpleDB server read ${SERVER} servername`
-echo $SERVERNAME
+#echo $SERVERNAME
 POSTGRESUSER=`./simpleDB installations read ${INSTALLATION} postgresuser`
-echo $POSTGRESUSER
+#echo $POSTGRESUSER
 SSHTARGET=${LINUXUSER}@${SERVERNAME}
-echo $SSHTARGET
+#echo $SSHTARGET
 LOCALDBSERVER=localhost
 LOCALDBUSER=adempiere
 LOCALDB=${INSTALLATION}
@@ -25,10 +25,13 @@ IDEMPIERESOURCEDIR=/home/tbayen/Java/workspaces/idempiere-interchange/migration
 if [ "${COMMAND}" == "db2local" ]
 then
   ssh ${SSHTARGET} ./backup.sh
-  psql -h ${LOCALDBSERVER} -U ${LOCALDBUSER} ${LOCALDB} -c "DROP DATABASE IF EXISTS ${LOCALDB}_killme;"
   # kill all other connections to this database
   psql -h ${LOCALDBSERVER} -U ${LOCALDBUSER} postgres -c "SELECT pg_terminate_backend(procpid) FROM  pg_stat_activity WHERE procpid <> pg_backend_pid() AND datname = '${LOCALDB}'"
+  # switch error checking off for the case that the local database does not yet exist
+  set +e
+  psql -h ${LOCALDBSERVER} -U ${LOCALDBUSER} ${LOCALDB} -c "DROP DATABASE IF EXISTS ${LOCALDB}_killme;"
   psql -h ${LOCALDBSERVER} -U ${LOCALDBUSER} postgres -c "ALTER DATABASE ${LOCALDB} RENAME TO ${LOCALDB}_killme;"
+  set -e
   psql -h ${LOCALDBSERVER} -U ${LOCALDBUSER} postgres -c "CREATE DATABASE ${LOCALDB} WITH ENCODING='UTF-8' OWNER=${LOCALDBUSER};"
   LASTBACKUP=`ssh ${SSHTARGET} "ls -t backup | head -n 1"`
   scp ${SSHTARGET}:backup/${LASTBACKUP} /tmp/${LASTBACKUP}

@@ -9,7 +9,11 @@ Export-Package: net.sf.jasperreports.engine,
  net.sf.jasperreports.engine.fill,
  net.sf.jasperreports.engine.util,
  net.sf.jasperreports.export,
- net.sf.jasperreports.view
+ net.sf.jasperreports.view,
+ org.apache.xml.dtm,
+ org.apache.xml.utils,
+ org.apache.xpath,
+ org.apache.xpath.objects
 Bundle-ClassPath: lib/ant-1.7.1.jar,
  lib/antlr-2.7.5.jar,
  lib/barbecue-1.5-beta1.jar,

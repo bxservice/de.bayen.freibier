@@ -69,6 +69,7 @@ import net.sf.jasperreports.export.SimpleXlsExporterConfiguration;
 import org.adempiere.base.Service;
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.exceptions.DBException;
+import org.adempiere.model.GenericPO;
 import org.adempiere.report.jasper.JRViewerProvider;
 import org.adempiere.util.IProcessUI;
 import org.compiere.model.MClient;
@@ -76,7 +77,9 @@ import org.compiere.model.MPInstance;
 import org.compiere.model.MProcess;
 import org.compiere.model.MRole;
 import org.compiere.model.MSysConfig;
+import org.compiere.model.MTable;
 import org.compiere.model.MUser;
+import org.compiere.model.PO;
 import org.compiere.model.PrintInfo;
 import org.compiere.model.X_AD_PInstance_Para;
 import org.compiere.print.ArchiveEngine;
@@ -128,6 +131,8 @@ public class ReportStarter implements ProcessCall, ClientProcess {
 	public static final String JCTX_GUI_SORT = "GUI_SORT";
 	public static final String JCTX_GUI_JOIN = "GUI_JOIN";
 	public static final String JCTX_RECORD_IDS = "RECORD_IDs";
+	public static final String SYSCONFIG_ARCHIVE_PDF_DIR="ARCHIVE_PDF_DIR";
+	public static final String SYSCONFIG_ARCHIVE_PDF_NAME="ARCHIVE_PDF_NAME";
 	/* @formatter:on */
 
 	private static final int DEFAULT_SWAP_MAX_PAGES = 100;
@@ -139,13 +144,15 @@ public class ReportStarter implements ProcessCall, ClientProcess {
 	private boolean m_directPrint;
 	private String m_jasperFilepath;
 	private FileResolver m_fileResolver;
-
+	private Properties m_ctx;
+	
 	/*
 	 * Start class to create a JasperReports report.
 	 */
 	public boolean startProcess(Properties ctx, ProcessInfo pi, Trx trx) {
 
 		// initialize fields and the parameter map
+		m_ctx=ctx;
 		String trxName = trx == null ? null : trx.getTrxName();
 		initFromAD_Process(pi, trxName);
 		HashMap<String, Object> params = initParameterMap(ctx, pi, trxName);
@@ -384,11 +391,35 @@ public class ReportStarter implements ProcessCall, ClientProcess {
 			for (char ch : jasperPrint.getName().toCharArray())
 				prefix.append(Character.isLetterOrDigit(ch) ? ch : '_');
 			File PDF;
-			if (pi.getPDFFileName() != null) {
-				PDF = new File(pi.getPDFFileName());
-			} else {
-				PDF=File.createTempFile(prefix.toString(), ".pdf");
+			// temporary or not?
+			String dir = MClient.get(m_ctx).getDocumentDir();
+			if(dir!=null && dir.length()>0){
+				if("JasperReport Rechnung".equals(pi.getTitle())){
+					String sql="SELECT c_bp_value, DocumentNo FROM RV_C_Invoice WHERE C_Invoice_ID=?";
+					CPreparedStatement ps = DB.prepareStatement(sql, null);
+					try {
+						ps.setInt(1, pi.getRecord_ID());
+						ResultSet rs = ps.executeQuery();
+						rs.next();
+						String c_bp_value = rs.getString(1);
+						String DocumentNo = rs.getString(2);
+						PDF = new File(dir + "/" + c_bp_value + "_" + DocumentNo + ".pdf");
+						rs.close();
+						ps.close();
+					} catch (SQLException e) {
+						throw new AdempiereException(e);
+					}
+				}else{
+					PDF=File.createTempFile(prefix.toString(), ".pdf");
+				}
+			}else{
+				if (pi.getPDFFileName() != null) {
+					PDF = new File(pi.getPDFFileName());
+				} else {
+					PDF=File.createTempFile(prefix.toString(), ".pdf");
+				}
 			}
+
 
 			DefaultJasperReportsContext jrContext = DefaultJasperReportsContext
 					.getInstance();
