@@ -1,7 +1,7 @@
 package de.bayen.bx.lde;
 
-import de.bayen.freibier.report.IReportFileResolverFactory;
-import de.bayen.freibier.report.ReportFileResolver;
+import de.bxservice.report.IReportFileResolverFactory;
+import de.bxservice.report.ReportFileResolver;
 
 public class ReportFileResolverFactory implements IReportFileResolverFactory {
 

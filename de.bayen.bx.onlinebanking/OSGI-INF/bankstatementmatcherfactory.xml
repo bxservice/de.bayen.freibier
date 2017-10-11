@@ -4,5 +4,4 @@
    <service>
       <provide interface="de.bayen.bx.onlinebanking.IBankStatementMatcherFactory"/>
    </service>
-   <property name="service.ranking" type="Integer" value="1"/>
 </scr:component>
