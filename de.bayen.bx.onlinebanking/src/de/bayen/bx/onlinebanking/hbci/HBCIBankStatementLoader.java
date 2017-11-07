@@ -347,4 +347,14 @@ public class HBCIBankStatementLoader implements BankStatementLoaderInterface {
 	public BigDecimal getChargeAmt() {
 		return mt940line.getChargeAmt();
 	}
+
+	/**
+	 * Method getIBAN
+	 * @return String
+	 */
+	public String getIBAN() {
+		/* TODO */
+		return null;
+	}
+	
 }
