@@ -11,6 +11,7 @@ Require-Bundle: org.adempiere.base;bundle-version="1.0.0",
 Import-Package: org.adempiere.plugin.utils
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .,
- lib/commons-io.jar
+ lib/commons-io.jar,
+ lib/super-csv-2.0.0-beta-1.jar
 Service-Component: OSGI-INF/calloutfactory.xml,OSGI-INF/modelvalidatorfactory.xml,OSGI-INF/modelfactory.xml,
  OSGI-INF/processfactory.xml
