@@ -17,7 +17,7 @@ public class FreiBierLoginEventHandler extends AbstractEventHandler {
 				MRole role = MRole.get(Env.getCtx(), eventData.getAD_Role_ID());
 				if (!role.getName().toLowerCase().contains("admin") || role.isManual()) {
 					System.out.println("Must log in with an organization: " + role.getName());
-					addErrorMessage(event, "Must log in with an organization");
+					addErrorMessage(event, "Keine Organisation ausgewählt");
 				}
 			}
 		}
