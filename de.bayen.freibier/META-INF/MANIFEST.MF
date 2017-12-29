@@ -14,6 +14,6 @@ Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .,
  lib/commons-io.jar,
  lib/super-csv-2.0.0-beta-1.jar
-Service-Component: OSGI-INF/calloutfactory.xml,OSGI-INF/modelvalidatorfactory.xml,OSGI-INF/modelfactory.xml,OSGI-INF/processfactory.xml,
- OSGI-INF/eventhandler.xml
-Export-Package: de.bayen.util
+Service-Component: OSGI-INF/*.xml
+Export-Package: de.bayen.freibier.util,
+ de.bayen.util
