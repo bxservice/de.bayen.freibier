@@ -25,6 +25,9 @@ import org.compiere.model.MSysConfig;
 import org.compiere.model.MUser;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
+import org.compiere.util.Util;
+
+import com.sun.org.apache.xml.internal.serializer.utils.Utils;
 
 @SuppressWarnings("unused")
 public class OrderDotMatrixFormat {
@@ -72,10 +75,11 @@ public class OrderDotMatrixFormat {
     private PageControl pageControl = new PageControl();
     private HeaderData headerData = new HeaderData();
 	private List<DetailData> detailsData = new ArrayList<DetailData>();
-	private static int FooterLineRechnung = 40;
-	private static int FooterLineLieferschein = 46;
+	private int FooterLineRechnung;
+	private int FooterLineLieferschein;
+
+	private static int TopMargin = 2;
 	private static int MaxLineDetail = 62;
-	private static int TopMargin = 6;
 
 	public String print(Properties ctx, int orderID, String trxName) {
 		MOrder order = new MOrder(ctx, orderID, trxName);
@@ -83,8 +87,8 @@ public class OrderDotMatrixFormat {
 
 		// define the filename
 		// Order[DocumentNo]_[UserValue].txt
-		// the user value will help to map the printer
-		String fileName = "Order" + order.getDocumentNo() + "_" + user.getValue() + ".txt";
+		// TODO: User Preference with printer name
+		String fileName = "Order" + order.getDocumentNo() + "_" + user.getValue() + "_ZentraleForm.txt";
 		String tmpFolder = MSysConfig.getValue("BAY_TMP_FOLDER", "/tmp/preparing");
 		String definitiveFolder = MSysConfig.getValue("BAY_DEFINITIVE_FOLDER", "/tmp/to_print");
 		try {
@@ -134,7 +138,7 @@ public class OrderDotMatrixFormat {
 					+ " to_char(coalesce(h.GrandTotal-h.TotalLines,0),'99999990.00') AS TotalTax,"
 					+ " coalesce(upper(h.Address1),'') AS Address1,"
 					+ " coalesce(upper(h.Address2),'') AS Address2,"
-					+ " coalesce(h.Postal,'') AS Postal,"
+					+ " coalesce(l.Postal,'') AS Postal,"
 					+ " coalesce(upper(h.City),'') AS City,"
 					+ " rpad(substring(coalesce(h.BPValue,''),1,5),5,' ') AS BPValue,"
 					+ " rpad(substring(coalesce(r.Value,''),1,4),4,' ') AS DeliveryRoute,"
@@ -145,12 +149,16 @@ public class OrderDotMatrixFormat {
 					+ " to_char(coalesce((SELECT sum(ROUND(lp.LineNetAmt*t.Rate/100,2)) FROM C_OrderLine lp JOIN C_Tax t ON (lp.C_Tax_ID=t.C_Tax_ID) WHERE lp.C_Order_ID=o.C_Order_ID AND lp.bay_masterorderline_id IS NULL),0),'99999990.00') AS TotalTaxLGAusgleich,"
 					+ " to_char(coalesce(h.TotalLines-(SELECT sum(lp.LineNetAmt) FROM C_OrderLine lp WHERE lp.C_Order_ID=o.C_Order_ID AND lp.bay_masterorderline_id IS NULL),0),'99999990.00') AS LeerGut,"
 					+ " coalesce(h.Description,'') AS Description,"
-					+ " coalesce(h.PaymentTermNote,'') AS PaymentTermNote,"
+					+ " coalesce(pt.DocumentNote,'') AS PaymentTermNote,"
 					+ " coalesce(d.DocumentNote,'') AS TargetDocumentTypeNote,"
 					+ " to_char(coalesce((SELECT MAX(t.Rate) FROM C_OrderLine lp JOIN C_Tax t ON (lp.C_Tax_ID=t.C_Tax_ID) WHERE lp.C_Order_ID=o.C_Order_ID AND lp.bay_masterorderline_id IS NULL),0),'90.0%') AS TaxRate,"
 					+ " h.C_Order_ID"
 					+ " FROM C_Order_Header_V h"
 					+ " JOIN C_Order o ON (h.C_Order_ID=o.C_Order_ID)"
+					+ " JOIN C_BPartner bp ON (o.C_BPartner_ID=bp.C_BPartner_ID)"
+					+ " LEFT JOIN C_PaymentTerm pt ON (bp.C_PaymentTerm_ID=pt.C_PaymentTerm_ID)"
+					+ " JOIN C_BPartner_Location bpl ON (bpl.C_BPartner_Location_ID=o.C_BPartner_Location_ID)"
+					+ " JOIN C_Location l ON (bpl.C_Location_ID=l.C_Location_ID)"
 					+ " LEFT JOIN C_DocType d ON (d.C_DocType_ID=o.C_DocTypeTarget_ID)"
 					+ " LEFT JOIN BAY_Route r ON (o.BAY_Route_ID=r.BAY_Route_ID)"
 					+ " WHERE h.C_Order_ID=?", trxName);
@@ -195,6 +203,30 @@ public class OrderDotMatrixFormat {
 		} finally {
 			DB.close(rs, pstmt);
 			rs = null; pstmt = null;
+		}
+		
+		FooterLineRechnung = 36;
+		FooterLineLieferschein = 42;
+		if (Util.isEmpty(headerData.PaymentTermNote, true)) {
+			FooterLineRechnung = FooterLineRechnung + 2;
+		}
+		if (Util.isEmpty(headerData.Description, true)) {
+			FooterLineRechnung = FooterLineRechnung + 2;
+			FooterLineLieferschein = FooterLineLieferschein + 2;
+		} else {
+			int count = 0;
+			// Description can be multiline
+			for (int i = 0; i < headerData.Description.length(); i++) {
+				if (headerData.Description.charAt(i) == CR) {
+					count++;
+				}
+			}
+			FooterLineRechnung = FooterLineRechnung - count;
+			FooterLineLieferschein = FooterLineLieferschein - count;
+		}
+		if (Util.isEmpty(headerData.DocumentTypeNote, true)) {
+			FooterLineRechnung = FooterLineRechnung + 2;
+			FooterLineLieferschein = FooterLineLieferschein + 2;
 		}
 
 		// get detail data
@@ -446,18 +478,28 @@ public class OrderDotMatrixFormat {
 			bw.write(headerData.TotalTaxLGAusgleich);
 			bw.write("  RB:");
 			bw.write(headerData.GrandTotalLGAusgleich);
-			carriageReturn(bw); lineFeed(bw);
-			lineFeed(bw);
-			bw.write(headerData.PaymentTermNote);
-			carriageReturn(bw); lineFeed(bw);
-			lineFeed(bw);
-			bw.write(headerData.Description);
-			carriageReturn(bw); lineFeed(bw);
-			lineFeed(bw);
-			boldOn(bw);
-			bw.write(headerData.TargetDocumentTypeNote);
-			boldOff(bw);
-			carriageReturn(bw); lineFeed(bw);
+			carriageReturn(bw);
+			if (! Util.isEmpty(headerData.PaymentTermNote, true)) {
+				lineFeed(bw);
+				lineFeed(bw);
+				bw.write(headerData.PaymentTermNote);
+				carriageReturn(bw);
+			}
+			if (! Util.isEmpty(headerData.Description, true)) {
+				lineFeed(bw);
+				lineFeed(bw);
+				bw.write(headerData.Description);
+				carriageReturn(bw);
+			}
+			if (! Util.isEmpty(headerData.TargetDocumentTypeNote, true)) {
+				lineFeed(bw);
+				lineFeed(bw);
+				boldOn(bw);
+				bw.write(headerData.TargetDocumentTypeNote);
+				boldOff(bw);
+				carriageReturn(bw);
+			}
+			formFeed(bw);
 
 		} catch (IOException e) {
 			throw new AdempiereException(e);
@@ -588,14 +630,22 @@ public class OrderDotMatrixFormat {
 			bw.write(AnzahlMsgRechnung);
 			carriageReturn(bw); lineFeed(bw);
 			bw.write("--");
-			carriageReturn(bw); lineFeed(bw);
-			bw.write(headerData.Description);
-			carriageReturn(bw); lineFeed(bw);
-			lineFeed(bw);
-			boldOn(bw);
-			bw.write(headerData.TargetDocumentTypeNote);
-			boldOff(bw);
-			carriageReturn(bw); lineFeed(bw);
+			carriageReturn(bw);
+			if (! Util.isEmpty(headerData.Description, true)) {
+				lineFeed(bw);
+				lineFeed(bw);
+				bw.write(headerData.Description);
+				carriageReturn(bw);
+			}
+			if (! Util.isEmpty(headerData.TargetDocumentTypeNote, true)) {
+				lineFeed(bw);
+				lineFeed(bw);
+				boldOn(bw);
+				bw.write(headerData.TargetDocumentTypeNote);
+				boldOff(bw);
+				carriageReturn(bw);
+			}
+			formFeed(bw);
 
 		} catch (IOException e) {
 			throw new AdempiereException(e);
@@ -614,6 +664,8 @@ public class OrderDotMatrixFormat {
 
 	private void printHeader(BufferedWriter bw, String doc) throws IOException {
 		// print header rechnung
+		bw.write(ESC);
+		bw.write("!C");
 		carriageReturn(bw);
 		lineFeed(bw);
 		for (int i = 0; i < TopMargin; i++)
@@ -625,7 +677,6 @@ public class OrderDotMatrixFormat {
 		bw.write("      ");
 		bw.write(headerData.Name2);
 		carriageReturn(bw); lineFeed(bw);
-		lineFeed(bw);
 		bw.write("      ");
 		bw.write(headerData.Address1);
 		carriageReturn(bw); lineFeed(bw);
