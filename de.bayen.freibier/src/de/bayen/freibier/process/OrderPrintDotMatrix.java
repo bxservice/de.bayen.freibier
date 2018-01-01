@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
+import org.compiere.model.MOrder;
 import org.compiere.process.ProcessInfoParameter;
 import org.compiere.process.SvrProcess;
 
@@ -32,8 +33,14 @@ public class OrderPrintDotMatrix extends SvrProcess {
 		if (orderID <= 0) {
 			throw new AdempiereException("@Mandatory@ @C_Order_ID@");
 		}
+
 		String fileName = new OrderDotMatrixFormat().print(getCtx(), orderID, get_TrxName());
-		return "@File@ @Generated@ " + fileName;
+
+		MOrder order = new MOrder(getCtx(), orderID, get_TrxName());
+		order.setIsPrinted(true);
+		order.saveEx();
+
+		return "@File@ @Printed@ " + fileName;
 	}
 
 }
