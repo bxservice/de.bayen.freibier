@@ -35,10 +35,6 @@ public class OrderDotMatrixFormat {
     private static final char E = 69; //bold font on
     private static final char F = 70; //bold font off
 
-    private static String AnzahlMsgRechnung = " ......";
-    private static String EurMsgRechnung = " EUR ............";
-    private static String AnzahlMsgLieferschein = " ...........";
-
 	// TODO: make configurable DB messages
     private static String Line01Leer = "01 GASTRO-FASS  ohne Pfd.";
     private static String Line02Leer = "26 PFAND-FASS   EUR 30.00";
@@ -54,11 +50,12 @@ public class OrderDotMatrixFormat {
     private static String Line12Leer = "15 EUROPALETTE  EUR  7.50";
     private static String Line13Leer = "07 PAL./CONT.   EUR 10.00";
 
+	private String DocumentTitle;
+
     private PageControl pageControl = new PageControl();
     private HeaderData headerData = new HeaderData();
 	private List<DetailData> detailsData = new ArrayList<DetailData>();
-	private int FooterLineRechnung;
-	private int FooterLineLieferschein;
+	private int FooterLine;
 
 	private static int TopMargin = 2;
 	private static int MaxLineDetail = 60;
@@ -89,9 +86,9 @@ public class OrderDotMatrixFormat {
 
 			// fill the file contents
 			if (MOrder.PAYMENTRULE_Cash.equals(order.getPaymentRule())) {
-				fillFileRechnung(ctx, orderID, trxName, file);
+				fillFile(ctx, orderID, trxName, file, true);
 			} else {
-				fillFileLieferschein(ctx, orderID, trxName, file);
+				fillFile(ctx, orderID, trxName, file, false);
 			}
 
 			// move the file to definitive folder
@@ -114,7 +111,6 @@ public class OrderDotMatrixFormat {
 					+ " rpad(substring(coalesce(h.DocumentNo,''),1,6),6,' ') AS DocumentNo,"
 					+ " coalesce(h.TaxId,'') AS TaxId,"
 					+ " coalesce(h.DocumentType,'') AS DocumentType,"
-					+ " coalesce(h.DocumentTypeNote,'') AS DocumentTypeNote,"
 					+ " upper(h.Name) AS Name,"
 					+ " coalesce(upper(h.Name2),'') AS Name2,"
 					+ " to_char(h.DateOrdered,'dd.mm.yy') AS DateOrdered,"
@@ -153,7 +149,6 @@ public class OrderDotMatrixFormat {
 				headerData.DocumentNo = rs.getString("DocumentNo");
 				headerData.TaxID = rs.getString("TaxID");
 				headerData.DocumentType = rs.getString("DocumentType");
-				headerData.DocumentTypeNote = rs.getString("DocumentTypeNote");
 				headerData.Name = rs.getString("Name");
 				headerData.Name2 = rs.getString("Name2");
 				headerData.DateOrdered = rs.getString("DateOrdered");
@@ -180,38 +175,12 @@ public class OrderDotMatrixFormat {
 				headerData.Description = sanitizeCRLF(headerData.Description);
 				headerData.PaymentTermNote = sanitizeCRLF(headerData.PaymentTermNote);
 				headerData.TargetDocumentTypeNote = sanitizeCRLF(headerData.TargetDocumentTypeNote);
-				}
-				if (headerData.Description.indexOf(CR) >= 0 && headerData.Description.indexOf(LINE_FEED) < 0) {
 			}
 		} catch (SQLException e) {
 			throw new AdempiereException(e);
 		} finally {
 			DB.close(rs, pstmt);
 			rs = null; pstmt = null;
-		}
-		
-		FooterLineRechnung = 36;
-		FooterLineLieferschein = 41;
-		if (Util.isEmpty(headerData.PaymentTermNote, true)) {
-			FooterLineRechnung = FooterLineRechnung + 2;
-		}
-		if (Util.isEmpty(headerData.Description, true)) {
-			FooterLineRechnung = FooterLineRechnung + 2;
-			FooterLineLieferschein = FooterLineLieferschein + 2;
-		} else {
-			int count = 0;
-			// Description can be multiline
-			for (int i = 0; i < headerData.Description.length(); i++) {
-				if (headerData.Description.charAt(i) == CR) {
-					count++;
-				}
-			}
-			FooterLineRechnung = FooterLineRechnung - count;
-			FooterLineLieferschein = FooterLineLieferschein - count;
-		}
-		if (Util.isEmpty(headerData.DocumentTypeNote, true)) {
-			FooterLineRechnung = FooterLineRechnung + 2;
-			FooterLineLieferschein = FooterLineLieferschein + 2;
 		}
 
 		// get detail data
@@ -223,6 +192,7 @@ public class OrderDotMatrixFormat {
 					+ " to_char(coalesce(d.QtyOrdered,0),'99990') AS QtyOrdered,"
 					+ " to_char(coalesce((SELECT sum(LineNetAmt) FROM C_OrderLine p WHERE l.c_orderline_id=p.bay_masterorderline_id),0),'999999999999990.00') AS Pfand,"
 					+ " to_char(coalesce(d.LineNetAmt,0),'999999999990.00') AS LineNetAmt,"
+					+ " coalesce(d.Description,'') AS Description,"
 					+ " d.C_OrderLine_ID"
 					+ " FROM C_Order_LineTax_V d"
 					+ " JOIN C_OrderLine l ON (d.C_OrderLine_ID=l.C_OrderLine_ID)"
@@ -240,6 +210,9 @@ public class OrderDotMatrixFormat {
 				detailData.QtyOrdered = rs.getString("QtyOrdered");
 				detailData.Pfand = rs.getString("Pfand");
 				detailData.LineNetAmt = rs.getString("LineNetAmt");
+				detailData.Description = rs.getString("Description");
+				// add newlines if needed
+				detailData.Description = sanitizeCRLF(detailData.Description);
 				detailsData.add(detailData);
 			}
 		} catch (SQLException e) {
@@ -266,7 +239,6 @@ public class OrderDotMatrixFormat {
 		public String DocumentNo;
 		public String TaxID;
 		public String DocumentType;
-		public String DocumentTypeNote;
 		public String Name;
 		public String Name2;
 		public String DateOrdered;
@@ -298,9 +270,10 @@ public class OrderDotMatrixFormat {
 		public String QtyOrdered;
 		public String Pfand;
 		public String LineNetAmt;
+		public String Description;
 	}
 
-	private void fillFileRechnung(Properties ctx, int orderID, String trxName, Path file) {
+	private void fillFile(Properties ctx, int orderID, String trxName, Path file, boolean isRechnung) {
 		// open file
 		File fout;
 		FileOutputStream fos;
@@ -316,38 +289,69 @@ public class OrderDotMatrixFormat {
 		pageControl.Line = 1;
 		pageControl.Page = 1;
 
+		if (isRechnung) {
+			FooterLine = 36;
+		} else {
+			FooterLine = 41;
+		}
+		if (isRechnung) {
+			evaluateFooterLines(headerData.PaymentTermNote);
+		}
+		evaluateFooterLines(headerData.Description);
+		evaluateFooterLines(headerData.TargetDocumentTypeNote);
+
+		if (isRechnung) {
+			DocumentTitle = "LIEFERSCHEIN/RECHNUNG";
+		} else {
+			DocumentTitle = "LIEFERSCHEIN         ";
+		}
+
 		try {
 
-			printHeader(bw, "LIEFERSCHEIN/RECHNUNG");
+			printHeader(bw, DocumentTitle);
 
 			lineFeed(bw);
-			bw.write("Art.Nr.    Menge  Artikelbezeichnung                         Pfand            Ware");
+			if (isRechnung) {
+				bw.write("Art.Nr.    Menge  Artikelbezeichnung                         Pfand            Ware");
+			} else {
+				bw.write("Art.Nr.    Menge  Artikelbezeichnung");
+			}
 			carriageReturn(bw); lineFeed(bw);
-			bw.write("----------+------+------------------------------+---------+--------+-----+---------");
+			if (isRechnung) {
+				bw.write("----------+------+------------------------------+---------+--------+-----+---------");
+			} else {
+				bw.write("----------+------+------------------------------");
+			}
 			carriageReturn(bw); lineFeed(bw);
-			
+
 			// print detail rechnung
 			for (DetailData detailData : detailsData) {
-				if (pageControl.Line > MaxLineDetail) {
-					// skip page - reprint header
-					formFeed(bw);
-					printHeader(bw, "LIEFERSCHEIN/RECHNUNG");
-					lineFeed(bw);
-					bw.write("Art.Nr.    Menge  Artikelbezeichnung                         Pfand            Ware");
-					carriageReturn(bw); lineFeed(bw);
-					bw.write("----------+------+------------------------------+---------+--------+-----+---------");
-					carriageReturn(bw); lineFeed(bw);
+				int numLinesThisDetail = 1;
+				if (!Util.isEmpty(detailData.Description,true)) {
+					int count = countCR(detailData.Description);
+					numLinesThisDetail = numLinesThisDetail + count;
 				}
+
+				verifySkipPage(bw, MaxLineDetail-numLinesThisDetail, isRechnung);
 				bw.write(detailData.ProductValue);
 				bw.write(detailData.QtyOrdered);
 				bw.write("  ");
 				bw.write(detailData.Name);
-				bw.write(detailData.Pfand);
-				bw.write(detailData.LineNetAmt);
+				if (isRechnung) {
+					bw.write(detailData.Pfand);
+					bw.write(detailData.LineNetAmt);
+				}
 				carriageReturn(bw); lineFeed(bw);
+				if (!Util.isEmpty(detailData.Description,true)) {
+					bw.write("                  ");
+					bw.write(detailData.Description);
+					carriageReturn(bw); lineFeed(bw);
+					pageControl.Line = pageControl.Line + numLinesThisDetail - 1;
+				}
 			}
 
 			// print group total rechnung
+			verifySkipPage(bw, MaxLineDetail-1, isRechnung);
 			carriageReturn(bw); lineFeed(bw);
 			bw.write("F\u00e4sser:");
 			bw.write(headerData.QtyFaesser);
@@ -358,117 +362,154 @@ public class OrderDotMatrixFormat {
 
 			// print footer rechnung
 			// verify the position and skip page if not enough
-			if (pageControl.Line > FooterLineRechnung) {
+			if (pageControl.Line > FooterLine) {
 				// skip page - reprint header and position in footer line
 				formFeed(bw);
-				printHeader(bw, "LIEFERSCHEIN/RECHNUNG");
+				printHeader(bw, DocumentTitle);
 			}
-			if (pageControl.Line < FooterLineRechnung) {
+			if (pageControl.Line < FooterLine) {
 				// fill lines until footer margin
 				int start = pageControl.Line;
-				for (int i = start; i < FooterLineRechnung; i++)
+				for (int i = start; i < FooterLine; i++)
 					lineFeed(bw);
 			}
-			bw.write("LEERGUTR\u00dcCKGABE:        ANZAHL:                     Ware");
-			bw.write(headerData.TaxRate);
-			bw.write("             ");
-			bw.write(headerData.TotalLinesLGAusgleich);
+			if (isRechnung) {
+				bw.write("LEERGUTR\u00dcCKGABE:        ANZAHL:                     Ware");
+				bw.write(headerData.TaxRate);
+				bw.write("             ");
+				bw.write(headerData.TotalLinesLGAusgleich);
+			} else {
+				bw.write("LEERGUTR\u00dcCKGABE:        ANZAHL:");
+			}
 			carriageReturn(bw); lineFeed(bw);
 			bw.write("----------------");
 			carriageReturn(bw); lineFeed(bw);
+			String anzahlMsg;
+			if (isRechnung) {
+				anzahlMsg = " ...... EUR ............";
+			} else {
+				anzahlMsg = " ...........";
+			}
 			bw.write(Line01Leer);
-			bw.write(AnzahlMsgRechnung);
-			bw.write(".                   + Leergut              ");
-			bw.write(headerData.LeerGut);
+			if (isRechnung) {
+				bw.write(" ......");
+			} else {
+				bw.write(" ...........");
+			}
+			if (isRechnung) {
+				bw.write(".                   + Leergut              ");
+				bw.write(headerData.LeerGut);
+			}
 			carriageReturn(bw); lineFeed(bw);
 			bw.write(Line02Leer);
-			bw.write(AnzahlMsgRechnung);
-			bw.write(EurMsgRechnung);
-			bw.write("   -----------------------------------");
+			bw.write(anzahlMsg);
+			if (isRechnung) bw.write("   -----------------------------------");
 			carriageReturn(bw); lineFeed(bw);
 			bw.write(Line03Leer);
-			bw.write(AnzahlMsgRechnung);
-			bw.write(EurMsgRechnung);
-			bw.write("   ZWISCHENSUMME          ");
-			bw.write(headerData.TotalLines);
+			bw.write(anzahlMsg);
+			if (isRechnung) {
+				bw.write("   ZWISCHENSUMME          ");
+				bw.write(headerData.TotalLines);
+			}
 			carriageReturn(bw); lineFeed(bw);
 			bw.write(Line04Leer);
-			bw.write("                        ");
-			bw.write("   - Leergutr\u00fcckgabe");
+			if (isRechnung) {
+				bw.write("                        ");
+				bw.write("   - Leergutr\u00fcckgabe");
+			}
 			carriageReturn(bw); lineFeed(bw);
 			bw.write(Line05Leer);
-			bw.write(AnzahlMsgRechnung);
-			bw.write(EurMsgRechnung);
-			bw.write("   -----------------------------------");
+			bw.write(anzahlMsg);
+			if (isRechnung) {
+				bw.write("   -----------------------------------");
+			}
 			carriageReturn(bw); lineFeed(bw);
 			bw.write(Line06Leer);
-			bw.write("                        ");
-			bw.write("   NETTO ");
-			bw.write(headerData.TaxRate);
+			if (isRechnung) {
+				bw.write("                        ");
+				bw.write("   NETTO ");
+				bw.write(headerData.TaxRate);
+			}
 			carriageReturn(bw); lineFeed(bw);
 			bw.write(Line07Leer);
-			bw.write(AnzahlMsgRechnung);
-			bw.write(EurMsgRechnung);
-			bw.write("   + MwSt");
-			bw.write(headerData.TaxRate);
+			bw.write(anzahlMsg);
+			if (isRechnung) {
+				bw.write("   + MwSt");
+				bw.write(headerData.TaxRate);
+			} else {
+				bw.write("                            Ware empfangen");
+			}
 			carriageReturn(bw); lineFeed(bw);
 			bw.write(Line08Leer);
-			bw.write(AnzahlMsgRechnung);
-			bw.write(EurMsgRechnung);
+			bw.write(anzahlMsg);
 			carriageReturn(bw); lineFeed(bw);
 			bw.write(Line09Leer);
-			bw.write(AnzahlMsgRechnung);
-			bw.write(EurMsgRechnung);
-			bw.write("   -----------------------------------");
+			bw.write(anzahlMsg);
+			if (isRechnung) {
+				bw.write("   -----------------------------------");
+			}
 			carriageReturn(bw); lineFeed(bw);
 			bw.write(Line10Leer);
-			bw.write(AnzahlMsgRechnung);
-			bw.write(EurMsgRechnung);
-			boldOn(bw);
-			bw.write("   RECHNUNGSBETRAG");
-			boldOff(bw);
+			bw.write(anzahlMsg);
+			if (isRechnung) {
+				boldOn(bw);
+				bw.write("   RECHNUNGSBETRAG");
+				boldOff(bw);
+			}
 			carriageReturn(bw); lineFeed(bw);
 			bw.write(Line11Leer);
-			bw.write(AnzahlMsgRechnung);
-			bw.write(EurMsgRechnung);
-			bw.write("                             =========");
+			bw.write(anzahlMsg);
+			if (isRechnung) {
+				bw.write("                             =========");
+			} else {
+				bw.write("                            .........................");
+			}
 			carriageReturn(bw); lineFeed(bw);
 			bw.write(Line12Leer);
-			bw.write(AnzahlMsgRechnung);
-			bw.write(EurMsgRechnung);
+			bw.write(anzahlMsg);
+			if ( ! isRechnung) {
+				bw.write("                                  Unterschrift");
+			}
 			carriageReturn(bw); lineFeed(bw);
 			bw.write(Line13Leer);
-			bw.write(AnzahlMsgRechnung);
-			bw.write(EurMsgRechnung);
-			bw.write("   Ware erhalten _____________________");
+			bw.write(anzahlMsg);
+			if (isRechnung) {
+				bw.write("   Ware erhalten _____________________");
+			}
 			carriageReturn(bw); lineFeed(bw);
-			bw.write("                                 ----------------");
-			carriageReturn(bw); lineFeed(bw);
-			bw.write("00 GESAMT                        EUR ............   Betrag erhalten ___________________");
-			carriageReturn(bw); lineFeed(bw);
-			bw.write("Betr\u00e4ge ohne R\u00fcckgabe NET");
-			bw.write(headerData.TaxRate);
-			bw.write(":");
-			bw.write(headerData.TotalLines);
-			bw.write("  M1: ");
-			bw.write(headerData.TotalTax);
-			bw.write("  RB:");
-			bw.write(headerData.GrandTotal);
-			carriageReturn(bw); lineFeed(bw);
-			bw.write("Betr\u00e4ge LG-Ausgleich  NET");
-			bw.write(headerData.TaxRate);
-			bw.write(":");
-			bw.write(headerData.TotalLinesLGAusgleich);
-			bw.write("  M1: ");
-			bw.write(headerData.TotalTaxLGAusgleich);
-			bw.write("  RB:");
-			bw.write(headerData.GrandTotalLGAusgleich);
-			carriageReturn(bw);
-			if (! Util.isEmpty(headerData.PaymentTermNote, true)) {
-				lineFeed(bw);
-				lineFeed(bw);
-				bw.write(headerData.PaymentTermNote);
+			if (isRechnung) {
+				bw.write("                                 ----------------");
+				carriageReturn(bw); lineFeed(bw);
+				bw.write("00 GESAMT                        EUR ............   Betrag erhalten ___________________");
+				carriageReturn(bw); lineFeed(bw);
+				bw.write("Betr\u00e4ge ohne R\u00fcckgabe NET");
+				bw.write(headerData.TaxRate);
+				bw.write(":");
+				bw.write(headerData.TotalLines);
+				bw.write("  M1: ");
+				bw.write(headerData.TotalTax);
+				bw.write("  RB:");
+				bw.write(headerData.GrandTotal);
+				carriageReturn(bw); lineFeed(bw);
+				bw.write("Betr\u00e4ge LG-Ausgleich  NET");
+				bw.write(headerData.TaxRate);
+				bw.write(":");
+				bw.write(headerData.TotalLinesLGAusgleich);
+				bw.write("  M1: ");
+				bw.write(headerData.TotalTaxLGAusgleich);
+				bw.write("  RB:");
+				bw.write(headerData.GrandTotalLGAusgleich);
 				carriageReturn(bw);
+			} else {
+				bw.write("--");
+			}
+			if (isRechnung) {
+				if (! Util.isEmpty(headerData.PaymentTermNote, true)) {
+					lineFeed(bw);
+					lineFeed(bw);
+					bw.write(headerData.PaymentTermNote);
+					carriageReturn(bw);
+				}
 			}
 			if (! Util.isEmpty(headerData.Description, true)) {
 				lineFeed(bw);
@@ -501,150 +542,45 @@ public class OrderDotMatrixFormat {
 		}
 	}
 
-	private void fillFileLieferschein(Properties ctx, int orderID, String trxName, Path file) {
-		// open file
-		File fout;
-		FileOutputStream fos;
-		BufferedWriter bw = null;
-		try {
-			fout = file.toFile();
-			fos = new FileOutputStream(fout);
-			bw = new BufferedWriter(new OutputStreamWriter(fos));
-		} catch (FileNotFoundException e) {
-			throw new AdempiereException(e);
+	private void evaluateFooterLines(String str) {
+		if (Util.isEmpty(str, true)) {
+			FooterLine = FooterLine + 2;
+		} else {
+			int count = countCR(str);
+			FooterLine = FooterLine - count;
 		}
+	}
 
-		pageControl.Line = 1;
-		pageControl.Page = 1;
-
-		try {
-
-			printHeader(bw, "LIEFERSCHEIN         ");
-
-			lineFeed(bw);
-			bw.write("Art.Nr.    Menge  Artikelbezeichnung");
-			carriageReturn(bw); lineFeed(bw);
-			bw.write("----------+------+------------------------------");
-			carriageReturn(bw); lineFeed(bw);
-			
-			// print detail lieferschein
-			for (DetailData detailData : detailsData) {
-				if (pageControl.Line > MaxLineDetail) {
-					// skip page - reprint header
-					formFeed(bw);
-					printHeader(bw, "LIEFERSCHEIN         ");
-					lineFeed(bw);
-					bw.write("Art.Nr.    Menge  Artikelbezeichnung");
-					carriageReturn(bw); lineFeed(bw);
-					bw.write("----------+------+------------------------------");
-					carriageReturn(bw); lineFeed(bw);
-				}
-				bw.write(detailData.ProductValue);
-				bw.write(detailData.QtyOrdered);
-				bw.write("  ");
-				bw.write(detailData.Name);
-				carriageReturn(bw); lineFeed(bw);
-			}
-
-			// print group total rechnung
-			carriageReturn(bw); lineFeed(bw);
-			bw.write("F\u00e4sser:");
-			bw.write(headerData.QtyFaesser);
-			bw.write("     Kisten:");
-			bw.write(headerData.QtyKisten);
-			carriageReturn(bw); lineFeed(bw);
-			lineFeed(bw);
-
-			// print footer rechnung
-			// verify the position and skip page if not enough
-			if (pageControl.Line > FooterLineLieferschein) {
-				// skip page - reprint header and position in line footer
-				formFeed(bw);
-				printHeader(bw, "LIEFERSCHEIN         ");
-			}
-			if (pageControl.Line < FooterLineLieferschein) {
-				// fill lines until footer margin
-				int start = pageControl.Line;
-				for (int i = start; i < FooterLineLieferschein; i++)
-					lineFeed(bw);
-			}
-			bw.write("LEERGUTR\u00dcCKGABE:        ANZAHL:");
-			carriageReturn(bw); lineFeed(bw);
-			bw.write("----------------");
-			carriageReturn(bw); lineFeed(bw);
-			bw.write(Line01Leer);
-			bw.write(AnzahlMsgLieferschein);
-			carriageReturn(bw); lineFeed(bw);
-			bw.write(Line02Leer);
-			bw.write(AnzahlMsgLieferschein);
-			carriageReturn(bw); lineFeed(bw);
-			bw.write(Line03Leer);
-			bw.write(AnzahlMsgLieferschein);
-			carriageReturn(bw); lineFeed(bw);
-			bw.write(Line04Leer);
-			//bw.write(AnzahlMsgLieferschein);
-			carriageReturn(bw); lineFeed(bw);
-			bw.write(Line05Leer);
-			bw.write(AnzahlMsgLieferschein);
-			carriageReturn(bw); lineFeed(bw);
-			bw.write(Line06Leer);
-			//bw.write(AnzahlMsgLieferschein);
-			carriageReturn(bw); lineFeed(bw);
-			bw.write(Line07Leer);
-			bw.write(AnzahlMsgLieferschein);
-			bw.write("                            Ware empfangen");
-			carriageReturn(bw); lineFeed(bw);
-			bw.write(Line08Leer);
-			bw.write(AnzahlMsgLieferschein);
-			carriageReturn(bw); lineFeed(bw);
-			bw.write(Line09Leer);
-			bw.write(AnzahlMsgLieferschein);
-			carriageReturn(bw); lineFeed(bw);
-			bw.write(Line10Leer);
-			bw.write(AnzahlMsgLieferschein);
-			carriageReturn(bw); lineFeed(bw);
-			bw.write(Line11Leer);
-			bw.write(AnzahlMsgLieferschein);
-			bw.write("                            .........................");
-			carriageReturn(bw); lineFeed(bw);
-			bw.write(Line12Leer);
-			bw.write(AnzahlMsgLieferschein);
-			bw.write("                                  Unterschrift");
-			carriageReturn(bw); lineFeed(bw);
-			bw.write(Line13Leer);
-			bw.write(AnzahlMsgLieferschein);
-			carriageReturn(bw); lineFeed(bw);
-			bw.write("--");
-			carriageReturn(bw);
-			if (! Util.isEmpty(headerData.Description, true)) {
-				lineFeed(bw);
-				lineFeed(bw);
-				bw.write(headerData.Description);
-				carriageReturn(bw);
-			}
-			if (! Util.isEmpty(headerData.TargetDocumentTypeNote, true)) {
-				lineFeed(bw);
-				lineFeed(bw);
-				boldOn(bw);
-				bw.write(headerData.TargetDocumentTypeNote);
-				boldOff(bw);
-				carriageReturn(bw);
-			}
+	private void verifySkipPage(BufferedWriter bw, int i, boolean isRechnung) throws IOException {
+		if (pageControl.Line > i) {
+			// skip page - reprint header
 			formFeed(bw);
+			printHeader(bw, DocumentTitle);
+			lineFeed(bw);
+			if (isRechnung) {
+				bw.write("Art.Nr.    Menge  Artikelbezeichnung                         Pfand            Ware");
+			} else {
+				bw.write("Art.Nr.    Menge  Artikelbezeichnung");
+			}
+			carriageReturn(bw); lineFeed(bw);
+			if (isRechnung) {
+				bw.write("----------+------+------------------------------+---------+--------+-----+---------");
+			} else {
+				bw.write("----------+------+------------------------------");
+			}
+			carriageReturn(bw); lineFeed(bw);
+		}
+	}
 
-		} catch (IOException e) {
-			throw new AdempiereException(e);
-		} finally {
-			// close file
-			try {
-				if (bw != null)
-					bw.close();
-				if (fos != null)
-					fos.close();
-			} catch (IOException e) {
-				throw new AdempiereException(e);
+	// count the number of Carriage Return CR
+	private int countCR(String str) {
+		int count = 0;
+		for (int i = 0; i < str.length(); i++) {
+			if (str.charAt(i) == CR) {
+				count++;
 			}
 		}
+		return count;
 	}
 
 	private void printHeader(BufferedWriter bw, String doc) throws IOException {
