@@ -6,7 +6,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -14,7 +13,6 @@ import java.nio.file.StandardCopyOption;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -27,31 +25,15 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 
-import com.sun.org.apache.xml.internal.serializer.utils.Utils;
-
-@SuppressWarnings("unused")
 public class OrderDotMatrixFormat {
 
     /* decimal ascii values for epson ESC/P commands */
     private static final char ESC = 27; //escape
-	private static final char AT = 64; //@
     private static final char LINE_FEED = 10; //line feed/new line
-    private static final char PARENTHESIS_LEFT = 40;
-    private static final char BACKSLASH = 92;
     private static final char CR = 13; //carriage return
-    private static final char TAB = 9; //horizontal tab
     private static final char FF = 12; //form feed
-    private static final char g = 103; //15cpi pitch
-    private static final char p = 112; //used for choosing proportional mode or fixed-pitch
-    private static final char t = 116; //used for character set assignment/selection
-    private static final char l = 108; //used for setting left margin
-    private static final char x = 120; //used for setting draft or letter quality (LQ) printing
     private static final char E = 69; //bold font on
     private static final char F = 70; //bold font off
-    private static final char J = 74; //used for advancing paper vertically
-    private static final char P = 80; //10cpi pitch
-    private static final char Q = 81; //used for setting right margin
-    private static final char $ = 36; //used for absolute horizontal positioning
 
     private static String AnzahlMsgRechnung = " ......";
     private static String EurMsgRechnung = " EUR ............";
@@ -79,7 +61,7 @@ public class OrderDotMatrixFormat {
 	private int FooterLineLieferschein;
 
 	private static int TopMargin = 2;
-	private static int MaxLineDetail = 62;
+	private static int MaxLineDetail = 60;
 
 	public String print(Properties ctx, int orderID, String trxName) {
 		MOrder order = new MOrder(ctx, orderID, trxName);
@@ -87,8 +69,11 @@ public class OrderDotMatrixFormat {
 
 		// define the filename
 		// Order[DocumentNo]_[UserValue].txt
-		// TODO: User Preference with printer name
-		String fileName = "Order" + order.getDocumentNo() + "_" + user.getValue() + "_ZentraleForm.txt";
+		String printerName = Env.getContext(ctx, "P|BAY_DotMatrixPrinter");
+		if (Util.isEmpty(printerName, true)) {
+			printerName = "VersandForm";
+		}
+		String fileName = "Order" + order.getDocumentNo() + "_" + user.getValue() + "_" + printerName + ".txt";
 		String tmpFolder = MSysConfig.getValue("BAY_TMP_FOLDER", "/tmp/preparing");
 		String definitiveFolder = MSysConfig.getValue("BAY_DEFINITIVE_FOLDER", "/tmp/to_print");
 		try {
@@ -206,7 +191,7 @@ public class OrderDotMatrixFormat {
 		}
 		
 		FooterLineRechnung = 36;
-		FooterLineLieferschein = 42;
+		FooterLineLieferschein = 41;
 		if (Util.isEmpty(headerData.PaymentTermNote, true)) {
 			FooterLineRechnung = FooterLineRechnung + 2;
 		}
@@ -588,46 +573,46 @@ public class OrderDotMatrixFormat {
 			bw.write("----------------");
 			carriageReturn(bw); lineFeed(bw);
 			bw.write(Line01Leer);
-			bw.write(AnzahlMsgRechnung);
+			bw.write(AnzahlMsgLieferschein);
 			carriageReturn(bw); lineFeed(bw);
 			bw.write(Line02Leer);
-			bw.write(AnzahlMsgRechnung);
+			bw.write(AnzahlMsgLieferschein);
 			carriageReturn(bw); lineFeed(bw);
 			bw.write(Line03Leer);
-			bw.write(AnzahlMsgRechnung);
+			bw.write(AnzahlMsgLieferschein);
 			carriageReturn(bw); lineFeed(bw);
 			bw.write(Line04Leer);
-			//bw.write(AnzahlMsgRechnung);
+			//bw.write(AnzahlMsgLieferschein);
 			carriageReturn(bw); lineFeed(bw);
 			bw.write(Line05Leer);
-			bw.write(AnzahlMsgRechnung);
+			bw.write(AnzahlMsgLieferschein);
 			carriageReturn(bw); lineFeed(bw);
 			bw.write(Line06Leer);
-			//bw.write(AnzahlMsgRechnung);
+			//bw.write(AnzahlMsgLieferschein);
 			carriageReturn(bw); lineFeed(bw);
 			bw.write(Line07Leer);
-			bw.write(AnzahlMsgRechnung);
+			bw.write(AnzahlMsgLieferschein);
 			bw.write("                            Ware empfangen");
 			carriageReturn(bw); lineFeed(bw);
 			bw.write(Line08Leer);
-			bw.write(AnzahlMsgRechnung);
+			bw.write(AnzahlMsgLieferschein);
 			carriageReturn(bw); lineFeed(bw);
 			bw.write(Line09Leer);
-			bw.write(AnzahlMsgRechnung);
+			bw.write(AnzahlMsgLieferschein);
 			carriageReturn(bw); lineFeed(bw);
 			bw.write(Line10Leer);
-			bw.write(AnzahlMsgRechnung);
+			bw.write(AnzahlMsgLieferschein);
 			carriageReturn(bw); lineFeed(bw);
 			bw.write(Line11Leer);
-			bw.write(AnzahlMsgRechnung);
+			bw.write(AnzahlMsgLieferschein);
 			bw.write("                            .........................");
 			carriageReturn(bw); lineFeed(bw);
 			bw.write(Line12Leer);
-			bw.write(AnzahlMsgRechnung);
+			bw.write(AnzahlMsgLieferschein);
 			bw.write("                                  Unterschrift");
 			carriageReturn(bw); lineFeed(bw);
 			bw.write(Line13Leer);
-			bw.write(AnzahlMsgRechnung);
+			bw.write(AnzahlMsgLieferschein);
 			carriageReturn(bw); lineFeed(bw);
 			bw.write("--");
 			carriageReturn(bw);
