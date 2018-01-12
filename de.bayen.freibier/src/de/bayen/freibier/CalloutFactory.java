@@ -5,12 +5,14 @@ import java.util.List;
 
 import org.adempiere.base.IColumnCallout;
 import org.adempiere.base.IColumnCalloutFactory;
+import org.compiere.model.I_C_Order;
 import org.compiere.model.MInvoiceBatchLine;
 import org.compiere.model.MProduct;
 
 import de.bayen.freibier.model.CalloutInterestCalculation;
 import de.bayen.freibier.model.CalloutInterestCalculationLine;
 import de.bayen.freibier.model.CalloutInvoiceBatchLine;
+import de.bayen.freibier.model.CalloutOpenSalesOrder;
 import de.bayen.freibier.model.CalloutProduct;
 import de.bayen.freibier.model.I_BAY_Contract;
 import de.bayen.freibier.model.I_BAY_InterestCalculation;
@@ -46,6 +48,12 @@ public class CalloutFactory implements IColumnCalloutFactory {
 		if(tableName.equals(MBAYInterestCalculationLine.Table_Name)){
 			list.add(new CalloutInterestCalculationLine());
 		}
+		//
+		if(tableName.equalsIgnoreCase(I_C_Order.Table_Name) &&
+				columnName.equalsIgnoreCase(I_C_Order.COLUMNNAME_C_BPartner_ID)){
+				list.add(new CalloutOpenSalesOrder());
+		}
+		
 		//
 		return list.toArray(new IColumnCallout[0]);
 	}
