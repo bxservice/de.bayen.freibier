@@ -202,9 +202,10 @@ public class OrderDotMatrixFormat {
 		final String sqlDetail =
 				"SELECT "
 				+ " coalesce(d.UOMSymbol,'') AS UOMSymbol,"
-				+ " CASE WHEN p.Description IS NOT NULL AND t.Name IS NOT NULL THEN rpad(substring(p.Description,1,44-length(REPLACE(t.Name,' x ','x'))),44-length(REPLACE(t.Name,' x ','x')),' ') || ' ' || REPLACE(t.Name,' x ','x') ELSE rpad(substring(coalesce(d.Name,''),1,45),45,' ') END AS Name,"
+				+ " CASE WHEN l.C_UOM_ID!=p.C_UOM_ID THEN rpad(substring(COALESCE(p.Description,p.Name),1,44-length(m.Name)),44-length(m.Name),' ') || ' ' || m.Name"
+				+ "    ELSE CASE WHEN p.Description IS NOT NULL AND t.Name IS NOT NULL THEN rpad(substring(p.Description,1,44-length(REPLACE(t.Name,' x ','x'))),44-length(REPLACE(t.Name,' x ','x')),' ') || ' ' || REPLACE(t.Name,' x ','x') ELSE rpad(substring(coalesce(d.Name,''),1,45),45,' ') END END AS Name,"
 				+ " rpad(substring(coalesce(d.ProductValue,''),1,10),10,' ') AS ProductValue,"
-				+ " CASE WHEN d.QtyOrdered IS NULL THEN '      ' ELSE to_char(coalesce(d.QtyOrdered,0),'99990') END AS QtyOrdered,"
+				+ " CASE WHEN d.QtyEntered IS NULL THEN '      ' ELSE to_char(coalesce(d.QtyEntered,0),'99990') END AS QtyEntered,"
 				+ " CASE WHEN d.LineNetAmt IS NULL THEN '            ' ELSE to_char(CASE WHEN p.IsDeposit='Y' THEN coalesce(d.LineNetAmt,0) ELSE 0 END+coalesce((SELECT sum(LineNetAmt) FROM C_OrderLine p WHERE l.c_orderline_id=p.bay_masterorderline_id),0),'99999990.00') END AS Pfand,"
 				+ " CASE WHEN d.LineNetAmt IS NULL THEN '            ' ELSE to_char(CASE WHEN p.IsDeposit!='Y' THEN coalesce(d.LineNetAmt,0) ELSE 0 END,'99999990.00') END AS LineNetAmt,"
 				+ " coalesce(d.Description,'') AS Description,"
@@ -214,6 +215,7 @@ public class OrderDotMatrixFormat {
 				+ " JOIN C_OrderLine l ON (d.C_OrderLine_ID=l.C_OrderLine_ID)"
 				+ " LEFT JOIN M_Product p ON (l.M_Product_ID=p.M_Product_ID)"
 				+ " LEFT JOIN BAY_TradingUnit t ON (t.BAY_TradingUnit_ID=p.BAY_TradingUnit_ID)"
+				+ " LEFT JOIN C_UOM m ON (l.C_UOM_ID=m.C_UOM_ID)"
 				+ " WHERE d.C_Order_ID=? AND d.Line < 999998 AND l.bay_masterorderline_id IS NULL"
 				+ " ORDER BY d.Line";
 		try {
@@ -225,7 +227,7 @@ public class OrderDotMatrixFormat {
 				detailData.UOMSymbol = rs.getString("UOMSymbol");
 				detailData.Name = rs.getString("Name");
 				detailData.ProductValue = rs.getString("ProductValue");
-				detailData.QtyOrdered = rs.getString("QtyOrdered");
+				detailData.QtyEntered = rs.getString("QtyEntered");
 				detailData.Pfand = rs.getString("Pfand");
 				detailData.LineNetAmt = rs.getString("LineNetAmt");
 				detailData.Description = rs.getString("Description");
@@ -365,7 +367,7 @@ public class OrderDotMatrixFormat {
 		public String UOMSymbol;
 		public String Name;
 		public String ProductValue;
-		public String QtyOrdered;
+		public String QtyEntered;
 		public String Pfand;
 		public String LineNetAmt;
 		public String Description;
@@ -469,7 +471,7 @@ public class OrderDotMatrixFormat {
 
 				verifySkipPage(bw, MaxLineDetail-numLinesThisDetail, isRechnung);
 				bw.write(detailData.ProductValue);
-				bw.write(detailData.QtyOrdered);
+				bw.write(detailData.QtyEntered);
 				bw.write("  ");
 				bw.write(detailData.Name);
 				if (isRechnung) {
@@ -776,15 +778,15 @@ public class OrderDotMatrixFormat {
 			printHeader(bw, DocumentTitle);
 			lineFeed(bw);
 			if (isRechnung) {
-				bw.write("Art.Nr.    Menge  Artikelbezeichnung                         Pfand            Ware");
+				bw.write("Art.Nr.    Menge  Artikelbezeichnung                                 Pfand         Ware");
 			} else {
 				bw.write("Art.Nr.    Menge  Artikelbezeichnung");
 			}
 			carriageReturn(bw); lineFeed(bw);
 			if (isRechnung) {
-				bw.write("----------+------+------------------------------+---------+--------+-----+---------");
+				bw.write("----------+------+---------------------------------------------+-----------+-----------");
 			} else {
-				bw.write("----------+------+------------------------------");
+				bw.write("----------+------+---------------------------------------------");
 			}
 			carriageReturn(bw); lineFeed(bw);
 		}
