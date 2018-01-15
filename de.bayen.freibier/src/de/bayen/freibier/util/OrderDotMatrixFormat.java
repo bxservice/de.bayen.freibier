@@ -201,10 +201,9 @@ public class OrderDotMatrixFormat {
 		// get detail data
 		final String sqlDetail =
 				"SELECT "
-				+ " coalesce(d.UOMSymbol,'') AS UOMSymbol,"
-				+ " CASE WHEN l.C_UOM_ID!=p.C_UOM_ID THEN rpad(substring(COALESCE(p.Description,p.Name),1,44-length(m.Name)),44-length(m.Name),' ') || ' ' || m.Name"
-				+ "    ELSE CASE WHEN p.Description IS NOT NULL AND t.Name IS NOT NULL THEN rpad(substring(p.Description,1,44-length(REPLACE(t.Name,' x ','x'))),44-length(REPLACE(t.Name,' x ','x')),' ') || ' ' || REPLACE(t.Name,' x ','x') ELSE rpad(substring(coalesce(d.Name,''),1,45),45,' ') END END AS Name,"
-				+ " rpad(substring(coalesce(d.ProductValue,''),1,10),10,' ') AS ProductValue,"
+				+ " CASE WHEN l.C_UOM_ID!=p.C_UOM_ID THEN rpad(substring(coalesce(m.UOMSymbol,''),1,3),3,' ') ELSE '   ' END AS UOMSymbol,"
+				+ " CASE WHEN p.Description IS NOT NULL AND t.Name IS NOT NULL THEN rpad(substring(p.Description,1,44-length(REPLACE(t.Name,' x ','x'))),44-length(REPLACE(t.Name,' x ','x')),' ') || ' ' || REPLACE(t.Name,' x ','x') ELSE rpad(substring(coalesce(d.Name,''),1,45),45,' ') END AS Name,"
+				+ " rpad(substring(coalesce(d.ProductValue,''),1,6),6,' ') AS ProductValue,"
 				+ " CASE WHEN d.QtyEntered IS NULL THEN '      ' ELSE to_char(coalesce(d.QtyEntered,0),'99990') END AS QtyEntered,"
 				+ " CASE WHEN d.LineNetAmt IS NULL THEN '            ' ELSE to_char(CASE WHEN p.IsDeposit='Y' THEN coalesce(d.LineNetAmt,0) ELSE 0 END+coalesce((SELECT sum(LineNetAmt) FROM C_OrderLine p WHERE l.c_orderline_id=p.bay_masterorderline_id),0),'99999990.00') END AS Pfand,"
 				+ " CASE WHEN d.LineNetAmt IS NULL THEN '            ' ELSE to_char(CASE WHEN p.IsDeposit!='Y' THEN coalesce(d.LineNetAmt,0) ELSE 0 END,'99999990.00') END AS LineNetAmt,"
@@ -471,6 +470,14 @@ public class OrderDotMatrixFormat {
 
 				verifySkipPage(bw, MaxLineDetail-numLinesThisDetail, isRechnung);
 				bw.write(detailData.ProductValue);
+				bw.write(" ");
+				if (Util.isEmpty(detailData.UOMSymbol, true)) {
+					bw.write(detailData.UOMSymbol);
+				} else {
+					boldOn(bw);
+					bw.write(detailData.UOMSymbol);
+					boldOff(bw);
+				}
 				bw.write(detailData.QtyEntered);
 				bw.write("  ");
 				bw.write(detailData.Name);
