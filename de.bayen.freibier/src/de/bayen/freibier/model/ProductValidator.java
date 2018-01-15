@@ -20,7 +20,6 @@ public class ProductValidator implements ModelValidator{
 
 	@Override
 	public void initialize(ModelValidationEngine engine, MClient client) {
-		System.out.println("FreiBier ModelValidator.initialize()");
 		// This line must come before registering the model changes
 		//client = null for global validator
 		if (client != null) {	
@@ -37,7 +36,6 @@ public class ProductValidator implements ModelValidator{
 
 	@Override
 	public String login(int AD_Org_ID, int AD_Role_ID, int AD_User_ID) {
-		System.out.println("FreiBier ModelValidator.login()");
 		return null;
 	}
 

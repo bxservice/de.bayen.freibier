@@ -55,6 +55,7 @@ public class OrderDotMatrixFormat {
     private PageControl pageControl = new PageControl();
     private HeaderData headerData = new HeaderData();
 	private List<DetailData> detailsData = new ArrayList<DetailData>();
+	private List<OpenItemData> openItemsData = new ArrayList<OpenItemData>();
 	private int FooterLine;
 
 	private static int TopMargin = 2;
@@ -106,46 +107,52 @@ public class OrderDotMatrixFormat {
 		/* WARNING: The next query doesn't work with multiple taxes, assuming just one tax */
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
+		final String sqlHeader =
+				"SELECT "
+				+ " rpad(substring(coalesce(h.DocumentNo,''),1,6),6,' ') AS DocumentNo,"
+				+ " coalesce(h.TaxId,'') AS TaxId,"
+				+ " coalesce(h.DocumentType,'') AS DocumentType,"
+				+ " h.Name AS Name,"
+				+ " coalesce(h.Name2,'') AS Name2,"
+				+ " to_char(h.DateOrdered,'dd.mm.yy') AS DateOrdered,"
+				+ " to_char(coalesce(CASE WHEN h.IsTaxIncluded='Y' THEN ROUND(h.TotalLines/COALESCE(1+t.Rate/100,1),2) ELSE h.TotalLines END,0),'99999990.00') AS TotalLines,"
+				+ " to_char(coalesce(h.GrandTotal,0),'99999990.00') AS GrandTotal,"
+				+ " to_char(coalesce(CASE WHEN h.IsTaxIncluded='Y' THEN h.GrandTotal-ROUND(h.TotalLines/COALESCE(1+t.Rate/100,1),2) ELSE h.GrandTotal-h.TotalLines END,0),'99999990.00') AS TotalTax,"
+				+ " coalesce(h.Address1,'') AS Address1,"
+				+ " coalesce(h.Address2,'') AS Address2,"
+				+ " coalesce(l.Postal,'') AS Postal,"
+				+ " coalesce(h.City,'') AS City,"
+				+ " rpad(substring(coalesce(h.BPValue,''),1,5),5,' ') AS BPValue,"
+				+ " rpad(substring(coalesce(r.Value,''),1,4),4,' ') AS DeliveryRoute,"
+				+ " to_char(coalesce((SELECT SUM(lf.QtyEntered) FROM C_OrderLine lf JOIN C_UOM uf USING (C_UOM_ID) WHERE lf.C_Order_ID=o.C_Order_ID AND lf.bay_masterorderline_id IS NULL AND UOMSymbol='Faß'),0),'9999990') AS QtyFaesser,"
+				+ " to_char(coalesce((SELECT SUM(lf.QtyEntered) FROM C_OrderLine lf JOIN C_UOM uf USING (C_UOM_ID) WHERE lf.C_Order_ID=o.C_Order_ID AND lf.bay_masterorderline_id IS NULL AND UOMSymbol='Ka'),0),'9999990') AS QtyKisten,"
+				+ " to_char(coalesce((SELECT SUM(ROUND(lp.LineNetAmt/(CASE WHEN h.IsTaxIncluded='Y' THEN COALESCE(1+t.Rate/100,1) ELSE 1 END),2)) FROM C_OrderLine lp JOIN M_Product pp USING (M_Product_ID) WHERE lp.C_Order_ID=o.C_Order_ID AND lp.bay_masterorderline_id IS NULL AND pp.IsDeposit='N'),0),'99999990.00') AS TotalLinesLGAusgleich,"
+				+ " to_char(coalesce((SELECT SUM(ROUND(lp.LineNetAmt*(CASE WHEN h.IsTaxIncluded='Y' THEN 1 ELSE 1+t.Rate/100 END),2)) FROM C_OrderLine lp JOIN M_Product pp USING (M_Product_ID) WHERE lp.C_Order_ID=o.C_Order_ID AND lp.bay_masterorderline_id IS NULL AND pp.IsDeposit='N'),0),'99999990.00') AS GrandTotalLGAusgleich,"
+				+ " to_char(coalesce((SELECT SUM(ROUND(lp.LineNetAmt*(CASE WHEN h.IsTaxIncluded='Y' THEN (1-1/(1+t.Rate/100)) ELSE t.Rate/100 END),2)) FROM C_OrderLine lp JOIN M_Product pp USING (M_Product_ID) WHERE lp.C_Order_ID=o.C_Order_ID AND lp.bay_masterorderline_id IS NULL AND pp.IsDeposit='N'),0),'99999990.00') AS TotalTaxLGAusgleich,"
+				+ " to_char(coalesce(h.TotalLines-(SELECT sum(lp.LineNetAmt) FROM C_OrderLine lp JOIN M_Product pp USING (M_Product_ID) WHERE lp.C_Order_ID=o.C_Order_ID AND lp.bay_masterorderline_id IS NULL AND pp.IsDeposit='N'),0),'99999990.00') AS LeerGut,"
+				+ " coalesce(h.Description,'') AS Description,"
+				+ " coalesce(pt.DocumentNote,'') AS PaymentTermNote,"
+				+ " coalesce(d.DocumentNote,'') AS TargetDocumentTypeNote,"
+				+ " to_char(coalesce(t.Rate,0),'90.0%') AS TaxRate,"
+				+ " h.IsTaxIncluded AS IsTaxIncluded,"
+				+ " rpad(substring(coalesce(u.Value,''),1,3),3,' ') AS CreatedBy,"
+				+ " bp.BAY_IsPrintOpenItems,"
+				+ " h.C_BPartner_ID,"
+				+ " h.Bill_Location_ID,"
+				+ " h.C_Order_ID"
+				+ " FROM C_Order_Header_V h"
+				+ " JOIN C_Order o ON (h.C_Order_ID=o.C_Order_ID)"
+				+ " LEFT JOIN C_Tax t ON (t.C_Tax_ID=(SELECT MAX(C_Tax_ID) FROM C_OrderTax ot WHERE ot.C_Order_ID=o.C_Order_ID AND ot.TaxAmt!=0))"
+				+ " JOIN C_BPartner bp ON (o.C_BPartner_ID=bp.C_BPartner_ID)"
+				+ " LEFT JOIN C_PaymentTerm pt ON (bp.C_PaymentTerm_ID=pt.C_PaymentTerm_ID)"
+				+ " JOIN C_BPartner_Location bpl ON (bpl.C_BPartner_Location_ID=o.C_BPartner_Location_ID)"
+				+ " JOIN C_Location l ON (bpl.C_Location_ID=l.C_Location_ID)"
+				+ " LEFT JOIN C_DocType d ON (d.C_DocType_ID=o.C_DocTypeTarget_ID)"
+				+ " LEFT JOIN BAY_Route r ON (o.BAY_Route_ID=r.BAY_Route_ID)"
+				+ " LEFT JOIN AD_User u ON (h.CreatedBy=u.AD_User_ID)"
+				+ " WHERE h.C_Order_ID=?";
 		try {
-			pstmt = DB.prepareStatement(
-					"SELECT "
-					+ " rpad(substring(coalesce(h.DocumentNo,''),1,6),6,' ') AS DocumentNo,"
-					+ " coalesce(h.TaxId,'') AS TaxId,"
-					+ " coalesce(h.DocumentType,'') AS DocumentType,"
-					+ " h.Name AS Name,"
-					+ " coalesce(h.Name2,'') AS Name2,"
-					+ " to_char(h.DateOrdered,'dd.mm.yy') AS DateOrdered,"
-					+ " to_char(coalesce(CASE WHEN h.IsTaxIncluded='Y' THEN ROUND(h.TotalLines/COALESCE(1+t.Rate/100,1),2) ELSE h.TotalLines END,0),'99999990.00') AS TotalLines,"
-					+ " to_char(coalesce(h.GrandTotal,0),'99999990.00') AS GrandTotal,"
-					+ " to_char(coalesce(CASE WHEN h.IsTaxIncluded='Y' THEN h.GrandTotal-ROUND(h.TotalLines/COALESCE(1+t.Rate/100,1),2) ELSE h.GrandTotal-h.TotalLines END,0),'99999990.00') AS TotalTax,"
-					+ " coalesce(h.Address1,'') AS Address1,"
-					+ " coalesce(h.Address2,'') AS Address2,"
-					+ " coalesce(l.Postal,'') AS Postal,"
-					+ " coalesce(h.City,'') AS City,"
-					+ " rpad(substring(coalesce(h.BPValue,''),1,5),5,' ') AS BPValue,"
-					+ " rpad(substring(coalesce(r.Value,''),1,4),4,' ') AS DeliveryRoute,"
-					+ " to_char(coalesce((SELECT SUM(lf.QtyEntered) FROM C_OrderLine lf JOIN C_UOM uf USING (C_UOM_ID) WHERE lf.C_Order_ID=o.C_Order_ID AND lf.bay_masterorderline_id IS NULL AND UOMSymbol='Faß'),0),'9999990') AS QtyFaesser,"
-					+ " to_char(coalesce((SELECT SUM(lf.QtyEntered) FROM C_OrderLine lf JOIN C_UOM uf USING (C_UOM_ID) WHERE lf.C_Order_ID=o.C_Order_ID AND lf.bay_masterorderline_id IS NULL AND UOMSymbol='Ka'),0),'9999990') AS QtyKisten,"
-					+ " to_char(coalesce((SELECT SUM(ROUND(lp.LineNetAmt/(CASE WHEN h.IsTaxIncluded='Y' THEN COALESCE(1+t.Rate/100,1) ELSE 1 END),2)) FROM C_OrderLine lp JOIN M_Product pp USING (M_Product_ID) WHERE lp.C_Order_ID=o.C_Order_ID AND lp.bay_masterorderline_id IS NULL AND pp.IsDeposit='N'),0),'99999990.00') AS TotalLinesLGAusgleich,"
-					+ " to_char(coalesce((SELECT SUM(ROUND(lp.LineNetAmt*(CASE WHEN h.IsTaxIncluded='Y' THEN 1 ELSE 1+t.Rate/100 END),2)) FROM C_OrderLine lp JOIN M_Product pp USING (M_Product_ID) WHERE lp.C_Order_ID=o.C_Order_ID AND lp.bay_masterorderline_id IS NULL AND pp.IsDeposit='N'),0),'99999990.00') AS GrandTotalLGAusgleich,"
-					+ " to_char(coalesce((SELECT SUM(ROUND(lp.LineNetAmt*(CASE WHEN h.IsTaxIncluded='Y' THEN (1-1/(1+t.Rate/100)) ELSE t.Rate/100 END),2)) FROM C_OrderLine lp JOIN M_Product pp USING (M_Product_ID) WHERE lp.C_Order_ID=o.C_Order_ID AND lp.bay_masterorderline_id IS NULL AND pp.IsDeposit='N'),0),'99999990.00') AS TotalTaxLGAusgleich,"
-					+ " to_char(coalesce(h.TotalLines-(SELECT sum(lp.LineNetAmt) FROM C_OrderLine lp JOIN M_Product pp USING (M_Product_ID) WHERE lp.C_Order_ID=o.C_Order_ID AND lp.bay_masterorderline_id IS NULL AND pp.IsDeposit='N'),0),'99999990.00') AS LeerGut,"
-					+ " coalesce(h.Description,'') AS Description,"
-					+ " coalesce(pt.DocumentNote,'') AS PaymentTermNote,"
-					+ " coalesce(d.DocumentNote,'') AS TargetDocumentTypeNote,"
-					+ " to_char(coalesce(t.Rate,0),'90.0%') AS TaxRate,"
-					+ " h.IsTaxIncluded AS IsTaxIncluded,"
-					+ " h.C_Order_ID"
-					+ " FROM C_Order_Header_V h"
-					+ " JOIN C_Order o ON (h.C_Order_ID=o.C_Order_ID)"
-					+ " LEFT JOIN C_Tax t ON (t.C_Tax_ID=(SELECT MAX(C_Tax_ID) FROM C_OrderTax ot WHERE ot.C_Order_ID=o.C_Order_ID AND ot.TaxAmt!=0))"
-					+ " JOIN C_BPartner bp ON (o.C_BPartner_ID=bp.C_BPartner_ID)"
-					+ " LEFT JOIN C_PaymentTerm pt ON (bp.C_PaymentTerm_ID=pt.C_PaymentTerm_ID)"
-					+ " JOIN C_BPartner_Location bpl ON (bpl.C_BPartner_Location_ID=o.C_BPartner_Location_ID)"
-					+ " JOIN C_Location l ON (bpl.C_Location_ID=l.C_Location_ID)"
-					+ " LEFT JOIN C_DocType d ON (d.C_DocType_ID=o.C_DocTypeTarget_ID)"
-					+ " LEFT JOIN BAY_Route r ON (o.BAY_Route_ID=r.BAY_Route_ID)"
-					+ " WHERE h.C_Order_ID=?", trxName);
+			pstmt = DB.prepareStatement(sqlHeader, trxName);
 			pstmt.setInt(1, orderID);
 			rs = pstmt.executeQuery();
 			if (rs.next()) {
@@ -175,6 +182,10 @@ public class OrderDotMatrixFormat {
 				headerData.TargetDocumentTypeNote = rs.getString("TargetDocumentTypeNote");
 				headerData.TaxRate = rs.getString("TaxRate");
 				headerData.IsTaxIncluded = rs.getString("IsTaxIncluded");
+				headerData.CreatedBy = rs.getString("CreatedBy");
+				headerData.BAY_IsPrintOpenItems = rs.getString("BAY_IsPrintOpenItems");
+				headerData.C_BPartner_ID = rs.getInt("C_BPartner_ID");
+				headerData.Bill_Location_ID = rs.getInt("Bill_Location_ID");
 				// add newlines if needed
 				headerData.Description = sanitizeCRLF(headerData.Description);
 				headerData.PaymentTermNote = sanitizeCRLF(headerData.PaymentTermNote);
@@ -188,22 +199,25 @@ public class OrderDotMatrixFormat {
 		}
 
 		// get detail data
+		final String sqlDetail =
+				"SELECT "
+				+ " coalesce(d.UOMSymbol,'') AS UOMSymbol,"
+				+ " CASE WHEN p.Description IS NOT NULL AND t.Name IS NOT NULL THEN rpad(substring(p.Description,1,44-length(REPLACE(t.Name,' x ','x'))),44-length(REPLACE(t.Name,' x ','x')),' ') || ' ' || REPLACE(t.Name,' x ','x') ELSE rpad(substring(coalesce(d.Name,''),1,45),45,' ') END AS Name,"
+				+ " rpad(substring(coalesce(d.ProductValue,''),1,10),10,' ') AS ProductValue,"
+				+ " CASE WHEN d.QtyOrdered IS NULL THEN '      ' ELSE to_char(coalesce(d.QtyOrdered,0),'99990') END AS QtyOrdered,"
+				+ " CASE WHEN d.LineNetAmt IS NULL THEN '            ' ELSE to_char(CASE WHEN p.IsDeposit='Y' THEN coalesce(d.LineNetAmt,0) ELSE 0 END+coalesce((SELECT sum(LineNetAmt) FROM C_OrderLine p WHERE l.c_orderline_id=p.bay_masterorderline_id),0),'99999990.00') END AS Pfand,"
+				+ " CASE WHEN d.LineNetAmt IS NULL THEN '            ' ELSE to_char(CASE WHEN p.IsDeposit!='Y' THEN coalesce(d.LineNetAmt,0) ELSE 0 END,'99999990.00') END AS LineNetAmt,"
+				+ " coalesce(d.Description,'') AS Description,"
+				+ " coalesce(d.DocumentNote,'') AS DocumentNote,"
+				+ " d.C_OrderLine_ID"
+				+ " FROM C_Order_LineTax_V d"
+				+ " JOIN C_OrderLine l ON (d.C_OrderLine_ID=l.C_OrderLine_ID)"
+				+ " LEFT JOIN M_Product p ON (l.M_Product_ID=p.M_Product_ID)"
+				+ " LEFT JOIN BAY_TradingUnit t ON (t.BAY_TradingUnit_ID=p.BAY_TradingUnit_ID)"
+				+ " WHERE d.C_Order_ID=? AND d.Line < 999998 AND l.bay_masterorderline_id IS NULL"
+				+ " ORDER BY d.Line";
 		try {
-			pstmt = DB.prepareStatement("SELECT "
-					+ " coalesce(d.UOMSymbol,'') AS UOMSymbol,"
-					+ " CASE WHEN p.Description IS NOT NULL AND t.Name IS NOT NULL THEN rpad(substring(p.Description,1,44-length(REPLACE(t.Name,' x ','x'))),44-length(REPLACE(t.Name,' x ','x')),' ') || ' ' || REPLACE(t.Name,' x ','x') ELSE rpad(substring(coalesce(d.Name,''),1,45),45,' ') END AS Name,"
-					+ " rpad(substring(coalesce(d.ProductValue,''),1,10),10,' ') AS ProductValue,"
-					+ " to_char(coalesce(d.QtyOrdered,0),'99990') AS QtyOrdered,"
-					+ " to_char(CASE WHEN p.IsDeposit='Y' THEN coalesce(d.LineNetAmt,0) ELSE 0 END+coalesce((SELECT sum(LineNetAmt) FROM C_OrderLine p WHERE l.c_orderline_id=p.bay_masterorderline_id),0),'99999990.00') AS Pfand,"
-					+ " to_char(CASE WHEN p.IsDeposit!='Y' THEN coalesce(d.LineNetAmt,0) ELSE 0 END,'99999990.00') AS LineNetAmt,"
-					+ " coalesce(d.Description,'') AS Description,"
-					+ " d.C_OrderLine_ID"
-					+ " FROM C_Order_LineTax_V d"
-					+ " JOIN C_OrderLine l ON (d.C_OrderLine_ID=l.C_OrderLine_ID)"
-					+ " LEFT JOIN M_Product p ON (l.M_Product_ID=p.M_Product_ID)"
-					+ " LEFT JOIN BAY_TradingUnit t ON (t.BAY_TradingUnit_ID=p.BAY_TradingUnit_ID)"
-					+ " WHERE d.C_Order_ID=? AND d.Line < 999998 AND l.bay_masterorderline_id IS NULL"
-					+ " ORDER BY d.Line", trxName);
+			pstmt = DB.prepareStatement(sqlDetail, trxName);
 			pstmt.setInt(1, orderID);
 			rs = pstmt.executeQuery();
 			while (rs.next()) {
@@ -215,8 +229,11 @@ public class OrderDotMatrixFormat {
 				detailData.Pfand = rs.getString("Pfand");
 				detailData.LineNetAmt = rs.getString("LineNetAmt");
 				detailData.Description = rs.getString("Description");
+				detailData.DocumentNote = rs.getString("DocumentNote");
 				// add newlines if needed
-				detailData.Description = sanitizeCRLF(detailData.Description);
+				detailData.Name = sanitizeCRLF(detailData.Name, "                  ");
+				detailData.Description = sanitizeCRLF(detailData.Description, "                  ");
+				detailData.DocumentNote = sanitizeCRLF(detailData.DocumentNote, "                  ");
 				detailsData.add(detailData);
 			}
 		} catch (SQLException e) {
@@ -225,18 +242,89 @@ public class OrderDotMatrixFormat {
 			DB.close(rs, pstmt);
 			rs = null; pstmt = null;
 		}
+
+		// get open items data
+		final String sqlOpenItems =
+				"SELECT "
+				+ " i.DateInvoiced,"
+				+ " rpad(substring(coalesce(i.DocumentNo,''),1,6),6,' ') AS DocumentNo,"
+				+ " to_char(coalesce(i.OpenAmt,0),'999990.00') AS Amount,"
+				+ " i.OpenAmt"  // USED in the query sqlSaldo below
+				+ " FROM RV_OpenItem i"
+				+ " WHERE i.C_BPartner_ID=?" // 1
+				+ " AND i.IsSOTrx='Y'"
+				+ " AND i.C_DocType_ID IN (SELECT dt.C_DocType_ID FROM C_DocType dt WHERE dt.DocNoSequence_ID=(SELECT s.AD_Sequence_ID s FROM AD_Sequence s WHERE s.Name='Rechnungsnummern'))"
+				+ " AND i.C_BPartner_Location_ID=?"  // 2
+				+ " UNION ALL"
+				+ " SELECT"
+				+ " p.DateTrx,"
+				+ " rpad(substring(coalesce(p.DocumentNo,''),1,6),6,' ') AS DocumentNo,"
+				+ " to_char(coalesce(-p.AvailableAmt,0),'999990.00') AS Amount,"
+				+ " -p.AvailableAmt"
+				+ " FROM RV_Payment p"
+				+ " WHERE p.C_BPartner_ID=?"  // 3
+				+ " AND p.DocStatus IN ('CO','CL')"
+				+ " AND p.AvailableAmt!=0"
+				+ " ORDER BY 1, 2 DESC";
+		try {
+			pstmt = DB.prepareStatement(sqlOpenItems, trxName);
+			pstmt.setInt(1, headerData.C_BPartner_ID);
+			pstmt.setInt(2, headerData.Bill_Location_ID);
+			pstmt.setInt(3, headerData.C_BPartner_ID);
+			rs = pstmt.executeQuery();
+			while (rs.next()) {
+				OpenItemData openItemData = new OpenItemData();
+				openItemData.DocumentNo = rs.getString("DocumentNo");
+				openItemData.Amount = rs.getString("Amount");
+				openItemsData.add(openItemData);
+			}
+		} catch (SQLException e) {
+			throw new AdempiereException(e);
+		} finally {
+			DB.close(rs, pstmt);
+			rs = null; pstmt = null;
+		}
+
+		final String sqlSaldo =
+				"SELECT to_char(coalesce(SUM(oi.OpenAmt),0),'99999990.00') AS Saldo FROM ("
+				+ sqlOpenItems
+				+ " ) oi";
+		try {
+			pstmt = DB.prepareStatement(sqlSaldo, trxName);
+			pstmt.setInt(1, headerData.C_BPartner_ID);
+			pstmt.setInt(2, headerData.Bill_Location_ID);
+			pstmt.setInt(3, headerData.C_BPartner_ID);
+			rs = pstmt.executeQuery();
+			if (rs.next()) {
+				headerData.Saldo = rs.getString("Saldo");
+			}
+		} catch (SQLException e) {
+			throw new AdempiereException(e);
+		} finally {
+			DB.close(rs, pstmt);
+			rs = null; pstmt = null;
+		}
+
 	}
 
-	private String sanitizeCRLF(String str) {
+	private String sanitizeCRLF(String str, String prefix) {
+		if (str.indexOf(CR) >= 0 && str.indexOf(LINE_FEED) >= 0) {
+			// string has CR but no LF
+			str = str.replaceAll("\r\n", "\r\n" + prefix);
+		}
 		if (str.indexOf(CR) >= 0 && str.indexOf(LINE_FEED) < 0) {
 			// string has CR but no LF
-			str = str.replaceAll("\r", "\r\n");
+			str = str.replaceAll("\r", "\r\n" + prefix);
 		}
 		if (str.indexOf(LINE_FEED) >= 0 && str.indexOf(CR) < 0) {
 			// string has CR but no LF
-			str = str.replaceAll("\n", "\r\n");
+			str = str.replaceAll("\n", "\r\n" + prefix);
 		}
 		return str;
+	}
+
+	private String sanitizeCRLF(String str) {
+		return sanitizeCRLF(str, "");
 	}
 
 	public static class HeaderData {
@@ -266,6 +354,11 @@ public class OrderDotMatrixFormat {
 		public String TargetDocumentTypeNote;
 		public String TaxRate;
 		public String IsTaxIncluded;
+		public String CreatedBy;
+		public String BAY_IsPrintOpenItems;
+		public int C_BPartner_ID;
+		public int Bill_Location_ID;
+		public String Saldo;
 	}
 
 	public static class DetailData {
@@ -276,6 +369,12 @@ public class OrderDotMatrixFormat {
 		public String Pfand;
 		public String LineNetAmt;
 		public String Description;
+		public String DocumentNote;
+	}
+
+	public static class OpenItemData {
+		public String DocumentNo;
+		public String Amount;
 	}
 
 	private void fillFile(Properties ctx, int orderID, String trxName, Path file, boolean isRechnung) {
@@ -315,6 +414,29 @@ public class OrderDotMatrixFormat {
 
 			printHeader(bw, DocumentTitle);
 
+			if (isRechnung && "Y".equals(headerData.BAY_IsPrintOpenItems) && openItemsData.size() > 0) {
+				bw.write("    NR    BETRAG     NR    BETRAG     NR    BETRAG     NR    BETRAG     NR    BETRAG");
+				carriageReturn(bw); lineFeed(bw);
+				bw.write("------+---------+------+---------+------+---------+------+---------+------+---------");
+				carriageReturn(bw); lineFeed(bw);
+				int i = 0;
+				for (OpenItemData openItemData : openItemsData) {
+					if (i > 0 && i % 5 == 0) {
+						carriageReturn(bw); lineFeed(bw);
+					}
+					i++;
+					bw.write(openItemData.DocumentNo);
+					bw.write(openItemData.Amount);
+					bw.write(" ");
+				}
+				carriageReturn(bw); lineFeed(bw);
+				boldOn(bw);
+				bw.write("                                                               SALDO:");
+				bw.write(headerData.Saldo);
+				bw.write(" EUR");
+				boldOff(bw);
+				carriageReturn(bw);
+			}
 			lineFeed(bw);
 			if (isRechnung) {
 				bw.write("Art.Nr.    Menge  Artikelbezeichnung                                 Pfand         Ware");
@@ -332,8 +454,16 @@ public class OrderDotMatrixFormat {
 			// print detail rechnung
 			for (DetailData detailData : detailsData) {
 				int numLinesThisDetail = 1;
+				if (!Util.isEmpty(detailData.Name,true)) {
+					int count = countCR(detailData.Name);
+					numLinesThisDetail = numLinesThisDetail + count;
+				}
 				if (!Util.isEmpty(detailData.Description,true)) {
 					int count = countCR(detailData.Description);
+					numLinesThisDetail = numLinesThisDetail + count;
+				}
+				if (!Util.isEmpty(detailData.DocumentNote,true)) {
+					int count = countCR(detailData.DocumentNote);
 					numLinesThisDetail = numLinesThisDetail + count;
 				}
 
@@ -343,13 +473,30 @@ public class OrderDotMatrixFormat {
 				bw.write("  ");
 				bw.write(detailData.Name);
 				if (isRechnung) {
-					bw.write(detailData.Pfand);
-					bw.write(detailData.LineNetAmt);
+					if (   "        0.00".equals(detailData.Pfand)
+						&& "        0.00".equals(detailData.LineNetAmt)) {
+						bw.write("            ");
+					} else {
+						bw.write(detailData.Pfand);
+					}
+					if ("        0.00".equals(detailData.LineNetAmt)) {
+						boldOn(bw);
+						bw.write("      GRATIS");
+						boldOff(bw);
+					} else {
+						bw.write(detailData.LineNetAmt);
+					}
 				}
 				carriageReturn(bw); lineFeed(bw);
 				if (!Util.isEmpty(detailData.Description,true)) {
 					bw.write("                  ");
 					bw.write(detailData.Description);
+					carriageReturn(bw); lineFeed(bw);
+					pageControl.Line = pageControl.Line + numLinesThisDetail - 1;
+				}
+				if (!Util.isEmpty(detailData.DocumentNote,true)) {
+					bw.write("                  ");
+					bw.write(detailData.DocumentNote);
 					carriageReturn(bw); lineFeed(bw);
 					pageControl.Line = pageControl.Line + numLinesThisDetail - 1;
 				}
@@ -695,18 +842,20 @@ public class OrderDotMatrixFormat {
 			for (int i = 0; i < pageStr.length(); i++)
 				bw.write(" ");
 		}
-		bw.write("                 Bel-Nr Kd-Nr  Datum   Kz Tour Fahrer");
+		bw.write("                Bel-Nr Kd-Nr  Datum   Kz  Tour Fahrer");
 		carriageReturn(bw); lineFeed(bw);
-		bw.write("                                                   ------+-----+--------+--+----+------");
+		bw.write("                                                  ------+-----+--------+---+----+------");
 		carriageReturn(bw); lineFeed(bw);
-		bw.write("                                                   ");
+		bw.write("                                                  ");
 		boldOn(bw);
 		bw.write(headerData.DocumentNo);
 		bw.write(" ");
 		bw.write(headerData.BPValue);
 		bw.write(" ");
 		bw.write(headerData.DateOrdered);
-		bw.write("    ");
+		bw.write(" ");
+		bw.write(headerData.CreatedBy);
+		bw.write(" ");
 		bw.write(headerData.DeliveryRoute);
 		boldOff(bw);
 		carriageReturn(bw); lineFeed(bw);
