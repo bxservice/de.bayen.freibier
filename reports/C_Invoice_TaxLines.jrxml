@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Created with Jaspersoft Studio version 6.5.0.final using JasperReports Library version 6.5.0  -->
+<!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
+<!-- 2018-06-05T15:00:15 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Document Tax Lines" pageWidth="511" pageHeight="842" columnWidth="511" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" resourceBundle="C_Invoice_Localization" uuid="0ea03c33-cee9-4aa5-b7a2-e829a06f336b">
 	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
 	<property name="com.jaspersoft.studio.unit." value="pixel"/>
@@ -48,7 +49,8 @@ SELECT
 	ilt.c_invoice_id AS record_id,
 	'C_Invoice' AS doctypename
 FROM c_invoice_linetax_v ilt
-UNION
+WHERE ilt.c_invoice_id=$P{RECORD_ID}
+UNION ALL
 SELECT
 	olt.line,
 	olt.linenetamt,
@@ -67,6 +69,7 @@ SELECT
 	olt.c_order_id AS record_id,
 	'C_Order' AS doctypename
 FROM c_order_linetax_v olt
+WHERE olt.c_order_id=$P{RECORD_ID}
 )
 SELECT
 	*,
