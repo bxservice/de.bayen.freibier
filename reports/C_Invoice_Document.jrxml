@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Created with Jaspersoft Studio version 6.5.0.final using JasperReports Library version 6.5.0  -->
+<!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
+<!-- 2018-06-05T14:48:28 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Invoice" pageWidth="595" pageHeight="842" whenNoDataType="AllSectionsNoDetail" columnWidth="515" leftMargin="55" rightMargin="25" topMargin="25" bottomMargin="0" resourceBundle="C_Invoice_Localization" uuid="20e8fd88-2908-486a-951c-643670cb054e">
 	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="Controlling.xml"/>
 	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
@@ -102,7 +103,8 @@
 	c_bpartner_location_id
 FROM c_invoice_header_v ih
 JOIN C_DocType dt ON (dt.C_DocType_ID = ih.C_DocTypeTarget_ID)
-UNION
+WHERE ih.c_invoice_id=$P{USED_RECORD_ID}
+UNION ALL
 SELECT oh.documentno,
 	oh.c_currency_id,
 	oh.bpvalue,
@@ -160,6 +162,7 @@ SELECT oh.documentno,
 	c_bpartner_location_id
 FROM c_order_header_v oh
 JOIN C_DocType dt ON (dt.C_DocType_ID = oh.C_DocTypeTarget_ID)
+WHERE oh.c_order_id=$P{USED_RECORD_ID}
 ),
 
 lines AS (
@@ -170,7 +173,8 @@ SELECT
 	linenetamt,
 	'C_Order' AS doctablename
 FROM C_OrderLine l
-UNION
+WHERE c_order_id=$P{USED_RECORD_ID}
+UNION ALL
 SELECT
 	C_InvoiceLine_ID AS Record_ID,
 	C_Invoice_ID AS Doc_ID,
@@ -178,6 +182,7 @@ SELECT
 	linenetamt,
 	'C_Invoice' AS doctablename
 FROM C_InvoiceLine
+WHERE c_invoice_id=$P{USED_RECORD_ID}
 )
 
 SELECT
