@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.5.0.final using JasperReports Library version 6.5.0  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Ladeliste" pageWidth="595" pageHeight="842" columnWidth="515" leftMargin="55" rightMargin="25" topMargin="25" bottomMargin="25" uuid="c6e2d1b1-90b1-4779-a789-abe1276536da">
+	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="Controlling.xml"/>
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.topMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.bottomMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.leftMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
+	<template><![CDATA["BayenStyles.jrtx"]]></template>
+	<parameter name="DateOrdered" class="java.util.Date">
+		<defaultValueExpression><![CDATA[new GregorianCalendar(2018,0,4).getTime()]]></defaultValueExpression>
+	</parameter>
+	<parameter name="BAY_Route_ID" class="java.lang.Integer">
+		<parameterDescription><![CDATA[Tournummer (Vorgabe ist T8 als Beispiel)]]></parameterDescription>
+		<defaultValueExpression><![CDATA[1000003 /* 3: Tour 5 Yalcin, 0: Tour 4 */]]></defaultValueExpression>
+	</parameter>
+	<queryString language="SQL">
+		<![CDATA[with param as(
+select
+  --(select bay_route_id from bay_route where value='T8') as bay_route_id,
+  --'2018-01-02'::date as datum,
+  $P{BAY_Route_ID} as bay_route_id,
+   $P{DateOrdered}::date as datum
+)
+,
+paymentrule as (
+select 
+  refl.value as paymentrule, 
+  --refl.name,
+  reflt.name as name
+  --reflt.ad_language
+from ad_reference ref
+join ad_ref_list refl using(ad_reference_id)
+join ad_ref_list_trl reflt using(ad_ref_list_id)
+where ref.name='_Payment Rule' and reflt.ad_language='de_DE'
+)
+,
+ladeliste as (
+select
+  r.value as r_value,
+  r.name as r_name,
+  r.description as r_description,
+  lkw.value as lkw_value,
+  lkw.description as lkw_description,
+  f1.value as f1_value,
+  f1.name as f1_name,
+  f1.description as f1_description,
+  f2.value as f2_value,
+  f2.name as f2_name,
+  f3.value as f3_value,
+  f3.name as f3_name,
+  sum(p.weight * qtyordered) over (partition by r.bay_route_id) as weightsum,
+  o.documentno,
+  o.description as o_description,
+  o.dateordered,
+  o.weight as o_weight,
+  o.paymentrule,
+  o.grandtotal,
+  pr.name as pr_name,
+  bp.value as bp_value,
+  bp.name as bp_name,
+  bp.name2 as bp_name2,
+  loc.address1,
+  loc.address2,
+  loc.postal,
+  loc.city,
+  ol.line,
+  ol.description as ol_description,
+  ol.qtyordered,
+  ol.bay_masterorderline_id,
+  p.value as p_value,
+  p.name as p_name,
+  p.description as p_description,
+  tu.name as tu_name,
+  p.weight as p_weight,
+  p.weight * qtyordered as ol_weight,
+  uom."name" as uom,
+  case when uom.c_uom_id = p.c_uom_id then 'N' else 'Y' end as uom_nondefault,
+  coalesce(pl.value, (select distinct l.value from m_locator l where l.ad_client_id=1000000 and l.isactive='Y' and l.isdefault='Y')) as loc_value,
+  coalesce(pl.x::numeric*1000000+pl.y::numeric*1000+pl.z::numeric, (select distinct l.x::numeric*1000000+l.y::numeric*1000+l.z::numeric from m_locator l where l.ad_client_id=1000000 and l.isactive='Y' and l.isdefault='Y')) as loc_order,
+  pl.priorityno as loc_priority,
+  sum (ol.qtyordered) over (partition by uom.c_uom_id) as uom_sum
+from bay_route r
+join param using (bay_route_id)
+join c_order o using (bay_route_id)
+join paymentrule pr using(paymentrule)
+left join c_orderline ol using (c_order_id)
+left join c_uom uom using(c_uom_id)
+left join c_bpartner bp on (bp.c_bpartner_id = o.c_bpartner_id)
+left join c_bpartner_location bpl on (bpl.c_bpartner_location_id = o.c_bpartner_location_id and bpl.isactive='Y' and bpl.isshipto='Y')
+left join c_location loc using (c_location_id)
+join m_product p using (m_product_id)
+left join bay_tradingunit tu using (bay_tradingunit_id)
+left join m_locator pl using (m_locator_id)
+left join c_uom_conversion uc on (uc.m_product_id = p.m_product_id and uc.c_uom_id = p.c_uom_id and uc.c_uom_to_id = ol.c_uom_id)
+left join bay_delivery d on (r.bay_route_id = d.bay_route_id and d.bay_routedate = datum)
+left join s_resource lkw on (lkw.s_resource_id = d.bay_truck_id)
+left join s_resource f1 on (f1.s_resource_id = d.bay_driver_id)
+left join s_resource f2 on (f2.s_resource_id = d.bay_codriver_id)
+left join s_resource f3 on (f3.s_resource_id = d.bay_codriver2_id)
+where r.ad_client_id=1000000 and r.isactive='Y'
+  and o.isactive='Y' and o.issotrx='Y' and o.dateordered = datum
+  --and o.docstatus='IP' and o.processed='N'
+  and ol.qtyentered > 0
+order by loc.postal, loc.address1, bp.value, o.documentno, loc_priority, loc_order, p_value, uom
+)
+-------------- Ladeliste nach Lieferscheinen
+--select * from ladeliste --where bay_masterorderline_id is null
+-------------- Infos zur Tour (für den Seitenkopf)
+select distinct r_value, r_name, r_description, lkw_value, lkw_description,f1_value,f1_name,f1_description,f2_value,f2_name,f3_value,f3_name, weightsum, sr.reportname from ladeliste cross join (select regexp_split_to_table('Inkasso, nachArtikeln, nachLieferscheinen',', *') as reportname ) as sr
+-------------- Summen je UOM (Summe Fässer, Summe Kästen, etc.)
+--select distinct uom, uom_sum, weightsum from ladeliste where bay_masterorderline_id is null
+-------------- Ladeliste nach Artikeln
+--select p_value, p_name, p_description, tu_name, uom, loc_value, sum(qtyordered) as qtyordered from ladeliste where bay_masterorderline_id is null group by p_value, p_name, p_description, tu_name, uom, loc_value, loc_order order by loc_order, p_value, uom
+-------------- Inkassoliste
+--select distinct documentno, paymentrule, grandtotal, pr_name, bp_value, bp_name, bp_name2, address1, address2, postal, city from ladeliste]]>
+	</queryString>
+	<field name="r_value" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="r_value"/>
+	</field>
+	<field name="r_name" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="r_name"/>
+	</field>
+	<field name="r_description" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="r_description"/>
+	</field>
+	<field name="lkw_value" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="lkw_value"/>
+	</field>
+	<field name="lkw_description" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="lkw_description"/>
+	</field>
+	<field name="f1_value" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="f1_value"/>
+	</field>
+	<field name="f1_name" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="f1_name"/>
+	</field>
+	<field name="f1_description" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="f1_description"/>
+	</field>
+	<field name="f2_value" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="f2_value"/>
+	</field>
+	<field name="f2_name" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="f2_name"/>
+	</field>
+	<field name="f3_value" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="f3_value"/>
+	</field>
+	<field name="f3_name" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="f3_name"/>
+	</field>
+	<field name="weightsum" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.label" value="weightsum"/>
+	</field>
+	<field name="reportname" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="reportname"/>
+	</field>
+	<group name="Subreport" isStartNewPage="true">
+		<groupExpression><![CDATA[$F{reportname}]]></groupExpression>
+		<groupHeader>
+			<band height="12">
+				<subreport>
+					<reportElement x="0" y="0" width="515" height="10" uuid="9ec0cd7d-3baa-4ff5-bda8-30802e3f68ad">
+						<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					</reportElement>
+					<subreportParameter name="DateOrdered">
+						<subreportParameterExpression><![CDATA[$P{DateOrdered}]]></subreportParameterExpression>
+					</subreportParameter>
+					<subreportParameter name="BAY_Route_ID">
+						<subreportParameterExpression><![CDATA[$P{BAY_Route_ID}]]></subreportParameterExpression>
+					</subreportParameter>
+					<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					<subreportExpression><![CDATA["Ladeliste_"+$F{reportname}+".jasper"]]></subreportExpression>
+				</subreport>
+			</band>
+		</groupHeader>
+	</group>
+	<pageHeader>
+		<band height="121" splitType="Stretch">
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<staticText>
+				<reportElement stretchType="ContainerBottom" mode="Opaque" x="0" y="0" width="515" height="80" backcolor="#EDEBEB" uuid="fa89ed25-9925-4625-9608-afce3bb74c38">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<text><![CDATA[]]></text>
+			</staticText>
+			<textField>
+				<reportElement style="Header" x="0" y="0" width="50" height="30" uuid="3731c66e-07ce-4d20-bfaf-2c691d870542"/>
+				<textFieldExpression><![CDATA[$F{r_value}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Header" x="50" y="0" width="200" height="30" uuid="2a3c838d-d320-428a-b8bc-276ed450ceea"/>
+				<textFieldExpression><![CDATA[$F{r_name}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement style="Header" x="265" y="0" width="155" height="30" uuid="7f51f85f-20a5-42d3-8279-9ac0dd1c33ad">
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{lkw_value}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement style="Header" x="-2" y="50" width="72" height="30" uuid="4d9d9170-65b8-4fbf-bca6-6340cf158988"/>
+				<textFieldExpression><![CDATA[$F{f1_value}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement style="Header" x="80" y="50" width="250" height="30" uuid="fea7cee6-62ca-44fe-a394-7280b3b8fae3"/>
+				<textFieldExpression><![CDATA[$F{f1_name}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement style="Report Standard Font" x="330" y="50" width="185" height="30" uuid="169fba6d-feea-45f1-b1cd-1b006b2c494b"/>
+				<textElement verticalAlignment="Bottom"/>
+				<textFieldExpression><![CDATA[$F{f1_description}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement style="Report Standard Font" x="265" y="30" width="155" height="20" uuid="2af7c06b-3369-427b-bb18-c82259a8303b">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{lkw_description}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement style="Report Standard Font" x="-2" y="30" width="252" height="20" uuid="538d7d4e-e44e-47ff-878d-0c4fec222305">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{r_description}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement mode="Opaque" x="80" y="80" width="434" height="20" isRemoveLineWhenBlank="true" backcolor="#EDEDED" uuid="e00b0162-2a09-44b7-8bfd-2deeb760b3f0"/>
+				<textFieldExpression><![CDATA[$F{f2_name}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement mode="Opaque" x="80" y="100" width="434" height="20" isRemoveLineWhenBlank="true" backcolor="#EDEDED" uuid="90480894-8eef-409e-81c7-ec62779607a6"/>
+				<textFieldExpression><![CDATA[$F{f3_name}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement positionType="Float" x="0" y="120" width="515" height="1" uuid="202c4971-49f4-4dfe-b077-62de988934cf">
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+			</line>
+			<textField pattern="#,##0.####;(#,##0.####-)">
+				<reportElement style="Report Standard Font" x="420" y="30" width="95" height="20" uuid="9ed55fbb-6f3c-47dd-8817-77b64b50fd4a"/>
+				<textElement textAlignment="Right" verticalAlignment="Bottom">
+					<font isItalic="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Gewicht:" + $F{weightsum}.toBigInteger().toString() + "kg"]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement mode="Opaque" x="0" y="80" width="80" height="20" backcolor="#EDEDED" uuid="fb19d907-6d20-4df5-af22-6a4fbd3a32d7">
+					<printWhenExpression><![CDATA[$F{f2_name}!=null]]></printWhenExpression>
+				</reportElement>
+				<text><![CDATA[]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="0" y="100" width="80" height="20" backcolor="#EDEDED" uuid="d77cd346-a85b-4421-bd51-ed954e6537a7">
+					<printWhenExpression><![CDATA[$F{f3_name}!=null]]></printWhenExpression>
+				</reportElement>
+				<text><![CDATA[]]></text>
+			</staticText>
+			<textField pattern="dd.MM.yy" isBlankWhenNull="true">
+				<reportElement style="Header" x="420" y="0" width="94" height="30" uuid="fdae99c1-fd4b-4edc-a614-8dcc8d87cb09">
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression><![CDATA[$P{DateOrdered}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageHeader>
+	<detail>
+		<band height="24" splitType="Stretch">
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="15" splitType="Stretch">
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<textField>
+				<reportElement style="Report Standard Font" x="370" y="0" width="100" height="15" uuid="79859b10-4a43-4ad3-86ec-9ed85429b1bd">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Seite " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report">
+				<reportElement style="Report Standard Font" x="470" y="0" width="45" height="15" uuid="d4579058-24e9-474c-8e78-548dc3a765e5">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Left">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[" von " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageFooter>
+</jasperReport>

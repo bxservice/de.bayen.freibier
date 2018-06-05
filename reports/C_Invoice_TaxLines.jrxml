@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.5.0.final using JasperReports Library version 6.5.0  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Document Tax Lines" pageWidth="511" pageHeight="842" columnWidth="511" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" resourceBundle="C_Invoice_Localization" uuid="0ea03c33-cee9-4aa5-b7a2-e829a06f336b">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.topMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.bottomMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.leftMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
+	<property name="ireport.zoom" value="1.610510000000001"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<template><![CDATA["BayenStyles.jrtx"]]></template>
+	<parameter name="RECORD_ID" class="java.lang.Integer">
+		<defaultValueExpression><![CDATA[1040395]]></defaultValueExpression>
+	</parameter>
+	<parameter name="CURRENT_LANG" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["de_DE"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="AD_TABLE_ID" class="java.lang.Integer">
+		<parameterDescription><![CDATA[Tabelle, aus der wir aufgerufen wurden (259 Order, 318 Invoice)]]></parameterDescription>
+		<defaultValueExpression><![CDATA[318]]></defaultValueExpression>
+	</parameter>
+	<parameter name="ISO_CODE" class="java.lang.String"/>
+	<parameter name="BP_LANG" class="java.lang.String"/>
+	<parameter name="CURRENCY_PATTERN" class="java.lang.String" isForPrompting="false"/>
+	<queryString language="SQL">
+		<![CDATA[WITH l AS(
+SELECT
+	ilt.line,
+	ilt.linenetamt,
+	ilt.qtyinvoiced,
+	ilt.qtyentered,
+	ilt.uomsymbol,
+	ilt.c_uom_name,
+	ilt.name AS p_name,
+	ilt.description,
+	ilt.documentnote,
+	ilt.productvalue,
+	ilt.priceentered,
+	ilt.priceactual,
+	ilt.productdescription,
+	ilt.c_tax_id,
+	ilt.c_invoice_id AS record_id,
+	'C_Invoice' AS doctypename
+FROM c_invoice_linetax_v ilt
+UNION
+SELECT
+	olt.line,
+	olt.linenetamt,
+	olt.qtyinvoiced,
+	olt.qtyentered,
+	olt.uomsymbol,
+	olt.c_uom_name,
+	olt.name AS p_name,
+	olt.description,
+	olt.documentnote,
+	olt.productvalue,
+	olt.priceentered,
+	olt.priceactual,
+	olt.productdescription,
+	olt.c_tax_id,
+	olt.c_order_id AS record_id,
+	'C_Order' AS doctypename
+FROM c_order_linetax_v olt
+)
+SELECT
+	*,
+	coalesce (c_tax.description, p_name) AS name
+FROM l
+JOIN C_Tax ON(C_Tax.C_Tax_ID = l.C_Tax_ID)
+JOIN AD_Table ON(AD_Table.tablename=l.doctypename)
+WHERE
+	l.record_id = cast( $P{RECORD_ID} AS NUMERIC)
+   AND AD_Table.AD_Table_ID =  CAST($P{AD_TABLE_ID} AS NUMERIC)
+	AND (l.line > 999000 OR l.line IS NULL)
+ORDER BY
+	l.line]]>
+	</queryString>
+	<field name="line" class="java.math.BigDecimal"/>
+	<field name="qtyinvoiced" class="java.math.BigDecimal"/>
+	<field name="qtyentered" class="java.math.BigDecimal"/>
+	<field name="uomsymbol" class="java.lang.String"/>
+	<field name="name" class="java.lang.String"/>
+	<field name="description" class="java.lang.String"/>
+	<field name="documentnote" class="java.lang.String"/>
+	<field name="productvalue" class="java.lang.String"/>
+	<field name="priceactual" class="java.math.BigDecimal"/>
+	<field name="productdescription" class="java.lang.String"/>
+	<field name="linenetamt" class="java.math.BigDecimal"/>
+	<field name="c_uom_name" class="java.lang.String"/>
+	<field name="p_name" class="java.lang.String"/>
+	<field name="priceentered" class="java.math.BigDecimal"/>
+	<field name="c_tax_id" class="java.math.BigDecimal"/>
+	<field name="record_id" class="java.math.BigDecimal"/>
+	<field name="doctypename" class="java.lang.String"/>
+	<field name="ad_client_id" class="java.math.BigDecimal"/>
+	<field name="ad_org_id" class="java.math.BigDecimal"/>
+	<field name="isactive" class="java.lang.String"/>
+	<field name="created" class="java.sql.Timestamp"/>
+	<field name="createdby" class="java.math.BigDecimal"/>
+	<field name="updated" class="java.sql.Timestamp"/>
+	<field name="updatedby" class="java.math.BigDecimal"/>
+	<variable name="language" class="java.lang.String">
+		<variableExpression><![CDATA[new String($P{CURRENT_LANG}.substring(0,2))]]></variableExpression>
+		<initialValueExpression><![CDATA[new String($P{CURRENT_LANG}.substring(0,2))]]></initialValueExpression>
+	</variable>
+	<variable name="country" class="java.lang.String">
+		<variableExpression><![CDATA[new String($P{CURRENT_LANG}.substring(3,5))]]></variableExpression>
+		<initialValueExpression><![CDATA[new String($P{CURRENT_LANG}.substring(3,5))]]></initialValueExpression>
+	</variable>
+	<detail>
+		<band height="12" splitType="Stretch">
+			<property name="local_mesure_unitheight" value="pixel"/>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<textField>
+				<reportElement key="" style="Report Standard Font" x="0" y="0" width="420" height="12" uuid="e68539fe-fa17-4e7d-be1b-ef0ee048e507"/>
+				<textFieldExpression><![CDATA[$F{name}+ " " + $R{document.fromLabel} + " " + 
+
+
+
+new DecimalFormat(((DecimalFormat)NumberFormat.getCurrencyInstance(new Locale("de","DE"))).toPattern().replace("¤","€")).format($F{priceactual})]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00 €">
+				<reportElement key="" style="Report Monospace Font" x="420" y="0" width="84" height="12" uuid="f45c7fcb-f922-4fc3-808b-c18f25ab9fa0">
+					<printWhenExpression><![CDATA[($F{linenetamt}!=null) && ($F{linenetamt}.compareTo(BigDecimal.ZERO)!=0)]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression><![CDATA[new DecimalFormat($P{CURRENCY_PATTERN}).format($F{linenetamt})]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

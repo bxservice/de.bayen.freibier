@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.4.0.final using JasperReports Library version 6.4.1  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Header" pageWidth="515" pageHeight="842" columnWidth="515" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" uuid="dd4a4699-9c90-472e-bbb9-e4a4f793e885">
+	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="Controlling"/>
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.topMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.bottomMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.leftMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
+	<template><![CDATA["BayenStyles.jrtx"]]></template>
+	<parameter name="REPORT_NAME" class="java.lang.String">
+		<parameterDescription><![CDATA[Name für die Überschrift]]></parameterDescription>
+		<defaultValueExpression><![CDATA["Bericht"]]></defaultValueExpression>
+	</parameter>
+	<queryString language="SQL">
+		<![CDATA[select
+*
+from controlling.bay_company_v]]>
+	</queryString>
+	<field name="client_name" class="java.lang.String"/>
+	<field name="org_name" class="java.lang.String"/>
+	<field name="logo" class="java.awt.Image"/>
+	<detail>
+		<band height="30" splitType="Stretch">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<textField>
+				<reportElement style="Page Header" mode="Opaque" x="0" y="0" width="515" height="30" uuid="0856cd05-23e9-4260-8720-2dba3cd10cb7">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font isBold="true"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{REPORT_NAME}]]></textFieldExpression>
+			</textField>
+			<image hAlign="Right">
+				<reportElement style="Page Header" x="455" y="0" width="60" height="30" uuid="f61a3658-1c6b-40f0-91f3-fc543edacadd">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box padding="3"/>
+				<imageExpression><![CDATA[$F{logo}]]></imageExpression>
+			</image>
+			<line>
+				<reportElement x="0" y="29" width="515" height="1" uuid="6ad3a9f0-5ef6-41b7-9b08-cc6ff5be6bde">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+			</line>
+		</band>
+	</detail>
+</jasperReport>

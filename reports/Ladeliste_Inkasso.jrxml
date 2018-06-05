@@ -1,0 +1,387 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.5.0.final using JasperReports Library version 6.5.0  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Ladeliste_Inkasso" pageWidth="515" pageHeight="842" columnWidth="515" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" uuid="da30300e-bdb7-49cf-ac8c-2947f3e70668">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="Controlling.xml"/>
+	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.topMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.bottomMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.leftMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
+	<template><![CDATA["BayenStyles.jrtx"]]></template>
+	<parameter name="DateOrdered" class="java.util.Date">
+		<defaultValueExpression><![CDATA[new GregorianCalendar(2018,0,4).getTime()]]></defaultValueExpression>
+	</parameter>
+	<parameter name="BAY_Route_ID" class="java.lang.Integer">
+		<parameterDescription><![CDATA[Tournummer (Vorgabe ist T8 als Beispiel)]]></parameterDescription>
+		<defaultValueExpression><![CDATA[1000003 /* Tour 5 Yalcin */]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[with param as(
+select
+  --(select bay_route_id from bay_route where value='P1') as bay_route_id,
+  --'2018-01-02'::date as datum
+  $P{BAY_Route_ID} as bay_route_id,
+  $P{DateOrdered}::date as datum
+)
+,
+paymentrule as (
+select 
+  refl.value as paymentrule, 
+  --refl.name,
+  reflt.name as name
+  --reflt.ad_language
+from ad_reference ref
+join ad_ref_list refl using(ad_reference_id)
+join ad_ref_list_trl reflt using(ad_ref_list_id)
+where ref.name='_Payment Rule' and reflt.ad_language='de_DE'
+)
+,
+ladeliste as (
+select
+  r.value as r_value,
+  r.name as r_name,
+  r.description as r_description,
+  lkw.value as lkw_value,
+  lkw.description as lkw_description,
+  f1.value as f1_value,
+  f1.name as f1_name,
+  f1.description as f1_description,
+  f2.value as f2_value,
+  f2.name as f2_name,
+  f3.value as f3_value,
+  f3.name as f3_name,
+  sum(p.weight) over (partition by r.bay_route_id) as weightsum,
+  o.documentno,
+  o.description as o_description,
+  o.dateordered,
+  o.weight as o_weight,
+  o.paymentrule,
+  o.grandtotal,
+  pr.name as pr_name,
+  bp.value as bp_value,
+  bp.name as bp_name,
+  bp.name2 as bp_name2,
+  loc.address1,
+  loc.address2,
+  loc.postal,
+  loc.city,
+  ol.line,
+  ol.description as ol_description,
+  ol.qtyordered,
+  ol.bay_masterorderline_id,
+  p.value as p_value,
+  p.name as p_name,
+  p.description as p_description,
+  tu.name as tu_name,
+  p.weight as p_weight,
+  uom."name" as uom,
+  case when uom.c_uom_id = p.c_uom_id then 'N' else 'Y' end as uom_nondefault,
+  coalesce(pl.value, (select distinct l.value from m_locator l where l.ad_client_id=1000000 and l.isactive='Y' and l.isdefault='Y')) as loc_value,
+  coalesce(pl.x::numeric*1000000+pl.y::numeric*1000+pl.z::numeric, (select distinct l.x::numeric*1000000+l.y::numeric*1000+l.z::numeric from m_locator l where l.ad_client_id=1000000 and l.isactive='Y' and l.isdefault='Y')) as loc_order,
+  pl.priorityno as loc_priority,
+  sum (ol.qtyordered) over (partition by uom.c_uom_id) as uom_sum
+from bay_route r
+join param using (bay_route_id)
+join c_order o using (bay_route_id)
+join paymentrule pr using(paymentrule)
+left join c_orderline ol using (c_order_id)
+left join c_uom uom using(c_uom_id)
+left join c_bpartner bp on (bp.c_bpartner_id = o.c_bpartner_id)
+left join c_bpartner_location bpl on (bpl.c_bpartner_location_id = o.c_bpartner_location_id and bpl.isactive='Y' and bpl.isshipto='Y')
+left join c_location loc using (c_location_id)
+join m_product p using (m_product_id)
+left join bay_tradingunit tu using (bay_tradingunit_id)
+left join m_locator pl using (m_locator_id)
+left join bay_delivery d on (r.bay_route_id = d.bay_route_id and d.bay_routedate = datum)
+left join s_resource lkw on (lkw.s_resource_id = d.bay_truck_id)
+left join s_resource f1 on (f1.s_resource_id = d.bay_driver_id)
+left join s_resource f2 on (f2.s_resource_id = d.bay_codriver_id)
+left join s_resource f3 on (f3.s_resource_id = d.bay_codriver2_id)
+where r.ad_client_id=1000000 and r.isactive='Y'
+  and o.isactive='Y' and o.issotrx='Y' and o.dateordered = datum
+  --and o.docstatus='IP' and o.processed='N'
+  and ol.qtyentered > 0
+order by loc.postal, loc.address1, bp.value, o.documentno, loc_priority, loc_order, p_value, uom
+)
+-------------- Ladeliste nach Lieferscheinen
+--select * from ladeliste where bay_masterorderline_id is null
+-------------- Infos zur Tour (für den Seitenkopf)
+--select distinct r_value, r_name, r_description, lkw_value, lkw_description,f1_value,f1_name,f1_description,f2_value,f2_name,f3_value,f3_name, weightsum, sr.reportname from ladeliste cross join (select regexp_split_to_table('Inkasso, nachArtikeln, nachLieferscheinen',', *') as reportname ) as sr
+-------------- Summen je UOM (Summe Fässer, Summe Kästen, etc.)
+--select distinct uom, uom_sum, weightsum from ladeliste where bay_masterorderline_id is null
+-------------- Ladeliste nach Artikeln
+--select p_value, p_name, p_description, tu_name, uom, loc_value, sum(qtyordered) as qtyordered from ladeliste where bay_masterorderline_id is null group by p_value, p_name, p_description, tu_name, uom, loc_value, loc_order order by loc_order, p_value, uom
+-------------- Inkassoliste
+select distinct documentno, paymentrule, grandtotal, pr_name, bp_value, bp_name, bp_name2, address1, address2, postal, city from ladeliste]]>
+	</queryString>
+	<field name="documentno" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="documentno"/>
+	</field>
+	<field name="paymentrule" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="paymentrule"/>
+	</field>
+	<field name="grandtotal" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.label" value="grandtotal"/>
+	</field>
+	<field name="pr_name" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="pr_name"/>
+	</field>
+	<field name="bp_value" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="bp_value"/>
+	</field>
+	<field name="bp_name" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="bp_name"/>
+	</field>
+	<field name="bp_name2" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="bp_name2"/>
+	</field>
+	<field name="address1" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="address1"/>
+	</field>
+	<field name="address2" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="address2"/>
+	</field>
+	<field name="postal" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="postal"/>
+	</field>
+	<field name="city" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="city"/>
+	</field>
+	<title>
+		<band height="35">
+			<staticText>
+				<reportElement style="Header" x="0" y="5" width="515" height="30" uuid="c7804458-60e5-4d7d-8a0f-7ae1eebb7487"/>
+				<textElement textAlignment="Center">
+					<font isUnderline="true"/>
+				</textElement>
+				<text><![CDATA[Inkassoliste und Tourenübersicht]]></text>
+			</staticText>
+		</band>
+	</title>
+	<columnHeader>
+		<band height="16" splitType="Stretch">
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<staticText>
+				<reportElement style="Narrow Lists Header" x="0" y="0" width="35" height="15" uuid="1a5805f2-9401-45bf-b83c-fcfa62559801">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="1fdebb01-18b8-41a9-8af6-8ad6dc82e111"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement>
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[KdNr]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Narrow Lists Header" x="35" y="0" width="130" height="15" uuid="0efc1109-6bc6-43a1-abae-eca85199832c">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="4a3c9e9b-028c-42a0-babc-03c6c39b60e3"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement>
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[Bezeichnung Kunde]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Narrow Lists Header" x="275" y="0" width="60" height="15" uuid="04c12aa7-cf2e-4962-8459-c7a7a9ef38e7">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="72b5e2bd-5bd1-470b-8eb8-f71466b3629d"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[Betrag]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Narrow Lists Header" x="400" y="0" width="55" height="15" uuid="ab2e4bf5-84f9-4c7a-8c02-48370dded60a">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="c019a273-5c2d-4dd0-89e9-ebd8abc578b0"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Center">
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[Bar]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Narrow Lists Header" x="460" y="0" width="55" height="15" uuid="2eb65071-daf6-48ed-84d3-1386f5a758a7">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="1fdebb01-18b8-41a9-8af6-8ad6dc82e111"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Center">
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[Inkasso]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Narrow Lists Header" x="340" y="0" width="55" height="15" uuid="e4bf8e49-7182-442b-acce-14ae2174fbee">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="1fdebb01-18b8-41a9-8af6-8ad6dc82e111"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Center">
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[Leergut]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Narrow Lists Header" x="185" y="0" width="40" height="15" uuid="6f62de50-83b0-4941-b4ba-c76241a0de25">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="1fdebb01-18b8-41a9-8af6-8ad6dc82e111"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement>
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[Beleg]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Narrow Lists Header" x="225" y="0" width="55" height="15" uuid="8cbd4e7a-4fcf-46c4-8084-9fe507bb191c">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="1fdebb01-18b8-41a9-8af6-8ad6dc82e111"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement>
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[ZahlArt]]></text>
+			</staticText>
+			<line>
+				<reportElement x="0" y="15" width="515" height="1" uuid="24d2a70f-e51f-4c8d-9e8e-5bc8123ac8c8">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+				</reportElement>
+			</line>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="23" splitType="Stretch">
+			<frame>
+				<reportElement x="0" y="0" width="515" height="15" uuid="dd673ff2-5929-4bc4-bcb0-8ee826256841"/>
+				<textField isStretchWithOverflow="true">
+					<reportElement style="Narrow Lists" stretchType="ContainerBottom" x="185" y="0" width="40" height="15" uuid="8614e157-567f-4fbd-b5c0-c3bae283c447">
+						<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="1fdebb01-18b8-41a9-8af6-8ad6dc82e111"/>
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+						<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					</reportElement>
+					<textElement verticalAlignment="Bottom"/>
+					<textFieldExpression><![CDATA[$F{documentno}]]></textFieldExpression>
+				</textField>
+				<textField pattern="#,##0.00 ¤;-#,##0.00 ¤">
+					<reportElement style="Narrow Lists" stretchType="ContainerBottom" x="280" y="0" width="60" height="15" uuid="f6681eb2-d8fb-46cd-8be9-a19914bb7b57">
+						<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="4a3c9e9b-028c-42a0-babc-03c6c39b60e3"/>
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+						<printWhenExpression><![CDATA[!"B".equals($F{paymentrule})]]></printWhenExpression>
+					</reportElement>
+					<textElement textAlignment="Right" verticalAlignment="Bottom"/>
+					<textFieldExpression><![CDATA[$F{grandtotal}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement style="Narrow Lists" x="0" y="0" width="35" height="15" uuid="6b6b960b-0812-4a76-a67a-9805d029c085">
+						<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="72b5e2bd-5bd1-470b-8eb8-f71466b3629d"/>
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+						<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					</reportElement>
+					<textFieldExpression><![CDATA[$F{bp_value}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true">
+					<reportElement style="Narrow Lists" x="35" y="0" width="145" height="15" uuid="2265c317-98a3-4dce-8db9-e4cdc7d93be4">
+						<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="c019a273-5c2d-4dd0-89e9-ebd8abc578b0"/>
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+						<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					</reportElement>
+					<textElement markup="html"/>
+					<textFieldExpression><![CDATA["<b>"+$F{bp_name}+"</b>"
++($F{bp_name2}==null?"":", "+$F{bp_name2})
++($F{address1}==null?"":", "+$F{address1})
++($F{postal}==null?"":", "+$F{postal})
++($F{city}==null?"":" "+$F{city})]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement stretchType="ContainerBottom" x="340" y="0" width="55" height="15" uuid="ebbcb602-d2e5-49b7-8d26-39d8e32aec24">
+						<property name="com.jaspersoft.studio.unit.x" value="px"/>
+						<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					</reportElement>
+					<box>
+						<bottomPen lineWidth="1.0"/>
+					</box>
+					<text><![CDATA[]]></text>
+				</staticText>
+				<staticText>
+					<reportElement stretchType="ContainerBottom" x="400" y="0" width="55" height="15" uuid="caae1120-0d54-40cf-95a8-0207277e5711">
+						<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					</reportElement>
+					<box>
+						<bottomPen lineWidth="1.0"/>
+					</box>
+					<text><![CDATA[]]></text>
+				</staticText>
+				<staticText>
+					<reportElement stretchType="ContainerBottom" x="460" y="0" width="55" height="15" uuid="62d8dd45-3564-4d76-875a-b2aa165308ec">
+						<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					</reportElement>
+					<box>
+						<bottomPen lineWidth="1.0"/>
+					</box>
+					<text><![CDATA[]]></text>
+				</staticText>
+				<textField>
+					<reportElement style="Narrow Lists" stretchType="ContainerBottom" x="225" y="0" width="55" height="15" uuid="f4be36c3-5b6a-4a98-a0c2-15e4f22e23b4">
+						<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="56111e06-09c9-46eb-baf5-f1c732e61f7a"/>
+						<printWhenExpression><![CDATA[!"B".equals($F{paymentrule})]]></printWhenExpression>
+					</reportElement>
+					<textElement verticalAlignment="Bottom"/>
+					<textFieldExpression><![CDATA[$F{pr_name}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true">
+					<reportElement style="Narrow Lists" stretchType="ContainerBottom" x="225" y="0" width="55" height="15" uuid="b11df79b-98cd-4522-86b3-9aa1fda702ef">
+						<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="56111e06-09c9-46eb-baf5-f1c732e61f7a"/>
+						<printWhenExpression><![CDATA["B".equals($F{paymentrule})]]></printWhenExpression>
+					</reportElement>
+					<textElement verticalAlignment="Bottom">
+						<font size="12" isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{pr_name}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="#,##0.00 ¤;-#,##0.00 ¤">
+					<reportElement style="Narrow Lists" stretchType="ContainerBottom" x="255" y="0" width="80" height="15" uuid="3e3a39d7-f10e-4965-9949-de12a035c713">
+						<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="4a3c9e9b-028c-42a0-babc-03c6c39b60e3"/>
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+						<printWhenExpression><![CDATA["B".equals($F{paymentrule})]]></printWhenExpression>
+					</reportElement>
+					<textElement textAlignment="Right" verticalAlignment="Bottom">
+						<font size="12" isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{grandtotal}]]></textFieldExpression>
+				</textField>
+			</frame>
+		</band>
+	</detail>
+	<summary>
+		<band height="46" splitType="Stretch">
+			<line>
+				<reportElement x="400" y="30" width="115" height="1" uuid="fd928c45-bd05-4f1e-8c80-3d527dc02056">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+			</line>
+			<line>
+				<reportElement x="340" y="30" width="55" height="1" uuid="0d26752f-466f-4d41-a44c-346ce3f6c88d">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+			</line>
+			<staticText>
+				<reportElement style="Report Standard Font" x="400" y="31" width="115" height="10" uuid="1c8c4def-9ccd-4e0a-adbc-22fdd5628d5d">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Center">
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[Gesamtsumme]]></text>
+			</staticText>
+		</band>
+	</summary>
+</jasperReport>

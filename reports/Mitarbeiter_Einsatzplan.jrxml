@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.5.0.final using JasperReports Library version 6.5.0  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Mitarbeiter Einsatzplan" pageWidth="595" pageHeight="842" columnWidth="515" leftMargin="55" rightMargin="25" topMargin="25" bottomMargin="25" uuid="880d2d16-8685-4d38-b275-6399128a9eb3">
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="Controlling.xml"/>
+	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+	<property name="ireport.jasperserver.url" value="http://jasperserver.bayen.loc:8080/jasperserver/"/>
+	<property name="ireport.jasperserver.user" value="tbayen"/>
+	<property name="ireport.jasperserver.reportUnit" value="/Ausdrucke/Mitarbeiter_Einsatzplan"/>
+	<template><![CDATA["BayenStyles.jrtx"]]></template>
+	<parameter name="DateOrdered" class="java.util.Date">
+		<defaultValueExpression><![CDATA[new Date()]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[with param as (
+select
+   $P{DateOrdered}::date as datum
+)
+select 
+  d.bay_routedate
+from bay_delivery d
+cross join param p
+where d.bay_routedate=p.datum
+limit 1]]>
+	</queryString>
+	<field name="bay_routedate" class="java.sql.Timestamp">
+		<property name="com.jaspersoft.studio.field.label" value="bay_routedate"/>
+	</field>
+	<pageHeader>
+		<band height="34" splitType="Stretch">
+			<staticText>
+				<reportElement style="Report Header" x="0" y="0" width="515" height="30" uuid="3f7c2d2a-49f7-4390-9149-8a7acfdcac5d"/>
+				<textElement textAlignment="Center"/>
+				<text><![CDATA[Mitarbeiter-Einteilung Lager/Fuhrpark]]></text>
+			</staticText>
+		</band>
+	</pageHeader>
+	<detail>
+		<band height="10" splitType="Stretch">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<subreport>
+				<reportElement x="0" y="0" width="515" height="10" uuid="b2154bd7-000b-44e0-9b09-254541cabd55">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression><![CDATA["Mitarbeiter_Einsatzplan_Touren.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</detail>
+</jasperReport>

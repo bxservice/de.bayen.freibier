@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.5.0.final using JasperReports Library version 6.5.0  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Anrufliste" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="dcfe0be8-20e3-4562-8088-89b76d97d362">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="Controlling.xml"/>
+	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.topMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.bottomMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.leftMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
+	<template><![CDATA["BayenStyles.jrtx"]]></template>
+	<parameter name="C_BPartner_ID" class="java.lang.Integer">
+		<defaultValueExpression><![CDATA[null /*new BigDecimal(1007667)*/]]></defaultValueExpression>
+	</parameter>
+	<parameter name="week" class="java.math.BigDecimal">
+		<defaultValueExpression><![CDATA[new BigDecimal(Calendar.getInstance().get(Calendar.WEEK_OF_YEAR))]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[select
+bp.c_bpartner_id,
+bp.value as bp_value,
+bp.name as bp_name,
+bp.name2 as bp_name2,
+u.name,
+u.phone,
+u.phone2,
+bp.so_description,
+ci.description,
+coalesce(cdayde.description, cdayde.name) as callday,
+ci.bay_calltime as calltime,
+coalesce(ddayde.description, ddayde.name) as deliveryday,
+loc.address1,
+loc.postal,
+loc.city
+from c_bpartner bp
+join ad_user u using (c_bpartner_id)
+join r_contactinterest ci using (ad_user_id)
+join r_interestarea iarea using (r_interestarea_id)
+--
+join ad_reference re on (re.name='Weekdays')
+left join ad_ref_list cday on(cday.value=ci.bay_callday and re.ad_reference_id=cday.ad_reference_id)
+left join ad_ref_list_trl cdayde on(cdayde.ad_ref_list_id = cday.ad_ref_list_id and cdayde.ad_language='de_DE')
+--
+left join ad_ref_list dday on(dday.value=bp.bay_deliveryday and re.ad_reference_id=dday.ad_reference_id)
+left join ad_ref_list_trl ddayde on(ddayde.ad_ref_list_id = dday.ad_ref_list_id and ddayde.ad_language='de_DE')
+--
+left join c_bpartner_location bpl on (bpl.c_bpartner_location_id = 
+		(select c_bpartner_location_id from c_bpartner_location where c_bpartner_id=bp.c_bpartner_id and isshipto='Y' and isactive='Y' limit 1))
+left join c_location loc on (loc.c_location_id = bpl.c_location_id)
+where bp.ad_client_id=1000000
+and iarea.value='call'
+and (bp.c_bpartner_id =  $P{C_BPartner_ID} or $P{C_BPartner_ID} is null or $P{C_BPartner_ID} = 0)
+order by coalesce(ci.bay_callday,'0'), coalesce(ci.bay_calltime,to_timestamp(0)), bp.value]]>
+	</queryString>
+	<field name="c_bpartner_id" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.label" value="c_bpartner_id"/>
+	</field>
+	<field name="bp_value" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="bp_value"/>
+	</field>
+	<field name="bp_name" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="bp_name"/>
+	</field>
+	<field name="bp_name2" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="bp_name2"/>
+	</field>
+	<field name="name" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="name"/>
+	</field>
+	<field name="phone" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="phone"/>
+	</field>
+	<field name="phone2" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="phone2"/>
+	</field>
+	<field name="so_description" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="so_description"/>
+	</field>
+	<field name="description" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="description"/>
+	</field>
+	<field name="callday" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="callday"/>
+	</field>
+	<field name="calltime" class="java.sql.Timestamp">
+		<property name="com.jaspersoft.studio.field.label" value="calltime"/>
+	</field>
+	<field name="deliveryday" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="deliveryday"/>
+	</field>
+	<field name="address1" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="address1"/>
+	</field>
+	<field name="postal" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="postal"/>
+	</field>
+	<field name="city" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="city"/>
+	</field>
+	<group name="Geschäftspartner" isStartNewPage="true">
+		<groupExpression><![CDATA[$F{bp_value}]]></groupExpression>
+		<groupHeader>
+			<band>
+				<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			</band>
+		</groupHeader>
+		<groupFooter>
+			<band height="720">
+				<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				<printWhenExpression><![CDATA[$V{PAGE_NUMBER} % 2 == 1 && ($P{C_BPartner_ID} == null || $P{C_BPartner_ID} == 0)]]></printWhenExpression>
+			</band>
+		</groupFooter>
+	</group>
+	<pageHeader>
+		<band height="31" splitType="Stretch">
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<printWhenExpression><![CDATA[$V{PAGE_NUMBER} % 2 == 1]]></printWhenExpression>
+			<staticText>
+				<reportElement style="Page Header" x="0" y="0" width="550" height="24" uuid="a95ad456-6b3a-42cc-94e8-c367cd8d54c3"/>
+				<box>
+					<bottomPen lineWidth="1.0"/>
+				</box>
+				<textElement textAlignment="Center"/>
+				<text><![CDATA[Anrufkarte]]></text>
+			</staticText>
+			<image>
+				<reportElement x="510" y="0" width="40" height="25" uuid="10f66a22-37ca-49d3-b1de-2a12e61a1306">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<imageExpression><![CDATA["AD_Image_1000004.png"]]></imageExpression>
+			</image>
+			<textField>
+				<reportElement style="Report Standard Font" mode="Transparent" x="0" y="0" width="80" height="24" backcolor="#CCCCCC" uuid="971072f1-6e85-4deb-a27d-b22e62623add">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font size="14"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{bp_value}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageHeader>
+	<detail>
+		<band height="131" splitType="Stretch">
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<textField isBlankWhenNull="false">
+				<reportElement style="Report Standard Font" mode="Opaque" x="0" y="0" width="184" height="18" backcolor="#E6E6E6" uuid="b68c17cf-21df-4eeb-b8fb-50f5a703dc65">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{bp_name}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement style="Report Standard Font" mode="Opaque" x="0" y="23" width="184" height="18" backcolor="#E6E6E6" uuid="b2766364-8f6b-4c56-b6d2-fbe960082b72">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{bp_name2}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement style="Report Standard Font" mode="Opaque" x="0" y="46" width="184" height="18" backcolor="#E6E6E6" uuid="6d860fa4-5aa8-4da1-8e36-230ca55185a6">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{address1} + ($F{postal}==null?"":"," +$F{postal})+($F{city}==null?"":" "+$F{city})]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement style="Report Standard Font" mode="Opaque" x="200" y="0" width="150" height="18" backcolor="#E6E6E6" uuid="dbf03152-8db2-4f9c-8e3c-eec041d853bc">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{name}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement style="Report Standard Font" mode="Opaque" x="200" y="23" width="150" height="18" backcolor="#E6E6E6" uuid="89db572f-2fae-4ca4-94a7-3b7b109c8722">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{phone}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement style="Report Standard Font" mode="Opaque" x="200" y="46" width="150" height="18" backcolor="#E6E6E6" uuid="19f8f11d-44ff-48c7-8063-2d84e4686089">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{phone2}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="Report Standard Font" mode="Opaque" x="80" y="69" width="470" height="18" isRemoveLineWhenBlank="true" backcolor="#E6E6E6" uuid="285318f8-293f-40e9-aafd-3fe679fa2dd7">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{so_description}]]></textFieldExpression>
+			</textField>
+			<textField pattern="HH:mm" isBlankWhenNull="true">
+				<reportElement style="Report Standard Font" mode="Opaque" x="500" y="0" width="50" height="18" backcolor="#E6E6E6" uuid="10f334e4-afeb-4ce7-979b-6ebc04c62174">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{calltime}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement style="Report Standard Font" mode="Opaque" x="460" y="0" width="30" height="18" backcolor="#E6E6E6" uuid="db89ac1e-43e7-4106-a51e-98a73886cc01">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{callday}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement style="Report Standard Font" mode="Opaque" x="460" y="23" width="30" height="18" backcolor="#E6E6E6" uuid="f8505621-842f-4b9a-9766-24a3d5d6a923">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{deliveryday}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement style="Report Standard Font" x="400" y="0" width="50" height="18" uuid="07d9cfba-12f8-4f7c-9db1-61242c491872">
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<text><![CDATA[Anruftag:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Report Standard Font" x="400" y="23" width="50" height="18" uuid="4bd41cbe-5949-4380-98ec-259212e998d2">
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<text><![CDATA[Liefertag:]]></text>
+			</staticText>
+			<subreport>
+				<reportElement positionType="Float" x="0" y="120" width="549" height="9" uuid="f131e438-99d3-4071-9964-1a478d30f31c"/>
+				<subreportParameter name="C_BPartner_ID">
+					<subreportParameterExpression><![CDATA[$F{c_bpartner_id}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="KW">
+					<subreportParameterExpression><![CDATA[($P{week}==null ? 
+Calendar.getInstance().get(Calendar.WEEK_OF_YEAR)
+ : $P{week}.intValue())]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression><![CDATA["Anrufliste_Artikelliste.jasper"]]></subreportExpression>
+			</subreport>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="Report Standard Font" mode="Opaque" x="80" y="92" width="470" height="18" isRemoveLineWhenBlank="true" backcolor="#E6E6E6" uuid="e277e08f-9d1a-42e2-a24c-a03db7694eff">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{description}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement style="Report Standard Font" x="0" y="70" width="80" height="18" isRemoveLineWhenBlank="true" uuid="983904a0-f9e7-4a0b-a35d-1367871eb3c7">
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<printWhenExpression><![CDATA[$F{so_description}!=null]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Left" verticalAlignment="Middle"/>
+				<text><![CDATA[Lieferscheintext:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Report Standard Font" x="0" y="92" width="80" height="18" isRemoveLineWhenBlank="true" uuid="509d7e5b-92f2-451d-a1b8-eb3d6e66559e">
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<printWhenExpression><![CDATA[$F{description}!=null]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Left" verticalAlignment="Middle"/>
+				<text><![CDATA[Anruftext:]]></text>
+			</staticText>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="30" splitType="Stretch">
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+		</band>
+	</pageFooter>
+</jasperReport>
