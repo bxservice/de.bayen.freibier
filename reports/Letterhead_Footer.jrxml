@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.4.0.final using JasperReports Library version 6.4.1  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Footer" pageWidth="511" pageHeight="842" columnWidth="511" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" uuid="e6609d9d-ff80-4849-87e3-17c73f20f011">
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.topMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.bottomMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.leftMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
+	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="Controlling"/>
+	<style name="Report Monospace Font" fontName="DejaVu Sans Mono"/>
+	<style name="Report Standard Font" fontName="DejaVu Sans"/>
+	<parameter name="AD_ORG_ID" class="java.lang.Integer" isForPrompting="false">
+		<defaultValueExpression><![CDATA[1000000]]></defaultValueExpression>
+	</parameter>
+	<queryString language="SQL">
+		<![CDATA[SELECT ad_org.name,
+	ad_org.description,
+	c_location.city,
+	c_location.postal,
+	c_location.address1,
+	c_location.address2,
+	c_location.address3,
+	c_location.address4,
+	ad_orginfo.phone,
+	ad_orginfo.fax,
+	ad_orginfo.email,
+	ad_orginfo.taxid,
+	ad_orginfo.receiptfootermsg,
+	c_Bank.name AS bank_Name,
+	C_BankAccount.IBAN AS iban
+FROM ad_org
+	 INNER JOIN ad_orginfo ON 
+	 ad_orginfo.ad_org_id = ad_org.ad_org_id
+	 INNER JOIN c_location ON 
+	 ad_orginfo.c_location_id = c_location.c_location_id 
+	LEFT JOIN C_Bank ON ad_orginfo.transferbank_id = c_bank.c_bank_id
+	LEFT JOIN C_BankAccount ON ad_orginfo.transferbank_id = c_BankAccount.c_bank_id
+WHERE ad_org.ad_org_id = CAST( $P{AD_ORG_ID} AS INTEGER)]]>
+	</queryString>
+	<field name="name" class="java.lang.String"/>
+	<field name="description" class="java.lang.String"/>
+	<field name="city" class="java.lang.String"/>
+	<field name="postal" class="java.lang.String"/>
+	<field name="address1" class="java.lang.String"/>
+	<field name="address2" class="java.lang.String"/>
+	<field name="address3" class="java.lang.String"/>
+	<field name="address4" class="java.lang.String"/>
+	<field name="phone" class="java.lang.String"/>
+	<field name="fax" class="java.lang.String"/>
+	<field name="email" class="java.lang.String"/>
+	<field name="taxid" class="java.lang.String"/>
+	<field name="receiptfootermsg" class="java.lang.String"/>
+	<field name="bank_name" class="java.lang.String"/>
+	<field name="iban" class="java.lang.String"/>
+	<detail>
+		<band height="27" splitType="Stretch">
+			<textField isStretchWithOverflow="true">
+				<reportElement style="Report Standard Font" stretchType="RelativeToTallestObject" x="0" y="0" width="156" height="24" uuid="3e42d439-f8cd-48e4-b904-a1597c916c02"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{name}+"\n"+($F{receiptfootermsg}!=null?$F{receiptfootermsg}.replaceAll("\\\\(n|r)","\n"):"")]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement style="Report Standard Font" stretchType="RelativeToTallestObject" x="168" y="0" width="168" height="24" uuid="1efca5e2-3edc-4dd5-947c-afbcb826b33e"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[($F{phone}!=null?"Telefon: "+$F{phone}+"\n":"")+($F{fax}!=null?"Fax: "+$F{fax}+"\n":"")+($F{email}!=null?"EMail: "+$F{email}:"")]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement style="Report Standard Font" stretchType="RelativeToTallestObject" x="348" y="0" width="156" height="24" uuid="ef574fcb-1723-4296-bfb9-3e111073de04"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA["USt-ID-Nr. "+$F{taxid}+"\n"+"IBAN: "+$F{iban}+"\n"+"bei der "+$F{bank_name}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

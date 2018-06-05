@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.5.0.final using JasperReports Library version 6.5.0  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Invoice Address" pageWidth="240" pageHeight="127" columnWidth="240" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" uuid="30ceeae4-aeff-40ff-b8e1-5e8d8d1d0e83">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="druiz2 beveragedemo"/>
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageWidth" value="mm"/>
+	<property name="com.jaspersoft.studio.unit.pageHeight" value="mm"/>
+	<property name="com.jaspersoft.studio.unit.topMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.bottomMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.leftMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
+	<property name="ireport.zoom" value="1.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<template><![CDATA["BayenStyles.jrtx"]]></template>
+	<parameter name="RECORD_ID" class="java.lang.Integer" isForPrompting="false">
+		<defaultValueExpression><![CDATA[1000000]]></defaultValueExpression>
+	</parameter>
+	<parameter name="AD_TABLE_ID" class="java.lang.Integer">
+		<parameterDescription><![CDATA[Tabelle, aus der wir aufgerufen wurden (259 Order, 318 Invoice)]]></parameterDescription>
+		<defaultValueExpression><![CDATA[259]]></defaultValueExpression>
+	</parameter>
+	<queryString language="SQL">
+		<![CDATA[WITH h AS(
+SELECT
+	ih.documentno,
+	ih.bpgreeting,
+	ih.name,
+	ih.name2,
+	ih.bpcontactgreeting,
+	ih.contactname,
+	ih.address1,
+	ih.address2,
+	ih.address3,
+	ih.address4,
+	ih.city,
+	ih.regionname,
+	ih.C_Location_ID,
+	ih.AD_Org_ID,
+	ih.Org_Location_ID,
+	ih.C_Invoice_ID AS Record_ID,
+	'C_Invoice' AS doctypename
+FROM c_invoice_header_v ih
+UNION
+SELECT
+	oh.documentno,
+	oh.bpgreeting,
+	oh.name,
+	oh.name2,
+	oh.bpcontactgreeting,
+	oh.contactname,
+	oh.address1,
+	oh.address2,
+	oh.address3,
+	oh.address4,
+	oh.city,
+	oh.regionname,
+	oh.C_Location_ID,
+	oh.AD_Org_ID,
+	oh.Org_Location_ID,
+	oh.C_Order_ID AS Record_ID,
+	'C_Order' AS doctypename
+FROM c_order_header_v oh
+)
+SELECT
+	h.*,
+	COALESCE(c_location.postal || c_location.postal_add, c_location.postal, c_location.postal_add) AS postal,
+	C_Country.name AS countryname,
+	AD_Org.name AS org_name,
+	OrgLocation.address1 AS org_address1,
+	OrgLocation.address2 AS org_address2,
+	OrgLocation.address3 AS org_address3,
+	OrgLocation.address4 AS org_address4,
+	COALESCE(OrgLocation.postal || OrgLocation.postal_add, OrgLocation.postal, OrgLocation.postal_add) AS org_postal,
+	OrgLocation.city AS org_city,
+	OrgCountry.name AS org_countryname,
+	OrgCountry.countrycode AS org_countrycode
+FROM h
+JOIN AD_Table ON(AD_Table.tablename = h.doctypename)
+JOIN C_Location USING (C_Location_ID)
+JOIN C_Country ON(C_Country.C_Country_ID = C_Location.C_Country_ID)
+JOIN AD_Org ON(AD_Org.AD_Org_ID = h.AD_Org_ID)
+JOIN C_Location OrgLocation ON (OrgLocation.C_Location_ID = h.org_Location_ID)
+JOIN C_Country OrgCountry ON (OrgCountry.C_Country_ID = OrgLocation.C_Country_ID)
+WHERE
+	h.Record_ID =  CAST($P{RECORD_ID} AS NUMERIC)
+	AND AD_Table.AD_Table_ID = cast( $P{AD_TABLE_ID} AS NUMERIC)]]>
+	</queryString>
+	<field name="documentno" class="java.lang.String"/>
+	<field name="bpgreeting" class="java.lang.String"/>
+	<field name="name" class="java.lang.String"/>
+	<field name="name2" class="java.lang.String"/>
+	<field name="bpcontactgreeting" class="java.lang.String"/>
+	<field name="contactname" class="java.lang.String"/>
+	<field name="address1" class="java.lang.String"/>
+	<field name="address2" class="java.lang.String"/>
+	<field name="address3" class="java.lang.String"/>
+	<field name="address4" class="java.lang.String"/>
+	<field name="city" class="java.lang.String"/>
+	<field name="regionname" class="java.lang.String"/>
+	<field name="c_location_id" class="java.math.BigDecimal"/>
+	<field name="ad_org_id" class="java.math.BigDecimal"/>
+	<field name="org_location_id" class="java.math.BigDecimal"/>
+	<field name="record_id" class="java.math.BigDecimal"/>
+	<field name="postal" class="java.lang.String"/>
+	<field name="countryname" class="java.lang.String"/>
+	<field name="org_name" class="java.lang.String"/>
+	<field name="org_address1" class="java.lang.String"/>
+	<field name="org_address2" class="java.lang.String"/>
+	<field name="org_address3" class="java.lang.String"/>
+	<field name="org_address4" class="java.lang.String"/>
+	<field name="org_postal" class="java.lang.String"/>
+	<field name="org_city" class="java.lang.String"/>
+	<field name="org_countryname" class="java.lang.String"/>
+	<field name="org_countrycode" class="java.lang.String"/>
+	<detail>
+		<band height="115" splitType="Stretch">
+			<property name="local_mesure_unitheight" value="pixel"/>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<textField isBlankWhenNull="true">
+				<reportElement positionType="Float" x="0" y="60" width="240" height="12" isRemoveLineWhenBlank="true" uuid="4cf0a830-b736-421b-8bbb-624430c30e2a"/>
+				<textFieldExpression><![CDATA[$F{address2}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement positionType="Float" x="0" y="12" width="240" height="12" isRemoveLineWhenBlank="true" uuid="27f477bb-9bd3-4156-a6b3-2173fcf57ff9">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{bpgreeting}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement positionType="Float" x="0" y="36" width="240" height="12" isRemoveLineWhenBlank="true" uuid="d2b48443-700b-41c1-9293-0fc2924c762a"/>
+				<textFieldExpression><![CDATA[$F{name2}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" x="0" y="24" width="240" height="12" uuid="f9d68ca0-be21-4a8b-b08a-8536ba4dc59b">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{name}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement positionType="Float" x="0" y="48" width="240" height="12" isRemoveLineWhenBlank="true" uuid="9500c70a-0784-4796-a64b-744c7de7fd8a">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{address1}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" x="0" y="84" width="240" height="12" uuid="57cc5c61-641a-4870-8a9a-3e0e90af9cde"/>
+				<textElement>
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[($F{postal}!=null?$F{postal} + " ":"") + $F{city}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement x="0" y="0" width="240" height="12" uuid="35da03bd-377f-4297-aa33-28341f196bf1"/>
+				<textElement>
+					<font size="7" isUnderline="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{org_name}+", " + ($F{org_address1}!=null?$F{org_address1}+", ":"") + ($F{org_address2}!=null?$F{org_address2}+", ":"") + ($F{org_address3}!=null?$F{org_address3}+", ":"") + ($F{org_address4}!=null?$F{org_address4}+", ":"") + (!$F{countryname}.equals($F{org_countryname})?$F{org_countrycode}+"-":"") + ($F{org_postal}!=null?$F{org_postal}+" ":"") + ($F{org_city}!=null?$F{org_city}:"")]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement positionType="Float" x="0" y="96" width="240" height="19" isRemoveLineWhenBlank="true" uuid="fa1dc96d-b443-469d-9aa5-73b63b193c97">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<box topPadding="0"/>
+				<textElement verticalAlignment="Bottom">
+					<font isBold="true" isUnderline="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[(!$F{countryname}.equals($F{org_countryname})?$F{countryname}:null)]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

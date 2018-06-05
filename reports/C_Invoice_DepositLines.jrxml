@@ -1,0 +1,405 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.5.0.final using JasperReports Library version 6.5.0  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Document Lines" pageWidth="511" pageHeight="842" columnWidth="511" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" resourceBundle="C_Invoice_Localization" uuid="0ea03c33-cee9-4aa5-b7a2-e829a06f336b">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="Controlling"/>
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.topMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.bottomMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.leftMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
+	<property name="ireport.zoom" value="1.4641000000000006"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+	<template><![CDATA["BayenStyles.jrtx"]]></template>
+	<parameter name="RECORD_ID" class="java.lang.Integer">
+		<defaultValueExpression><![CDATA[1040375]]></defaultValueExpression>
+	</parameter>
+	<parameter name="CURRENT_LANG" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["de_DE"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="AD_TABLE_ID" class="java.lang.Integer">
+		<parameterDescription><![CDATA[Tabelle, aus der wir aufgerufen wurden (259 Order, 318 Invoice)]]></parameterDescription>
+		<defaultValueExpression><![CDATA[318]]></defaultValueExpression>
+	</parameter>
+	<parameter name="ISO_CODE" class="java.lang.String" isForPrompting="false"/>
+	<parameter name="BP_LANG" class="java.lang.String"/>
+	<queryString>
+		<![CDATA[WITH l AS(
+SELECT
+	ilt.line,
+	ilt.linenetamt,
+	ilt.qtyinvoiced,
+	ilt.qtyentered,
+	ilt.uomsymbol,
+	ilt.c_uom_name,
+	ilt.name,
+	ilt.description,
+	ilt.documentnote,
+	ilt.productvalue,
+	ilt.priceentered,
+	ilt.priceactual,
+	ilt.productdescription,
+	ilt.m_pricelist_id,
+	ilt.m_product_id,
+	ilt.c_invoice_c_bpartner_id AS c_bpartner_id,
+	ilt.c_invoice_id AS record_id,
+	'C_Invoice' AS doctablename
+FROM c_invoice_linetax_v ilt
+UNION
+SELECT
+	olt.line,
+	olt.linenetamt,
+	olt.qtyinvoiced,
+	olt.qtyentered,
+	olt.uomsymbol,
+	olt.c_uom_name,
+	olt.name,
+	olt.description,
+	olt.documentnote,
+	olt.productvalue,
+	olt.priceentered,
+	olt.priceactual,
+	olt.productdescription,
+	olt.c_order_m_pricelist_id AS m_pricelist_id,
+	olt.m_product_id,
+	olt.c_bpartner_id,
+	olt.c_order_id AS record_id,
+	'C_Order' AS doctablename
+FROM c_order_linetax_v olt
+),
+deposit_balance as(
+SELECT
+  m_product_id,
+  c_order.c_bpartner_id,
+  sum (c_orderline.qtydelivered) AS saldo
+FROM c_orderline
+JOIN c_order using (c_order_id)
+JOIN m_product using(m_product_id)
+JOIN m_product_category using (m_product_category_id)
+WHERE m_product_category.value='99'        /*99 is deposit products only*/
+      AND C_Order.IsSoTrx = 'Y'	  /*Only Sales Order*/
+      AND C_Order.DocStatus IN ('CL','CO') /*Only complete orders*/
+      -- Only previous orders
+      AND C_Order.C_Order_ID < CASE $P{AD_TABLE_ID}
+                                WHEN 318 /*C_Invoice*/ THEN ( SELECT C_Order_ID FROM C_Invoice WHERE C_Invoice_ID = $P{RECORD_ID} )
+                                WHEN 259 /*C_Order*/ THEN $P{RECORD_ID}
+                                END
+  /* TODO: nur abgeschlossene Belege zählen */
+GROUP BY m_product_id, c_order.c_bpartner_id
+),
+
+deposit_lines AS(
+SELECT M_Product_ID,
+	priceentered,
+	l.doctablename,
+	qtyentered,
+	linenetamt
+FROM M_Product
+JOIN M_Product_Category ON (M_Product_Category.M_Product_Category_ID = M_Product.M_Product_Category_ID)
+JOIN l USING(M_Product_ID)
+JOIN AD_Table ON(AD_Table.tablename = l.doctablename)
+WHERE
+	l.record_id = cast( $P{RECORD_ID} AS NUMERIC)
+	AND l.line < 999000                    /*Excludes the tax lines from the view*/
+	AND M_Product_Category.Value='99'      /*99 is deposit products only*/
+	AND AD_Table.AD_Table_ID = cast( $P{AD_TABLE_ID} AS NUMERIC)
+), all_lines AS(
+SELECT M_Product_ID
+FROM (
+	SELECT M_Product_ID FROM deposit_lines
+	UNION
+	SELECT M_Product_ID FROM deposit_balance
+     ) az
+GROUP BY M_Product_ID
+),
+
+mybp AS(
+--Get the first not null bpartner associated to the invoice/order
+SELECT C_BPartner_ID
+ FROM l
+ JOIN AD_Table ON (AD_Table.tablename = l.doctablename)
+ WHERE l.record_id = cast( $P{RECORD_ID} AS NUMERIC)
+    AND C_BPartner_ID IS NOT NULL
+    AND AD_Table.AD_Table_ID = cast( $P{AD_TABLE_ID} AS NUMERIC)
+LIMIT 1
+)
+
+SELECT
+	M_Product_ID,
+	M_Product.Value AS productvalue,
+	M_Product.Name AS name,
+	coalesce(lz.priceentered, (
+	  SELECT pricelist
+	  FROM mybp
+	  JOIN C_BPartner USING(C_BPartner_ID)
+	  JOIN M_PriceList_Version USING(M_PriceList_ID)
+	  JOIN M_ProductPrice USING(M_PriceList_Version_ID)
+	  WHERE M_ProductPrice.M_Product_ID=M_Product_ID
+	  ORDER BY ValidFrom
+	  LIMIT 1
+	)) AS priceentered,
+	lz.doctablename,
+	sum(CASE WHEN qtyentered > 0 THEN qtyentered ELSE 0 END) AS qtyplus,
+	sum(CASE WHEN qtyentered < 0 THEN qtyentered ELSE 0 END) AS qtyminus,
+	sum(linenetamt) AS linenetamt,
+	ls.saldo AS saldo
+FROM all_lines
+JOIN M_Product USING(M_Product_ID)
+LEFT JOIN deposit_lines lz USING(M_Product_ID)
+FULL JOIN (SELECT deposit_balance.* FROM deposit_balance JOIN mybp USING(C_BPartner_ID)) ls USING(M_Product_ID)
+GROUP BY
+	M_Product_ID,
+	lz.priceentered,
+	lz.doctablename,
+	M_Product.Value,
+	M_Product.Name,
+	ls.saldo
+ORDER BY
+	M_Product.Value]]>
+	</queryString>
+	<field name="m_product_id" class="java.math.BigDecimal"/>
+	<field name="productvalue" class="java.lang.String"/>
+	<field name="name" class="java.lang.String"/>
+	<field name="priceentered" class="java.math.BigDecimal"/>
+	<field name="doctablename" class="java.lang.String"/>
+	<field name="qtyplus" class="java.math.BigDecimal"/>
+	<field name="qtyminus" class="java.math.BigDecimal"/>
+	<field name="linenetamt" class="java.math.BigDecimal"/>
+	<field name="saldo" class="java.math.BigDecimal"/>
+	<columnHeader>
+		<band height="17" splitType="Stretch">
+			<property name="local_mesure_unitheight" value="pixel"/>
+			<textField>
+				<reportElement style="Report Standard Font" x="234" y="2" width="46" height="12" forecolor="#404040" uuid="f89170c7-a66f-43d4-9a29-602e8c419736"/>
+				<textElement textAlignment="Right" markup="none">
+					<font isItalic="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$R{depositlines.delivered}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Report Standard Font" x="5" y="2" width="36" height="12" forecolor="#404040" uuid="1ed52aa2-b7b8-46ea-b363-fc40e5ed9ecb"/>
+				<textElement textAlignment="Left" markup="none">
+					<font isItalic="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$R{documentlines.code}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Report Standard Font" x="41" y="2" width="228" height="12" forecolor="#404040" uuid="d704311a-7277-4358-9fe2-72b711f0c55f"/>
+				<textElement markup="none">
+					<font isItalic="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$R{documentlines.description}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Report Standard Font" x="382" y="2" width="48" height="12" forecolor="#404040" uuid="10327a90-4985-48d0-bf0e-e359a2ed3ea1"/>
+				<textElement textAlignment="Right" markup="none">
+					<font isItalic="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$R{documentlines.price}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Report Standard Font" stretchType="RelativeToBandHeight" x="432" y="2" width="72" height="12" forecolor="#404040" uuid="15f076b5-eac7-408d-ac1c-1609f966f6ab"/>
+				<textElement textAlignment="Right" markup="none">
+					<font isItalic="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$R{documentlines.total}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement style="Report Standard Font" x="0" y="0" width="511" height="1" forecolor="#404040" uuid="7f4746d6-d2ab-404d-8ba0-dab6ecc017c6">
+					<property name="local_mesure_unitx" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="local_mesure_unity" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+				</reportElement>
+			</line>
+			<line>
+				<reportElement x="0" y="15" width="511" height="1" forecolor="#404040" uuid="dc5992d7-efe9-47c6-bef9-eabc64c2d5aa">
+					<property name="local_mesure_unity" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+				</reportElement>
+			</line>
+			<textField>
+				<reportElement style="Report Standard Font" x="283" y="2" width="46" height="12" forecolor="#404040" uuid="071336ee-f37d-4355-ac0d-c8b0cbf3c8e7"/>
+				<textElement textAlignment="Right" markup="none">
+					<font isItalic="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$R{depositlines.back}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Report Standard Font" x="333" y="2" width="46" height="12" forecolor="#404040" uuid="c485442e-27a2-45c6-93c1-1f65af6e0255"/>
+				<textElement textAlignment="Right" markup="none">
+					<font isItalic="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$R{depositlines.difference}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="0" y="0" width="1" height="17" forecolor="#404040" uuid="cba548f9-d598-43a0-b3bc-9897ded26f07">
+					<property name="local_mesure_unitx" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="local_mesure_unity" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+			</line>
+			<line>
+				<reportElement x="511" y="0" width="1" height="17" forecolor="#404040" uuid="53ea12d7-a379-4407-8949-b3effe890076">
+					<property name="local_mesure_unitx" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="local_mesure_unity" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+			</line>
+			<textField>
+				<reportElement style="Report Standard Font" x="188" y="2" width="46" height="12" forecolor="#404040" uuid="3f51bad8-b886-4301-8871-fe17ffbea2dc"/>
+				<textElement textAlignment="Right" markup="none">
+					<font isItalic="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$R{depositlines.saldo}]]></textFieldExpression>
+			</textField>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="13" splitType="Stretch">
+			<property name="local_mesure_unitheight" value="pixel"/>
+			<printWhenExpression><![CDATA[($F{qtyplus} != null && $F{qtyplus}.compareTo(BigDecimal.ZERO) != 0) ||
+($F{qtyminus} != null && $F{qtyminus}.compareTo(BigDecimal.ZERO) != 0) ||
+($F{saldo} != null && $F{saldo}.compareTo(BigDecimal.ZERO) != 0)]]></printWhenExpression>
+			<textField isStretchWithOverflow="true">
+				<reportElement style="Report Monospace Font" x="41" y="1" width="198" height="12" forecolor="#404040" uuid="e68539fe-fa17-4e7d-be1b-ef0ee048e507"/>
+				<textFieldExpression><![CDATA[$F{name}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0;-#,##0">
+				<reportElement style="Report Monospace Font" x="234" y="1" width="46" height="12" forecolor="#404040" uuid="749469f7-379e-4a2d-8fb1-2ed644127053">
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression><![CDATA[$F{qtyplus}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Report Monospace Font" x="5" y="1" width="36" height="12" forecolor="#404040" uuid="d31fabde-d6e2-4e00-aabb-9e4e7eb1235f"/>
+				<textElement textAlignment="Left"/>
+				<textFieldExpression><![CDATA[$F{productvalue}]]></textFieldExpression>
+			</textField>
+			<textField pattern="">
+				<reportElement style="Report Monospace Font" x="382" y="1" width="48" height="12" forecolor="#404040" uuid="a1f666cd-d621-4225-9502-6ac0656f8f9f"/>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression><![CDATA[$F{priceentered} != null ? NumberFormat.getCurrencyInstance($P{REPORT_LOCALE}).format($F{priceentered}) : ""]]></textFieldExpression>
+			</textField>
+			<textField pattern="">
+				<reportElement style="Report Monospace Font" x="432" y="1" width="72" height="12" forecolor="#404040" uuid="f45c7fcb-f922-4fc3-808b-c18f25ab9fa0">
+					<printWhenExpression><![CDATA["C_Invoice".equals($F{doctablename})]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression><![CDATA[$F{linenetamt} != null ? NumberFormat.getCurrencyInstance($P{REPORT_LOCALE}).format($F{linenetamt}) : "0"]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0;-#,##0">
+				<reportElement style="Report Monospace Font" x="332" y="1" width="46" height="12" forecolor="#404040" uuid="db73d945-4795-4b28-b510-08392eab10cb">
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					<printWhenExpression><![CDATA["C_Invoice".equals($F{doctablename})]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression><![CDATA[$F{qtyplus}.add($F{qtyminus})]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0;-#,##0">
+				<reportElement style="Report Monospace Font" x="283" y="1" width="46" height="12" forecolor="#404040" uuid="d0f8def7-46a0-42b0-b951-bf0cb5d39bc6">
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					<printWhenExpression><![CDATA["C_Invoice".equals($F{doctablename})]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression><![CDATA[$F{qtyminus}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement style="Report Monospace Font" x="0" y="0" width="1" height="13" forecolor="#404040" uuid="c9f1b81a-78d5-4c0b-b261-6415348367a4">
+					<property name="local_mesure_unitx" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="local_mesure_unity" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+			</line>
+			<line>
+				<reportElement style="Report Monospace Font" x="511" y="0" width="1" height="13" forecolor="#404040" uuid="9bf321e6-d905-4a57-9c32-ef13fa1367eb">
+					<property name="local_mesure_unitx" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="local_mesure_unity" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+			</line>
+			<line>
+				<reportElement x="0" y="0" width="511" height="1" forecolor="#808080" uuid="a67f6aa2-a98e-4780-b831-043dfac79606">
+					<property name="local_mesure_unitx" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="local_mesure_unity" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<printWhenExpression><![CDATA[!"C_Invoice".equals($F{doctablename})]]></printWhenExpression>
+				</reportElement>
+			</line>
+			<textField pattern="#,##0;-#,##0">
+				<reportElement style="Report Monospace Font" x="188" y="1" width="46" height="12" forecolor="#404040" uuid="a8e8bb32-cf1e-4558-b46e-e4e1562915c6">
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression><![CDATA[$F{saldo} != null ? $F{saldo} : "0"]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<columnFooter>
+		<band height="5" splitType="Stretch">
+			<property name="local_mesure_unitheight" value="pixel"/>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<line>
+				<reportElement style="Report Monospace Font" x="0" y="1" width="511" height="1" forecolor="#404040" uuid="3e603075-2028-4342-8597-f065dc0f0f6e">
+					<property name="local_mesure_unity" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+				</reportElement>
+			</line>
+			<line>
+				<reportElement style="Report Monospace Font" x="0" y="0" width="1" height="2" forecolor="#404040" uuid="e5f65491-3700-4a00-9153-e9566afca098">
+					<property name="local_mesure_unitx" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="local_mesure_unity" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+			</line>
+			<line>
+				<reportElement style="Report Monospace Font" x="511" y="0" width="1" height="2" forecolor="#404040" uuid="33ae6a0d-d768-43a0-b30a-a1377de3886f">
+					<property name="local_mesure_unitx" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="local_mesure_unity" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+			</line>
+		</band>
+	</columnFooter>
+</jasperReport>

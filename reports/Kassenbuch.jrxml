@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.4.0.final using JasperReports Library version 6.4.1  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Kassenbuch" pageWidth="595" pageHeight="842" columnWidth="515" leftMargin="55" rightMargin="25" topMargin="25" bottomMargin="25" uuid="ed204525-ae83-47a7-b210-a871de5ab6b5">
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="Controlling"/>
+	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+	<property name="net.sf.jasperreports.export.xls.exclude.origin.band.1" value="pageHeader"/>
+	<property name="net.sf.jasperreports.export.xls.exclude.origin.band.2" value="pageFooter"/>
+	<template><![CDATA["BayenStyles.jrtx"]]></template>
+	<parameter name="LoggedInUserFullName" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["Benutzer nicht zugänglich"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="AD_USER_ID" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[null]]></defaultValueExpression>
+	</parameter>
+	<parameter name="CumulativeLevel" class="java.lang.String">
+		<defaultValueExpression><![CDATA["N"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="RECORD_ID" class="java.lang.Integer" isForPrompting="false">
+		<defaultValueExpression><![CDATA[null]]></defaultValueExpression>
+	</parameter>
+	<parameter name="Date" class="java.util.Date" isForPrompting="false">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+		<defaultValueExpression><![CDATA[new Date()]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[select
+  *,
+  coalesce(
+  	(select name from ad_user where ad_user_id= $P{AD_USER_ID}::numeric ),
+  	 $P{LoggedInUserFullName} 
+  ) as fullusername,
+  case when $P{CumulativeLevel} = 'Y' then 'Kassenbuch nach Kategorie'
+    when $P{CumulativeLevel} = 'N' then 'Kassenbuchblatt'
+    end as reportname,
+   $P{Date}::date as date
+from controlling.bay_company_v]]>
+	</queryString>
+	<field name="ad_client_id" class="java.math.BigDecimal"/>
+	<field name="client_name" class="java.lang.String"/>
+	<field name="ad_org_id" class="java.math.BigDecimal"/>
+	<field name="org_name" class="java.lang.String"/>
+	<field name="address1" class="java.lang.String"/>
+	<field name="address2" class="java.lang.String"/>
+	<field name="postal" class="java.lang.String"/>
+	<field name="city" class="java.lang.String"/>
+	<field name="country" class="java.lang.String"/>
+	<field name="taxid" class="java.lang.String"/>
+	<field name="receiptfootermsg" class="java.lang.String"/>
+	<field name="bank_name" class="java.lang.String"/>
+	<field name="bic" class="java.lang.String"/>
+	<field name="iban" class="java.lang.String"/>
+	<field name="logo" class="java.lang.Object"/>
+	<field name="fullusername" class="java.lang.String"/>
+	<field name="reportname" class="java.lang.String"/>
+	<field name="date" class="java.sql.Date"/>
+	<pageHeader>
+		<band height="30" splitType="Stretch">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<subreport>
+				<reportElement x="0" y="0" width="515" height="30" uuid="e5a9d2b1-f7a4-40e5-85cc-1c288f9c66ec"/>
+				<subreportParameter name="REPORT_NAME">
+					<subreportParameterExpression><![CDATA[$F{reportname}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression><![CDATA["Header.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</pageHeader>
+	<detail>
+		<band height="10" splitType="Stretch">
+			<subreport>
+				<reportElement x="0" y="0" width="515" height="10" uuid="ad369adc-7701-4301-bc3c-a6e72725f1af">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<subreportParameter name="REPORT_LOCALE">
+					<subreportParameterExpression><![CDATA[java.util.Locale.GERMANY]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="LoggedInUsername">
+					<subreportParameterExpression><![CDATA[$P{LoggedInUserFullName}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="RECORD_ID">
+					<subreportParameterExpression><![CDATA[$P{RECORD_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="Date">
+					<subreportParameterExpression><![CDATA[$F{date}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression><![CDATA[$F{reportname}.replaceAll(" ","_")+"_basic.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="30" splitType="Stretch">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<subreport>
+				<reportElement x="0" y="0" width="515" height="30" uuid="44dd37a5-4c82-4fb2-a592-5885cb3d70d6">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<subreportParameter name="REPORT_NAME">
+					<subreportParameterExpression><![CDATA[$F{reportname}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="LoggedInUserFullName">
+					<subreportParameterExpression><![CDATA[$F{fullusername}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression><![CDATA["Footer.jasper"]]></subreportExpression>
+			</subreport>
+			<textField>
+				<reportElement style="Page Footer" x="0" y="17" width="475" height="13" uuid="e127b25f-e2b1-46d4-8142-cc89bd8f888f">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression><![CDATA["Seite " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report">
+				<reportElement style="Page Footer" x="475" y="17" width="40" height="13" uuid="5ff4fb79-7fd6-41a9-8f81-a8f12f9cebdb">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Left"/>
+				<textFieldExpression><![CDATA[" von " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageFooter>
+	<noData>
+		<band height="67">
+			<printWhenExpression><![CDATA[false]]></printWhenExpression>
+			<subreport>
+				<reportElement x="10" y="8" width="30" height="41" uuid="caa25db3-29b6-4add-81b4-f11ad3373e26"/>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression><![CDATA["Kassenbuchblatt_basic.jasper"]]></subreportExpression>
+			</subreport>
+			<subreport>
+				<reportElement x="50" y="10" width="30" height="39" uuid="408945c2-40d0-4a0b-b4f0-af0b97edbd8d"/>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression><![CDATA["Kassenbuch_nach_Kategorie_basic.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</noData>
+</jasperReport>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio -->
+<jasperTemplate xmlns="http://jasperreports.sourceforge.net/jasperreports/template" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/template http://jasperreports.sourceforge.net/xsd/jaspertemplate.xsd">
+	<style name="Narrow Lists" fontName="M+ 1m" fontSize="10"/>
+	<style name="Narrow Lists Header" style="Narrow Lists" isBold="true">
+		<box>
+			<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+			<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+			<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+			<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="Page Header" mode="Opaque" forecolor="#000000" backcolor="#B3F1FF" fontName="Liberation Sans" fontSize="20" isBold="true"/>
+	<style name="Page Footer" mode="Opaque" forecolor="#000000" backcolor="#B3F1FF" fontName="Liberation Sans" fontSize="8"/>
+	<style name="Report Header" style="Page Header" backcolor="#C2FFB3"/>
+	<style name="Report Standard Font" fontName="Liberation Sans"/>
+	<style name="Report Monospace Font" fontName="Liberation Mono"/>
+	<style name="Monospace Form Fill" forecolor="#0000FF" fontName="Liberation Mono" isBold="true"/>
+	<style name="Header" style="Report Standard Font" fontSize="21"/>
+	<style name="grauer Zeilenhintergrund" mode="Opaque" backcolor="#EDEDED" fontName="Liberation Sans"/>
+</jasperTemplate>

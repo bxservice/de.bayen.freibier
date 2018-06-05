@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.4.0.final using JasperReports Library version 6.4.1  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Kassenbuch nach Kategorie" pageWidth="515" pageHeight="842" columnWidth="515" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" uuid="093afcf6-b1aa-4307-b6a9-47e163143948">
+	<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w1" value="437"/>
+	<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w2" value="557"/>
+	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="Controlling"/>
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.topMargin" value="cm"/>
+	<property name="com.jaspersoft.studio.unit.bottomMargin" value="cm"/>
+	<property name="com.jaspersoft.studio.unit.leftMargin" value="cm"/>
+	<property name="com.jaspersoft.studio.unit.rightMargin" value="cm"/>
+	<property name="ireport.jasperserver.url" value="http://jasperserver.bayen.loc:8080/jasperserver/"/>
+	<property name="ireport.jasperserver.user" value="tbayen"/>
+	<property name="ireport.jasperserver.reportUnit" value="/Ausdrucke/Kassenbuch_nach_Kategorie"/>
+	<property name="ireport.jasperserver.report.resource" value="/Ausdrucke/Kassenbuch_nach_Kategorie_files/main_jrxml"/>
+	<template><![CDATA["BayenStyles.jrtx"]]></template>
+	<parameter name="RECORD_ID" class="java.lang.Integer" isForPrompting="false">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+		<defaultValueExpression><![CDATA[1002994]]></defaultValueExpression>
+	</parameter>
+	<queryString language="SQL">
+		<![CDATA[with params as(
+select
+  $P{RECORD_ID}::text as recordid
+  --now()::date as monatsdatum
+)
+select
+  bs.name as kassenbuch_name,
+  bs.statementdate,
+  bs.beginningbalance,
+  bsl.stmtamt,
+  bsl.trxamt,
+  bsl.chargeamt,
+  bsl.description,
+  bsl.memo,
+  bsl.c_bankstatementline_id,
+  bp.value as bp_value,
+  bp.name as bp_name,
+  ch.name as charge_name,
+  ch.description as charge_description,
+  inv.documentno as invoice_no,
+  pay.documentno as payment_no,
+  max(case when bs.updated < bsl.updated then bsl.updated else bs.updated end) over() as updated,
+  sum(bsl.stmtamt) over (partition by 1 order by bsl.description, bs.statementdate, bsl.c_bankstatementline_id) + bs.beginningbalance as saldo
+from c_bankstatement bs
+cross join params
+join c_bankaccount ba using(c_bankaccount_id)
+join c_bankstatementline bsl using(c_bankstatement_id)
+left join c_bpartner bp using (c_bpartner_id)
+left join c_charge ch using (c_charge_id)
+left join c_invoice inv using(c_invoice_id)
+left join c_payment pay on(pay.c_payment_id = bsl.c_payment_id)
+where
+  bs.c_bankstatement_id=recordid::numeric
+order by
+  bs.statementdate,
+  bsl.c_bankstatementline_id]]>
+	</queryString>
+	<field name="kassenbuch_name" class="java.lang.String"/>
+	<field name="statementdate" class="java.sql.Timestamp"/>
+	<field name="beginningbalance" class="java.math.BigDecimal"/>
+	<field name="stmtamt" class="java.math.BigDecimal"/>
+	<field name="trxamt" class="java.math.BigDecimal"/>
+	<field name="chargeamt" class="java.math.BigDecimal"/>
+	<field name="description" class="java.lang.String"/>
+	<field name="memo" class="java.lang.String"/>
+	<field name="c_bankstatementline_id" class="java.math.BigDecimal"/>
+	<field name="bp_value" class="java.lang.String"/>
+	<field name="bp_name" class="java.lang.String"/>
+	<field name="charge_name" class="java.lang.String"/>
+	<field name="charge_description" class="java.lang.String"/>
+	<field name="invoice_no" class="java.lang.String"/>
+	<field name="payment_no" class="java.lang.String"/>
+	<field name="updated" class="java.sql.Timestamp"/>
+	<field name="saldo" class="java.math.BigDecimal"/>
+	<variable name="stmtamt1" class="java.math.BigDecimal" resetType="Group" resetGroup="Description" calculation="Sum">
+		<variableExpression><![CDATA[$F{stmtamt}]]></variableExpression>
+	</variable>
+	<variable name="stmtamt2" class="java.math.BigDecimal" calculation="Sum">
+		<variableExpression><![CDATA[$F{stmtamt}]]></variableExpression>
+	</variable>
+	<group name="description">
+		<groupExpression><![CDATA[$F{description}]]></groupExpression>
+	</group>
+	<group name="Description">
+		<groupExpression><![CDATA[$F{description}]]></groupExpression>
+	</group>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="50" splitType="Stretch">
+			<textField>
+				<reportElement x="0" y="5" width="180" height="15" uuid="8633edc6-096b-46a6-bea5-d7318872541a">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Left">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Kassenbuchblatt vom " + new SimpleDateFormat("dd.MM.yy").format($F{statementdate})]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00 ¤;-#,##0.00 ¤">
+				<reportElement key="" style="Narrow Lists Header" x="80" y="30" width="60" height="15" uuid="96947319-84fb-4eee-8245-f6c1319cf304">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{beginningbalance}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement key="" style="Narrow Lists Header" x="0" y="30" width="80" height="15" uuid="5552a0fc-6989-4304-b242-0bb7746b77bc"/>
+				<text><![CDATA[Anfangssaldo:]]></text>
+			</staticText>
+			<line>
+				<reportElement x="0" y="45" width="510" height="1" uuid="89729fbf-819a-4d2c-9980-daad405fc7bb">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+			</line>
+			<textField pattern="">
+				<reportElement key="" x="245" y="5" width="270" height="20" uuid="af4ba70d-3131-4b8d-99fc-254a3577b5b9">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{kassenbuch_name}]]></textFieldExpression>
+			</textField>
+		</band>
+	</title>
+	<pageHeader>
+		<band height="20" splitType="Stretch">
+			<staticText>
+				<reportElement style="Narrow Lists Header" x="0" y="0" width="25" height="15" uuid="1e56e41e-4538-4dcd-bbda-6b86d7f5a896">
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<text><![CDATA[Datum]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Narrow Lists Header" x="25" y="0" width="60" height="15" uuid="b038f55b-1afd-4753-97e0-c79f6c9cb97a"/>
+				<textElement textAlignment="Right"/>
+				<text><![CDATA[Betrag	]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Narrow Lists Header" x="85" y="0" width="60" height="15" uuid="0b0c10e1-2b54-4490-889d-54a493ee2e18">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Right"/>
+				<text><![CDATA[Rechnung]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Narrow Lists Header" x="145" y="0" width="60" height="15" uuid="f5f4847d-6947-4b27-a596-60eaf1e15dbe"/>
+				<textElement textAlignment="Right"/>
+				<text><![CDATA[Saldo]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Narrow Lists Header" x="210" y="0" width="100" height="15" uuid="b40c1c81-513c-42c5-8db0-26ae84025db8"/>
+				<text><![CDATA[Bezeichnung]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Narrow Lists Header" x="345" y="0" width="100" height="15" uuid="c5097361-d59e-4f7f-ad39-d0fa8512ddce">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<text><![CDATA[Geschäftspartner]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Narrow Lists Header" x="445" y="0" width="70" height="15" uuid="4f6fa20d-f969-4a59-b4ec-b71ee8e4e133"/>
+				<text><![CDATA[Zahlg/Rechn]]></text>
+			</staticText>
+		</band>
+	</pageHeader>
+	<detail>
+		<band height="20" splitType="Stretch">
+			<textField pattern="dd.MM">
+				<reportElement style="Narrow Lists" x="0" y="0" width="25" height="15" uuid="a1d902ac-77b7-4456-a234-4b16b94bef47">
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{statementdate}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00 ¤;-#,##0.00 ¤">
+				<reportElement style="Narrow Lists" x="25" y="0" width="60" height="15" uuid="020dfb04-3a23-4dd9-bbbc-6b5fae2e4963">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression><![CDATA[$F{stmtamt}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00 ¤;-#,##0.00 ¤">
+				<reportElement style="Narrow Lists" x="85" y="0" width="60" height="15" uuid="d7e5e279-97b5-4050-a91f-0a56e7656c3b"/>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression><![CDATA[$F{trxamt}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00 ¤;-#,##0.00 ¤">
+				<reportElement style="Narrow Lists" x="145" y="0" width="60" height="15" uuid="4f9ba234-a1e2-4137-9b1d-eb0ce03287f1"/>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression><![CDATA[$F{saldo}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="Narrow Lists" x="210" y="0" width="115" height="15" uuid="bfcc5437-f8d5-4acb-9418-1f79055f7ba2">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{memo}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Narrow Lists" x="345" y="0" width="100" height="15" uuid="e1b6ee6e-2bd9-4b24-a465-242b6854677b">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[($F{bp_value}==null?"":$F{bp_value}+" ")+($F{bp_name}==null?"":$F{bp_name})]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Narrow Lists" x="445" y="0" width="70" height="15" uuid="9d16c9fc-07e6-4cce-9e49-834c99b77828">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[($F{charge_description}==null?"":$F{charge_description})+" "+($F{charge_name}==null?"":$F{charge_name})]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Narrow Lists" x="445" y="0" width="70" height="15" uuid="e0c64e4c-7638-4717-a5d9-d446c07b493e">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[($F{payment_no}==null?"":$F{payment_no})+($F{invoice_no}==null?"":" ("+$F{invoice_no}+")")]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="Narrow Lists" x="325" y="0" width="20" height="15" uuid="c0e5cbad-2748-4823-92b0-ceb732a0e9b4">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{description}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<summary>
+		<band height="20" splitType="Stretch">
+			<textField pattern="#,##0.00 ¤;-#,##0.00 ¤">
+				<reportElement style="Narrow Lists Header" x="25" y="0" width="60" height="15" uuid="42a079c6-17b4-4f75-8170-4f876891673d">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="1.0" lineStyle="Solid"/>
+					<bottomPen lineWidth="1.0" lineStyle="Double"/>
+				</box>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression><![CDATA[$V{stmtamt2}]]></textFieldExpression>
+			</textField>
+			<textField pattern="">
+				<reportElement x="290" y="0" width="227" height="12" forecolor="#808080" uuid="87637c9a-2e31-43bf-9960-7b980df4d3e9">
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Stand vom: "+new SimpleDateFormat("dd.MM.yy HH:mm").format($F{updated})]]></textFieldExpression>
+			</textField>
+		</band>
+	</summary>
+</jasperReport>

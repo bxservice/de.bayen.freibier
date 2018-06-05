@@ -1,0 +1,352 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.5.0.final using JasperReports Library version 6.5.0  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Verbrauchsübersicht" pageWidth="595" pageHeight="842" whenNoDataType="AllSectionsNoDetail" columnWidth="520" leftMargin="55" rightMargin="20" topMargin="20" bottomMargin="20" uuid="4dad39f6-cec3-45fd-a4bc-5c5c3cbac6ac">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="Controlling.xml"/>
+	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.topMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.bottomMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.leftMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
+	<template><![CDATA["BayenStyles.jrtx"]]></template>
+	<parameter name="C_BPartner_ID" class="java.lang.Integer"/>
+	<parameter name="C_Period_ID" class="java.lang.Integer">
+		<defaultValueExpression><![CDATA[1000077]]></defaultValueExpression>
+	</parameter>
+	<parameter name="week" class="java.lang.Integer"/>
+	<parameter name="DateFrom" class="java.util.Date"/>
+	<parameter name="DateTo" class="java.util.Date"/>
+	<queryString>
+		<![CDATA[-- Umsatzstatistiken
+
+with param as (
+select
+/*
+  :c_bpartner_id::numeric as c_bpartner_id,
+  :c_period_id::numeric as c_period_id,
+  :week::integer as kw,
+  :datefrom::timestamp as datefrom,
+  :dateto::timestamp as dateto
+*/ 
+  $P{C_BPartner_ID}::numeric as c_bpartner_id,
+  $P{C_Period_ID}::numeric as c_period_id,
+  $P{week}::integer as kw,
+  $P{DateFrom}::timestamp as datefrom,
+  $P{DateTo}::timestamp as dateto
+),
+param2 as (
+select
+  case when c_bpartner_id=0 then null else c_bpartner_id end as c_bpartner_id,
+  coalesce (
+    to_timestamp('1 ' || extract(isoyear from now())::text, 'IW IYYY')::DATE + (1/*Montag*/ + 6) % 7 + 7 * kw - 7,
+    per.startdate, 
+    param.datefrom
+  ) as datefrom,
+  coalesce (
+    to_timestamp('1 ' || extract(isoyear from now())::text, 'IW IYYY')::DATE + (1/*Sonntag*/ + 6) % 7 + 7 * kw - 7,
+    per.enddate, 
+    param.dateto
+  ) as dateto
+from param
+left join c_period per using (c_period_id)
+),
+stat as (
+select
+  param.datefrom, 
+  param.dateto,
+  bp.c_bpartner_id,
+  p.m_product_id,
+  count(*) as count_orders,
+  sum(case when ol.priceentered != 0 or ol.priceentered = ol.pricelist then ol.qtyordered else null end) 
+    as sum_qty,
+  sum(case when ol.priceentered != 0 or ol.priceentered = ol.pricelist or ol.qtyordered<0 then null else ol.qtyordered end)
+    as sum_qty_gratis,
+  sum(ol.linenetamt) as sum_netamt,
+  sum(-cp.amount * ol.qtyordered) as sum_cost,
+  sum(case when ol.priceentered != 0 or ol.priceentered = ol.priceactual then ol.qtyordered * uf.factor else 0 end)
+    as sum_hl
+from c_order o
+join c_bpartner bp using (c_bpartner_id)
+join c_orderline ol using (c_order_id)
+left join m_product p using (m_product_id)
+left join bay_uomfactor_v uf on (uf.m_product_id=ol.m_product_id 
+          and uf.c_uom_id = (select c_uom_id from c_uom where uomsymbol='hl'))
+left join m_product_po ppo on (ppo.m_product_id = p.m_product_id and ppo.isactive='Y' and ppo.iscurrentvendor='Y')
+left join c_bpartner vendor on (vendor.c_bpartner_id = ppo.c_bpartner_id)
+join param2 param on (param.c_bpartner_id is null or param.c_bpartner_id = vendor.c_bpartner_id)
+left join m_product_category pc using (m_product_category_id)
+left join bay_conditionprice2(
+  p.m_product_id, null::numeric, vendor.c_bpartner_id, o.dateordered, '10'::text, '15'::text) as cp on (true)
+where o.ad_client_id=1000000 and o.docstatus in ('CO', 'CL')
+and o.issotrx='Y'
+and o.dateordered >= param.datefrom and o.dateordered <= param.dateto
+and pc.value not in ('99','17')
+group by
+  param.datefrom, 
+  param.dateto,
+  bp.c_bpartner_id,
+  p.m_product_id,
+  p.name
+order by
+  bp.c_bpartner_id,
+  p.m_product_id
+)
+select
+--  sum(sum_netamt-sum_cost) as db, sum(sum_hl) as hl
+  st.datefrom, 
+  st.dateto,
+  st.m_product_id,
+  p.value as p_value,
+  p.name as p_name,
+  vendor.value as v_value,
+  vendor.name as v_name,
+  sum(st.sum_qty) as sum_qty
+from stat st
+join c_bpartner bp using (c_bpartner_id)
+join m_product p using (m_product_id)
+left join m_product_po ppo on (ppo.m_product_id = p.m_product_id and ppo.isactive='Y' and ppo.iscurrentvendor='Y')
+left join c_bpartner vendor on (vendor.c_bpartner_id = ppo.c_bpartner_id)
+group by
+  st.datefrom, 
+  st.dateto,
+  st.m_product_id,
+  p.value,
+  p.name,
+  vendor.value,
+  vendor.name
+order by
+  vendor.value,
+  p.value
+;
+  ]]>
+	</queryString>
+	<field name="datefrom" class="java.sql.Timestamp">
+		<property name="com.jaspersoft.studio.field.label" value="datefrom"/>
+	</field>
+	<field name="dateto" class="java.sql.Timestamp">
+		<property name="com.jaspersoft.studio.field.label" value="dateto"/>
+	</field>
+	<field name="m_product_id" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.label" value="m_product_id"/>
+	</field>
+	<field name="p_value" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="p_value"/>
+	</field>
+	<field name="p_name" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="p_name"/>
+	</field>
+	<field name="v_value" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="v_value"/>
+	</field>
+	<field name="v_name" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="v_name"/>
+	</field>
+	<field name="sum_qty" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.label" value="sum_qty"/>
+	</field>
+	<group name="Lieferant">
+		<groupExpression><![CDATA[$F{v_value}]]></groupExpression>
+		<groupHeader>
+			<band height="25">
+				<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				<textField>
+					<reportElement style="Report Standard Font" x="0" y="9" width="40" height="15" uuid="e639072f-3521-4488-b6e8-f12f655c016b">
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					</reportElement>
+					<textElement>
+						<font isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{v_value}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement style="Report Standard Font" x="30" y="9" width="360" height="15" uuid="47769810-cccd-489e-be96-fd990cc56a51">
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					</reportElement>
+					<textElement>
+						<font isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{v_name}]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupHeader>
+	</group>
+	<title>
+		<band height="50">
+			<printWhenExpression><![CDATA[false]]></printWhenExpression>
+			<textField>
+				<reportElement x="0" y="0" width="111" height="30" uuid="6cf2b80f-d528-4e7b-bdbd-412b25e893da"/>
+				<textFieldExpression><![CDATA[$P{C_BPartner_ID}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="111" y="0" width="111" height="30" uuid="b94afa8f-3152-48d3-94c5-5cdb46496261"/>
+				<textFieldExpression><![CDATA[$P{C_Period_ID}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="222" y="0" width="111" height="30" uuid="d6cfd81b-96d6-4fd3-83fc-ce9e2844d306"/>
+				<textFieldExpression><![CDATA[$P{week}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="333" y="0" width="111" height="30" uuid="ba2380d9-1db4-4ac7-a2a2-a99275ad91d9"/>
+				<textFieldExpression><![CDATA[$P{DateFrom}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="444" y="0" width="76" height="30" uuid="dc76544d-d022-403f-a00a-0b851113c8a5"/>
+				<textFieldExpression><![CDATA[$P{DateTo}]]></textFieldExpression>
+			</textField>
+		</band>
+	</title>
+	<pageHeader>
+		<band height="25" splitType="Stretch">
+			<textField pattern="dd.MM.yy">
+				<reportElement style="Report Standard Font" x="120" y="0" width="60" height="20" uuid="e3e6fe03-5f74-41ee-9a2a-16823ba62663">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression><![CDATA[$F{datefrom}]]></textFieldExpression>
+			</textField>
+			<textField pattern="dd.MM.yy">
+				<reportElement style="Report Standard Font" x="198" y="0" width="60" height="20" uuid="e335e1c3-a121-411e-86f2-6decea2d9c77">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{dateto}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement style="Report Standard Font" x="0" y="0" width="120" height="20" uuid="4726e7e7-ef6d-4a0c-b431-6fe7900846ac">
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<text><![CDATA[Verbrauchsübersicht]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Report Standard Font" x="180" y="0" width="20" height="20" uuid="c2e15247-86e6-4bc7-beda-dc82caf8e78b">
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Center"/>
+				<text><![CDATA[-]]></text>
+			</staticText>
+		</band>
+	</pageHeader>
+	<columnHeader>
+		<band height="25" splitType="Stretch">
+			<staticText>
+				<reportElement style="Report Standard Font" x="0" y="0" width="520" height="20" uuid="df894913-2839-4b4a-85d4-4372aef8270d">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="03934eb8-8bc9-46ee-80b0-2f7f10252fa1"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Right">
+					<font isBold="true" isItalic="true"/>
+				</textElement>
+				<text><![CDATA[]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Report Standard Font" x="68" y="0" width="60" height="20" uuid="91c9c6be-fdad-49ae-bf9a-4c8f73128263">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="e2c9e06e-d469-46c2-97c2-4c421c3d0ca1"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement>
+					<font isBold="true" isItalic="true"/>
+				</textElement>
+				<text><![CDATA[ArtNr]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Report Standard Font" x="128" y="0" width="142" height="20" uuid="8011cc08-fcf5-44bb-af16-5f2a42ef2a64">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="db437077-ccab-4f1e-9548-d61046ee2441"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement>
+					<font isBold="true" isItalic="true"/>
+				</textElement>
+				<text><![CDATA[Bezeichnung]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Report Standard Font" x="270" y="0" width="60" height="20" uuid="f82a0455-a694-4f40-b1a4-889b424409c0">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="03934eb8-8bc9-46ee-80b0-2f7f10252fa1"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Right">
+					<font isBold="true" isItalic="true"/>
+				</textElement>
+				<text><![CDATA[Menge]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="15" splitType="Stretch">
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<textField>
+				<reportElement style="Report Standard Font" x="30" y="-1" width="50" height="15" uuid="1f06a47c-e44d-4b47-b958-ddf5127121c6">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="e2c9e06e-d469-46c2-97c2-4c421c3d0ca1"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{p_value}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement style="Report Standard Font" x="80" y="0" width="190" height="15" uuid="6787a803-4eb1-4796-8da5-002243fd67db">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="db437077-ccab-4f1e-9548-d61046ee2441"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{p_name}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.###;(#,##0.###-)">
+				<reportElement style="Report Standard Font" x="270" y="0" width="60" height="15" uuid="f4334ad0-3851-4cfb-8d25-f0f432d2ff21">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="03934eb8-8bc9-46ee-80b0-2f7f10252fa1"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression><![CDATA[$F{sum_qty}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="35">
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<textField>
+				<reportElement style="Report Standard Font" x="410" y="20" width="57" height="15" uuid="120e5e56-c34c-4156-8ea2-481097dd7e69">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression><![CDATA["Seite " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report">
+				<reportElement style="Report Standard Font" x="467" y="20" width="53" height="15" uuid="1f242734-94db-4971-ae62-77d87a9b40d0">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Left"/>
+				<textFieldExpression><![CDATA[" von " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageFooter>
+</jasperReport>

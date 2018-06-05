@@ -1,0 +1,364 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.5.0.final using JasperReports Library version 6.5.0  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Document Org Infoblock" pageWidth="210" pageHeight="200" columnWidth="210" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" resourceBundle="C_Invoice_Localization" uuid="8b33ad11-7673-4699-9c51-caba44c76391">
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.topMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.bottomMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.leftMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="Controlling"/>
+	<property name="ireport.zoom" value="1.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+	<template><![CDATA["BayenStyles.jrtx"]]></template>
+	<parameter name="RECORD_ID" class="java.lang.Integer">
+		<defaultValueExpression><![CDATA[1000001]]></defaultValueExpression>
+	</parameter>
+	<parameter name="AD_CLIENT_ID" class="java.lang.Integer" isForPrompting="false">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+		<defaultValueExpression><![CDATA[1000000]]></defaultValueExpression>
+	</parameter>
+	<parameter name="AD_ORG_ID" class="java.lang.Integer" isForPrompting="false">
+		<defaultValueExpression><![CDATA[1000000]]></defaultValueExpression>
+	</parameter>
+	<parameter name="CURRENT_LANG" class="java.lang.String" isForPrompting="false">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+		<defaultValueExpression><![CDATA["de_DE"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="SUBREPORT_DIR" class="java.lang.String" isForPrompting="false">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+		<defaultValueExpression><![CDATA["./"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="AD_TABLE_ID" class="java.lang.Integer">
+		<parameterDescription><![CDATA[Tabelle, aus der wir aufgerufen wurden (259 Order, 318 Invoice)]]></parameterDescription>
+		<defaultValueExpression><![CDATA[259]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[WITH h AS
+(SELECT ih.documentno,
+	ih.bpvalue,
+	ih.bptaxid,
+	ih.taxid,
+	ih.documenttype,
+	ih.documenttypenote,
+	ih.bpgreeting,
+	ih.name,
+	ih.name2,
+	ih.bpcontactgreeting,
+	ih.salesrep_name,
+	ih.referenceno,
+	ih.postal,
+	ih.contactname,
+	ih.description,
+	ih.dateordered,
+	ih.dateinvoiced,
+	ih.paymentterm,
+	ih.paymenttermnote,
+	ih.totallines,
+	ih.grandtotal,
+	ih.istaxincluded,
+	ih.ispaid,
+	ih.paymentrule,
+	ih.address1,
+	ih.address2,
+	ih.address3,
+	ih.address4,
+	ih.city,
+	ih.regionname,
+	ih.bpartner_name2,
+	ih.bpartner_value,
+	ih.salesrep_phone,
+	ih.salesrep_phone2,
+	ih.salesrep_email,
+	ih.ad_orginfo_phone,
+	ih.ad_orginfo_phone2,
+	ih.ad_orginfo_email,
+	ih.processedon,
+	ih.bp_c_bp_group_id,
+	ih.AD_Org_ID,
+	ih.logo_id,
+	ih.c_invoice_id AS record_id,
+	'C_Invoice' AS doctablename
+FROM c_invoice_header_v ih
+UNION
+SELECT oh.documentno,
+	oh.bpvalue,
+	oh.bptaxid,
+	oh.taxid,
+	oh.documenttype,
+	oh.documenttypenote,
+	oh.bpgreeting,
+	oh.name,
+	oh.name2,
+	oh.bpcontactgreeting,
+	oh.salesrep_name,
+	oh.referenceno,
+	oh.postal,
+	oh.contactname,
+	oh.description,
+	oh.dateordered,
+	null AS dateinvoiced,
+	oh.paymentterm,
+	oh.paymenttermnote,
+	oh.totallines,
+	oh.grandtotal,
+	oh.istaxincluded,
+	null AS ispaid,
+	oh.paymentrule,
+	oh.address1,
+	oh.address2,
+	oh.address3,
+	oh.address4,
+	oh.city,
+	oh.regionname,
+	oh.name2,
+	oh.bpvalue,
+	oh.salesrep_phone,
+	oh.salesrep_phone2,
+	oh.salesrep_email,
+	oh.ad_orginfo_phone,
+	oh.ad_orginfo_phone2,
+	oh.ad_orginfo_email,
+	oh.processedon,
+	oh.bp_c_bp_group_id,
+	oh.AD_Org_ID,
+	oh.logo_id,
+	oh.c_order_id AS record_id,
+	'C_Order' AS doctablename
+	FROM c_order_header_v oh
+)
+SELECT
+	h.*,
+	AD_Org.name AS org_name,
+	c_bp_group.description AS c_bp_group_description,
+	AD_Image.binarydata AS logo_binarydata,
+	(SELECT /* Das geht besser */
+	SUM(l.linenetamt) As TotalNonDeposit
+	 FROM C_OrderLine l
+	 JOIN M_Product p ON l.M_Product_ID = p.M_Product_ID
+	 JOIN M_Product_Category pc ON pc.M_Product_Category_ID = p.M_Product_Category_ID
+	 WHERE (h.Record_ID=l.C_Order_ID AND pc.Value IS NOT DISTINCT FROM '99')
+	) AS TotalNonDeposit,
+	(SELECT
+	SUM(l.linenetamt) As TotalNonDeposit
+	 FROM C_OrderLine l
+	 JOIN M_Product p ON l.M_Product_ID = p.M_Product_ID
+	 JOIN M_Product_Category pc ON pc.M_Product_Category_ID = p.M_Product_Category_ID
+	 WHERE (h.Record_ID=l.C_Order_ID AND pc.Value = '99')
+	) AS TotalDeposit
+
+FROM h
+	 LEFT JOIN c_bp_group ON (c_bp_group.c_bp_group_id = h.bp_c_bp_group_id)
+	 JOIN AD_Org ON(AD_Org.AD_Org_ID = h.AD_Org_ID)
+	 LEFT JOIN AD_Image ON(AD_Image.AD_Image_ID = h.logo_id)
+	 JOIN AD_Table ON(AD_Table.tablename = h.doctablename)
+WHERE
+     AD_Table.AD_Table_ID= CAST($P{AD_TABLE_ID} AS NUMERIC)
+	 AND record_id =  CAST( $P{RECORD_ID} AS NUMERIC)]]>
+	</queryString>
+	<field name="documentno" class="java.lang.String"/>
+	<field name="bpvalue" class="java.lang.String"/>
+	<field name="bptaxid" class="java.lang.String"/>
+	<field name="taxid" class="java.lang.String"/>
+	<field name="documenttype" class="java.lang.String"/>
+	<field name="documenttypenote" class="java.lang.String"/>
+	<field name="bpgreeting" class="java.lang.String"/>
+	<field name="name" class="java.lang.String"/>
+	<field name="name2" class="java.lang.String"/>
+	<field name="bpcontactgreeting" class="java.lang.String"/>
+	<field name="salesrep_name" class="java.lang.String"/>
+	<field name="referenceno" class="java.lang.String"/>
+	<field name="postal" class="java.lang.String"/>
+	<field name="contactname" class="java.lang.String"/>
+	<field name="description" class="java.lang.String"/>
+	<field name="dateordered" class="java.sql.Timestamp"/>
+	<field name="dateinvoiced" class="java.sql.Timestamp"/>
+	<field name="paymentterm" class="java.lang.String"/>
+	<field name="paymenttermnote" class="java.lang.String"/>
+	<field name="totallines" class="java.math.BigDecimal"/>
+	<field name="grandtotal" class="java.math.BigDecimal"/>
+	<field name="istaxincluded" class="java.lang.String"/>
+	<field name="ispaid" class="java.lang.String"/>
+	<field name="paymentrule" class="java.lang.String"/>
+	<field name="address1" class="java.lang.String"/>
+	<field name="address2" class="java.lang.String"/>
+	<field name="address3" class="java.lang.String"/>
+	<field name="address4" class="java.lang.String"/>
+	<field name="city" class="java.lang.String"/>
+	<field name="regionname" class="java.lang.String"/>
+	<field name="bpartner_name2" class="java.lang.String"/>
+	<field name="bpartner_value" class="java.lang.String"/>
+	<field name="salesrep_phone" class="java.lang.String"/>
+	<field name="salesrep_phone2" class="java.lang.String"/>
+	<field name="salesrep_email" class="java.lang.String"/>
+	<field name="ad_orginfo_phone" class="java.lang.String"/>
+	<field name="ad_orginfo_phone2" class="java.lang.String"/>
+	<field name="ad_orginfo_email" class="java.lang.String"/>
+	<field name="processedon" class="java.math.BigDecimal"/>
+	<field name="bp_c_bp_group_id" class="java.math.BigDecimal"/>
+	<field name="ad_org_id" class="java.math.BigDecimal"/>
+	<field name="logo_id" class="java.math.BigDecimal"/>
+	<field name="record_id" class="java.math.BigDecimal"/>
+	<field name="doctablename" class="java.lang.String"/>
+	<field name="org_name" class="java.lang.String"/>
+	<field name="c_bp_group_description" class="java.lang.String"/>
+	<field name="logo_binarydata" class="java.lang.Object"/>
+	<field name="totalnondeposit" class="java.math.BigDecimal"/>
+	<field name="totaldeposit" class="java.math.BigDecimal"/>
+	<detail>
+		<band height="84" splitType="Stretch">
+			<property name="local_mesure_unitheight" value="pixel"/>
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<textField>
+				<reportElement style="Report Monospace Font" positionType="Float" x="84" y="72" width="126" height="12" uuid="80b8676a-fb9e-4158-acc9-19519ca57ce0">
+					<property name="local_mesure_unitx" value="mm"/>
+					<property name="com.jaspersoft.studio.unit.x" value="mm"/>
+					<property name="local_mesure_unity" value="mm"/>
+					<property name="com.jaspersoft.studio.unit.y" value="mm"/>
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{bpvalue}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Report Standard Font" x="0" y="36" width="84" height="12" isRemoveLineWhenBlank="true" uuid="4d7aab72-a187-46e3-80a7-529568895600">
+					<printWhenExpression><![CDATA[$F{salesrep_phone}!=null]]></printWhenExpression>
+				</reportElement>
+				<textElement markup="none">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$R{orginfo.phone}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Report Standard Font" x="0" y="24" width="84" height="12" isRemoveLineWhenBlank="true" uuid="57eaab81-e3a8-4598-baf6-b6dfc7126e74">
+					<printWhenExpression><![CDATA[$F{salesrep_name}!=null]]></printWhenExpression>
+				</reportElement>
+				<textElement markup="none">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$R{orginfo.bpartnername}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement style="Report Standard Font" x="60" y="36" width="150" height="12" isRemoveLineWhenBlank="true" uuid="f7543d8b-e449-4b60-9153-5d45c6d0f0c6">
+					<property name="local_mesure_unitx" value="mm"/>
+					<property name="com.jaspersoft.studio.unit.x" value="mm"/>
+					<property name="local_mesure_unity" value="mm"/>
+					<property name="com.jaspersoft.studio.unit.y" value="mm"/>
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<printWhenExpression><![CDATA[$F{salesrep_phone}!=null]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{salesrep_phone}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Report Standard Font" x="0" y="12" width="84" height="12" isRemoveLineWhenBlank="true" uuid="af5236c6-a5a3-4bd9-9708-af7ee4639548">
+					<printWhenExpression><![CDATA[$F{ad_orginfo_email}!=null]]></printWhenExpression>
+				</reportElement>
+				<textElement markup="none">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$R{orginfo.email}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Report Standard Font" positionType="Float" x="0" y="72" width="84" height="12" uuid="489470cb-8dc7-46ea-a5df-708de24e463b"/>
+				<textElement markup="none">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$R{orginfo.clientNumber}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Report Standard Font" x="0" y="48" width="84" height="12" isRemoveLineWhenBlank="true" uuid="973c37a7-8d0a-48ef-be06-a8a79b0e0870">
+					<printWhenExpression><![CDATA[$F{salesrep_email}!=null]]></printWhenExpression>
+				</reportElement>
+				<textElement markup="none">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$R{orginfo.email}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement style="Report Standard Font" x="60" y="0" width="150" height="12" isRemoveLineWhenBlank="true" uuid="96cfddcb-8374-4d64-8d7a-dd26366ea595">
+					<property name="local_mesure_unitx" value="mm"/>
+					<property name="com.jaspersoft.studio.unit.x" value="mm"/>
+					<property name="local_mesure_unity" value="mm"/>
+					<property name="com.jaspersoft.studio.unit.y" value="mm"/>
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<printWhenExpression><![CDATA[$F{ad_orginfo_phone}!=null]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{ad_orginfo_phone}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement style="Report Standard Font" x="72" y="24" width="138" height="12" isRemoveLineWhenBlank="true" uuid="ea00e97b-0937-482c-8802-b718a34b175f">
+					<property name="local_mesure_unitx" value="mm"/>
+					<property name="com.jaspersoft.studio.unit.x" value="mm"/>
+					<property name="local_mesure_unity" value="mm"/>
+					<property name="com.jaspersoft.studio.unit.y" value="mm"/>
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<printWhenExpression><![CDATA[$F{salesrep_name}!=null]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{salesrep_name}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement style="Report Standard Font" x="60" y="12" width="150" height="12" isRemoveLineWhenBlank="true" uuid="2a26e367-817a-40d9-80df-6a6fecd29db9">
+					<property name="local_mesure_unitx" value="mm"/>
+					<property name="com.jaspersoft.studio.unit.x" value="mm"/>
+					<property name="local_mesure_unity" value="mm"/>
+					<property name="com.jaspersoft.studio.unit.y" value="mm"/>
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<printWhenExpression><![CDATA[$F{ad_orginfo_email}!=null]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{ad_orginfo_email}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Report Standard Font" x="0" y="0" width="84" height="12" isRemoveLineWhenBlank="true" uuid="d4ce7d8d-5419-4f5f-9be4-1a1bad626c16">
+					<printWhenExpression><![CDATA[$F{ad_orginfo_phone}!=null]]></printWhenExpression>
+				</reportElement>
+				<textElement markup="none">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$R{orginfo.phone}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement style="Report Standard Font" x="60" y="48" width="150" height="12" isRemoveLineWhenBlank="true" uuid="cc95350c-3fef-40ec-9693-f14e109cef55">
+					<property name="local_mesure_unitx" value="mm"/>
+					<property name="com.jaspersoft.studio.unit.x" value="mm"/>
+					<property name="local_mesure_unity" value="mm"/>
+					<property name="com.jaspersoft.studio.unit.y" value="mm"/>
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<printWhenExpression><![CDATA[$F{salesrep_email}!=null]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{salesrep_email}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement positionType="Float" x="0" y="60" width="84" height="12" uuid="f98a11d1-9099-4566-8f0d-1d472a9512ae"/>
+				<text><![CDATA[]]></text>
+			</staticText>
+		</band>
+	</detail>
+</jasperReport>

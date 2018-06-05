@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.5.0.final using JasperReports Library version 6.5.0  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Document Lines" pageWidth="511" pageHeight="842" whenNoDataType="AllSectionsNoDetail" columnWidth="511" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" resourceBundle="C_Invoice_Localization" uuid="0ea03c33-cee9-4aa5-b7a2-e829a06f336b">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.topMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.bottomMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.leftMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
+	<property name="ireport.zoom" value="1.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+	<template><![CDATA["BayenStyles.jrtx"]]></template>
+	<parameter name="RECORD_ID" class="java.lang.Integer" isForPrompting="false">
+		<defaultValueExpression><![CDATA[1000000]]></defaultValueExpression>
+	</parameter>
+	<parameter name="CURRENT_LANG" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["de_DE"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="AD_TABLE_ID" class="java.lang.Integer">
+		<parameterDescription><![CDATA[Tabelle, aus der wir aufgerufen wurden (259 Order, 318 Invoice)]]></parameterDescription>
+		<defaultValueExpression><![CDATA[259]]></defaultValueExpression>
+	</parameter>
+	<parameter name="CURRENCY_PATTERN" class="java.lang.String" isForPrompting="false"/>
+	<queryString language="SQL">
+		<![CDATA[WITH l AS(
+SELECT
+	ilt.line,
+	ilt.linenetamt,
+	ilt.qtyinvoiced,
+	ilt.qtyentered,
+	ilt.uomsymbol,
+	ilt.c_uom_name,
+	ilt.name,
+	ilt.description,
+	ilt.documentnote,
+	ilt.productvalue,
+	ilt.priceentered,
+	ilt.priceactual,
+	ilt.productdescription,
+	ilt.m_product_id,
+	ilt.paymentrule,
+	ilt.c_invoice_id AS record_id,
+	'C_Invoice' AS doctablename
+FROM c_invoice_linetax_v ilt
+UNION
+SELECT
+	olt.line,
+	olt.linenetamt,
+	olt.qtyinvoiced,
+	olt.qtyentered,
+	olt.uomsymbol,
+	olt.c_uom_name,
+	olt.name,
+	olt.description,
+	olt.documentnote,
+	olt.productvalue,
+	olt.priceentered,
+	olt.priceactual,
+	olt.productdescription,
+	olt.m_product_id,
+	olt.c_order_paymentrule,
+	olt.c_order_id AS record_id,
+	'C_Order' AS doctablename
+FROM c_order_linetax_v olt
+)
+SELECT
+	l.*,
+	tu.name as tu_name,
+	p.description as p_description
+FROM l
+JOIN AD_Table ON(AD_Table.tablename=l.doctablename)
+JOIN M_Product p ON(p.M_Product_ID = l.M_Product_ID)
+JOIN M_Product_Category ON (M_Product_Category.M_Product_Category_ID = p.M_Product_Category_ID)
+LEFT JOIN BAY_TradingUnit tu USING (BAY_TradingUnit_ID)
+WHERE
+	l.record_id = cast( $P{RECORD_ID} AS NUMERIC)
+	AND AD_Table.AD_Table_ID = cast( $P{AD_TABLE_ID} AS NUMERIC)
+	AND l.line < 999000
+	AND M_Product_Category.Value IS DISTINCT FROM '99'
+ORDER BY
+	l.line]]>
+	</queryString>
+	<field name="line" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.label" value="line"/>
+	</field>
+	<field name="linenetamt" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.label" value="linenetamt"/>
+	</field>
+	<field name="qtyinvoiced" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.label" value="qtyinvoiced"/>
+	</field>
+	<field name="qtyentered" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.label" value="qtyentered"/>
+	</field>
+	<field name="uomsymbol" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="uomsymbol"/>
+	</field>
+	<field name="c_uom_name" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="c_uom_name"/>
+	</field>
+	<field name="name" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="name"/>
+	</field>
+	<field name="description" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="description"/>
+	</field>
+	<field name="documentnote" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="documentnote"/>
+	</field>
+	<field name="productvalue" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="productvalue"/>
+	</field>
+	<field name="priceentered" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.label" value="priceentered"/>
+	</field>
+	<field name="priceactual" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.label" value="priceactual"/>
+	</field>
+	<field name="productdescription" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="productdescription"/>
+	</field>
+	<field name="m_product_id" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.label" value="m_product_id"/>
+	</field>
+	<field name="paymentrule" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="paymentrule"/>
+	</field>
+	<field name="record_id" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.label" value="record_id"/>
+	</field>
+	<field name="doctablename" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="doctablename"/>
+	</field>
+	<field name="tu_name" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="tu_name"/>
+	</field>
+	<field name="p_description" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="p_description"/>
+	</field>
+	<columnHeader>
+		<band height="16" splitType="Stretch">
+			<property name="local_mesure_unitheight" value="pixel"/>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<textField>
+				<reportElement x="10" y="3" width="53" height="12" uuid="2e595f78-574e-42bd-a118-790265bdcefc"/>
+				<textElement textAlignment="Left" markup="none">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$R{documentlines.quantity}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="65" y="2" width="50" height="12" uuid="425914f1-f661-4b34-abce-8150f0840daa"/>
+				<textElement textAlignment="Left" markup="none">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$R{documentlines.code}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="348" y="2" width="60" height="12" uuid="ca36e9e4-0dea-4699-ac68-87f1d80a19e6">
+					<printWhenExpression><![CDATA["B".equals($F{paymentrule}) || "C_Invoice".equals($F{doctablename})]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right" markup="none">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$R{documentlines.price}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="108" y="2" width="228" height="12" uuid="b65f3f60-a99e-4f93-a280-0d0646ed8936"/>
+				<textElement markup="none">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$R{documentlines.description}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement stretchType="RelativeToBandHeight" x="420" y="2" width="84" height="12" uuid="3afe14d3-589b-4664-a56a-29b4f2fe4a0d">
+					<printWhenExpression><![CDATA["B".equals($F{paymentrule}) || "C_Invoice".equals($F{doctablename})]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right" markup="none">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$R{documentlines.total}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement mode="Opaque" x="0" y="0" width="511" height="1" forecolor="#FFFFFF" uuid="7f4746d6-d2ab-404d-8ba0-dab6ecc017c6">
+					<property name="local_mesure_unitx" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="local_mesure_unity" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+				</reportElement>
+			</line>
+			<line>
+				<reportElement x="0" y="15" width="511" height="1" uuid="dc5992d7-efe9-47c6-bef9-eabc64c2d5aa">
+					<property name="local_mesure_unity" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+				</reportElement>
+				<graphicElement>
+					<pen lineWidth="2.0"/>
+				</graphicElement>
+			</line>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="38" splitType="Stretch">
+			<property name="local_mesure_unitheight" value="pixel"/>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<textField pattern="###0;-###0">
+				<reportElement style="Report Monospace Font" x="0" y="2" width="26" height="12" uuid="749469f7-379e-4a2d-8fb1-2ed644127053">
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression><![CDATA[$F{qtyentered}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Report Standard Font" x="29" y="2" width="40" height="12" uuid="9dd51c6d-4a54-49f0-8645-3c04bada200d">
+					<property name="local_mesure_unitx" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Left"/>
+				<textFieldExpression><![CDATA[$F{uomsymbol}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement style="Report Standard Font" x="108" y="2" width="228" height="12" uuid="e68539fe-fa17-4e7d-be1b-ef0ee048e507">
+					<printWhenExpression><![CDATA[$F{tu_name}==null]]></printWhenExpression>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{name}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="Report Standard Font" x="108" y="26" width="228" height="12" isRemoveLineWhenBlank="true" uuid="b8769f51-1192-405a-a812-45391ed452c4"/>
+				<textElement>
+					<font isItalic="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{description}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="Report Standard Font" x="108" y="14" width="228" height="12" isRemoveLineWhenBlank="true" uuid="1e7508ac-42df-4cc7-acd7-5cbca24e4bb6"/>
+				<textElement>
+					<font isItalic="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{documentnote}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Report Standard Font" x="70" y="2" width="36" height="12" uuid="d31fabde-d6e2-4e00-aabb-9e4e7eb1235f"/>
+				<textElement textAlignment="Left"/>
+				<textFieldExpression><![CDATA[$F{productvalue}]]></textFieldExpression>
+			</textField>
+			<textField pattern="">
+				<reportElement style="Report Monospace Font" x="348" y="2" width="72" height="12" uuid="a1f666cd-d621-4225-9502-6ac0656f8f9f">
+					<printWhenExpression><![CDATA["B".equals($F{paymentrule}) || "C_Invoice".equals($F{doctablename})]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression><![CDATA[new DecimalFormat($P{CURRENCY_PATTERN}).format($F{priceentered})]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="false">
+				<reportElement style="Report Monospace Font" x="420" y="2" width="84" height="12" uuid="f45c7fcb-f922-4fc3-808b-c18f25ab9fa0">
+					<printWhenExpression><![CDATA["B".equals($F{paymentrule}) || "C_Invoice".equals($F{doctablename})]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression><![CDATA[new DecimalFormat($P{CURRENCY_PATTERN}).format($F{linenetamt})]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement style="Report Standard Font" x="106" y="2" width="144" height="12" uuid="cd24f11f-25fa-48db-83e8-12b808946aa2">
+					<printWhenExpression><![CDATA[$F{tu_name}!=null]]></printWhenExpression>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{p_description}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement style="Report Standard Font" x="250" y="2" width="86" height="12" uuid="083b64cc-1a24-4b44-9f66-54c31ac76ed5">
+					<printWhenExpression><![CDATA[$F{tu_name}!=null]]></printWhenExpression>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{tu_name}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<columnFooter>
+		<band height="5" splitType="Stretch">
+			<property name="local_mesure_unitheight" value="pixel"/>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<line>
+				<reportElement x="0" y="1" width="511" height="1" uuid="3e603075-2028-4342-8597-f065dc0f0f6e">
+					<property name="local_mesure_unity" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+				</reportElement>
+			</line>
+		</band>
+	</columnFooter>
+</jasperReport>
