@@ -245,7 +245,7 @@ public class BankStatementCreatePayments extends SvrProcess {
 			payment.setC_Invoice_ID(invoice.getC_Invoice_ID());
 			payment.setC_BPartner_ID (invoice.getC_BPartner_ID());
 			// description is copied - tbayen
-			payment.setDescription(invoice.getDescription());
+			payment.setDescription(invoice.getPOReference());
 			// UserElement1/Contract - tbayen
 			if (m_userElement1ColumnName != null) {
 				int colI = invoice.get_ColumnIndex(m_userElement1ColumnName);
