@@ -8,6 +8,7 @@ import org.compiere.model.I_M_Product;
 import org.compiere.model.PO;
 import org.compiere.util.CPreparedStatement;
 import org.compiere.util.DB;
+import org.compiere.util.Env;
 
 import de.bayen.util.ResourceLoader;
 import de.bayen.util.StringUtils;
@@ -92,7 +93,9 @@ public class MBAYTradingUnit extends X_BAY_TradingUnit {
 		((PO)product).set_ValueOfColumn("BAY_TradingUnit_ID", get_ID());
 		product.setName(product.getDescription()+" "+getName());
 		product.setVolume(getVolume());
-		product.setWeight(getVolume().add(getWeight()));
+		//#2849 - Trading Unit shall not add the weight of a Product
+		if (product.getWeight() == null || product.getWeight().compareTo(Env.ZERO) == 0)
+			product.setWeight(getVolume());
 		int uom = getC_UOM_ID();
 		if(uom>0)
 			product.setC_UOM_ID(uom);
