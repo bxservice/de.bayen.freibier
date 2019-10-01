@@ -1,4 +1,4 @@
-SELECT  /* NGV Absatzstatistik */
+SELECT /* NGV Absatzstatistik */
   '001' AS "Versionsnummer",  /* Schnittstellenversion 001 vom 2.4.2013 */
   9076 AS "Partner", /* NGV-Nummer Jakob Bayen KG */
   '' AS "PartnerAuslief", /* Laut Herr Schütt: Ist für uns immer leer */
@@ -80,20 +80,22 @@ FROM BAY_Statistikperiode
 JOIN BAY_Umsatzstatistik ON (
   BAY_Umsatzstatistik.BAY_Statistikperiode_ID = BAY_Statistikperiode.BAY_Statistikperiode_ID
   AND BAY_Statistikperiode.BAY_Statistikperiode_ID=?
+  AND bay_umsatzstatistik.isactive='Y'
 /*  AND BAY_Statistikperiode.Value='st1309' */
 )
-LEFT JOIN M_Product USING(M_Product_ID)
-LEFT JOIN BAY_TradingUnit USING(BAY_TradingUnit_ID)
-LEFT JOIN C_BPartner USING (C_BPartner_ID)
+LEFT JOIN M_Product ON (M_Product.M_Product_ID = BAY_Umsatzstatistik.m_product_id)
+LEFT JOIN BAY_TradingUnit ON (M_Product.BAY_TradingUnit_ID = BAY_TradingUnit.bay_tradingunit_id)
+LEFT JOIN C_BPartner ON (C_BPartner.C_BPartner_ID = BAY_Umsatzstatistik.C_BPartner_ID)
 LEFT JOIN c_bpartner_location ON(
   c_bpartner.c_bpartner_id=c_bpartner_location.c_bpartner_id 
   AND c_bpartner_location.isbillto='Y'  /* Rechnungsadresse */
   AND c_bpartner_location.isActive='Y'
+  AND c_bpartner_location.isshipto='Y'
   )
-LEFT JOIN c_location USING(c_location_id)
-LEFT JOIN c_country USING(c_country_id)
-LEFT JOIN C_SalesRegion USING (C_SalesRegion_ID)
-LEFT JOIN C_BP_Group USING(C_BP_Group_ID)
+LEFT JOIN c_location ON (c_location.c_location_id = c_bpartner_location.c_location_id)
+LEFT JOIN c_country ON (c_country.c_country_id = c_location.c_country_id)
+LEFT JOIN C_SalesRegion ON (C_SalesRegion.C_SalesRegion_ID = c_bpartner_location.C_SalesRegion_ID)
+LEFT JOIN C_BP_Group ON (C_BP_Group.C_BP_Group_ID = C_BPartner.c_bp_group_id)
 ORDER BY 
   c_bpartner.value,
   m_product.value
