@@ -51,16 +51,17 @@ SELECT /* NGV Bezugsstatistik */
   /* Gratis ist "" oder "x" */
   
 FROM bay_statistikperiode
-LEFT JOIN bay_umsatzstatistik USING(bay_statistikperiode_id)
-LEFT JOIN c_bpartner USING(c_bpartner_id)
-LEFT JOIN m_product USING(m_product_id)
-LEFT JOIN bay_tradingunit USING(bay_tradingunit_id)
+LEFT JOIN bay_umsatzstatistik ON (bay_umsatzstatistik.bay_statistikperiode_id = bay_statistikperiode.bay_statistikperiode_id AND bay_umsatzstatistik.isactive='Y')
+LEFT JOIN C_BPartner ON (C_BPartner.C_BPartner_ID = BAY_Umsatzstatistik.C_BPartner_ID)
+LEFT JOIN M_Product ON (M_Product.M_Product_ID = BAY_Umsatzstatistik.m_product_id)
+LEFT JOIN BAY_TradingUnit ON (M_Product.BAY_TradingUnit_ID = BAY_TradingUnit.bay_tradingunit_id)
 LEFT JOIN c_bpartner_location ON(
   c_bpartner.c_bpartner_id=c_bpartner_location.c_bpartner_id 
   AND c_bpartner_location.isbillto='Y'  /* Rechnungsadresse */
+  AND c_bpartner_location.isactive='Y'
   )
-LEFT JOIN c_location USING(c_location_id)
-LEFT JOIN c_country USING(c_country_id)
+LEFT JOIN c_location ON (c_location.c_location_id = c_bpartner_location.c_location_id)
+LEFT JOIN c_country ON (c_country.c_country_id = c_location.c_country_id)
 WHERE bay_statistikperiode.bay_statistikperiode_id=?
 /* WHERE bay_statistikperiode.value='lm1309' */
 /* Nullen will die NGV nicht haben (entstehen, wenn Artikel gekauft und wieder zurückgegeben werden) */

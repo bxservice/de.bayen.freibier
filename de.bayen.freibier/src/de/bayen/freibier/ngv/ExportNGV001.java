@@ -4,6 +4,7 @@ import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.text.DateFormat;
@@ -112,7 +113,7 @@ public class ExportNGV001 extends SvrProcess {
 					value = dateFormat.format(value);
 				else if (value.getClass() == BigDecimal.class){
 					if(((BigDecimal) value).scale()>2)
-						value = ((BigDecimal) value).setScale(2, BigDecimal.ROUND_HALF_UP);
+						value = ((BigDecimal) value).setScale(2, RoundingMode.HALF_EVEN);
 					value = ((BigDecimal) value).toPlainString().replace(".", ",");
 				}
 				// else if ("ArtNr".equals(headerName))
@@ -181,7 +182,7 @@ public class ExportNGV001 extends SvrProcess {
 					value = dateFormat.format(value);
 				else if (value.getClass() == BigDecimal.class){
 					if(((BigDecimal) value).scale()>2)
-						value = ((BigDecimal) value).setScale(2, BigDecimal.ROUND_HALF_UP);
+						value = ((BigDecimal) value).setScale(2, RoundingMode.HALF_EVEN);
 					value = ((BigDecimal) value).toPlainString().replace(".", ",");
 				}
 				map.put(headerName, value);
