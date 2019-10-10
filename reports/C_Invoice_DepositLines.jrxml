@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2018-06-05T14:52:41 -->
+<!-- Created with Jaspersoft Studio version 6.4.0.final using JasperReports Library version 6.4.1  -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Document Lines" pageWidth="511" pageHeight="842" columnWidth="511" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" resourceBundle="C_Invoice_Localization" uuid="0ea03c33-cee9-4aa5-b7a2-e829a06f336b">
-	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="Controlling"/>
 	<property name="com.jaspersoft.studio.unit." value="pixel"/>
 	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
 	<property name="com.jaspersoft.studio.unit.pageWidth" value="pixel"/>
@@ -16,6 +14,7 @@
 	<property name="ireport.x" value="0"/>
 	<property name="ireport.y" value="0"/>
 	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="Freibier"/>
 	<template><![CDATA["BayenStyles.jrtx"]]></template>
 	<parameter name="RECORD_ID" class="java.lang.Integer">
 		<defaultValueExpression><![CDATA[1040375]]></defaultValueExpression>
@@ -150,7 +149,10 @@ SELECT
 	sum(CASE WHEN qtyentered > 0 THEN qtyentered ELSE 0 END) AS qtyplus,
 	sum(CASE WHEN qtyentered < 0 THEN qtyentered ELSE 0 END) AS qtyminus,
 	sum(linenetamt) AS linenetamt,
-	ls.saldo AS saldo
+	ls.saldo AS saldo,
+	(SELECT cbp.bay_isprintsaldo 
+	 FROM mybp
+	 JOIN C_BPartner cbp ON (cbp.C_BPartner_ID = mybp.C_BPartner_ID)) AS printsaldo
 FROM all_lines
 JOIN M_Product USING(M_Product_ID)
 LEFT JOIN deposit_lines lz USING(M_Product_ID)
@@ -174,6 +176,7 @@ ORDER BY
 	<field name="qtyminus" class="java.math.BigDecimal"/>
 	<field name="linenetamt" class="java.math.BigDecimal"/>
 	<field name="saldo" class="java.math.BigDecimal"/>
+	<field name="printsaldo" class="java.lang.String"/>
 	<columnHeader>
 		<band height="17" splitType="Stretch">
 			<property name="local_mesure_unitheight" value="pixel"/>
@@ -265,7 +268,9 @@ ORDER BY
 				</reportElement>
 			</line>
 			<textField>
-				<reportElement style="Report Standard Font" x="188" y="2" width="46" height="12" forecolor="#404040" uuid="3f51bad8-b886-4301-8871-fe17ffbea2dc"/>
+				<reportElement style="Report Standard Font" x="188" y="2" width="46" height="12" forecolor="#404040" uuid="3f51bad8-b886-4301-8871-fe17ffbea2dc">
+					<printWhenExpression><![CDATA[$F{printsaldo}.equals("Y")]]></printWhenExpression>
+				</reportElement>
 				<textElement textAlignment="Right" markup="none">
 					<font isItalic="true"/>
 				</textElement>
@@ -278,7 +283,7 @@ ORDER BY
 			<property name="local_mesure_unitheight" value="pixel"/>
 			<printWhenExpression><![CDATA[($F{qtyplus} != null && $F{qtyplus}.compareTo(BigDecimal.ZERO) != 0) ||
 ($F{qtyminus} != null && $F{qtyminus}.compareTo(BigDecimal.ZERO) != 0) ||
-($F{saldo} != null && $F{saldo}.compareTo(BigDecimal.ZERO) != 0)]]></printWhenExpression>
+($F{saldo} != null && $F{saldo}.compareTo(BigDecimal.ZERO) != 0 && $F{printsaldo}.equals("Y"))]]></printWhenExpression>
 			<textField isStretchWithOverflow="true">
 				<reportElement style="Report Monospace Font" x="41" y="1" width="198" height="12" forecolor="#404040" uuid="e68539fe-fa17-4e7d-be1b-ef0ee048e507"/>
 				<textFieldExpression><![CDATA[$F{name}]]></textFieldExpression>
@@ -363,6 +368,7 @@ ORDER BY
 			<textField pattern="#,##0;-#,##0">
 				<reportElement style="Report Monospace Font" x="188" y="1" width="46" height="12" forecolor="#404040" uuid="a8e8bb32-cf1e-4558-b46e-e4e1562915c6">
 					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					<printWhenExpression><![CDATA[$F{printsaldo}.equals("Y")]]></printWhenExpression>
 				</reportElement>
 				<textElement textAlignment="Right"/>
 				<textFieldExpression><![CDATA[$F{saldo} != null ? $F{saldo} : "0"]]></textFieldExpression>
