@@ -22,3 +22,4 @@ Bundle-ClassPath: .,
 Service-Component: OSGI-INF/*.xml
 Export-Package: de.bayen.freibier.util,
  de.bayen.util
+Bundle-Activator: org.adempiere.plugin.utils.Incremental2PackActivator
