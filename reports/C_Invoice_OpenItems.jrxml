@@ -34,14 +34,14 @@ where ad_client_id=1000000
  and issotrx='Y'  -- Verkaufstransaktion
  and documentno like 'R%'
  and ispaid='N'
- and docstatus='CO'
+ and docstatus in ('CL','CO')
 union
 select
-  documentno, dateacct, datetrx, 0, -payamt, c_bpartner_id, null
+  documentno, dateacct, datetrx, 0, -AvailableAmt, c_bpartner_id, null
 from adempiere.rv_payment
 where ad_client_id=1000000
   and isallocated='N'
-  and docstatus='CO'
+  and docstatus in ('CL','CO')
 order by c_bpartner_id, c_bpartner_location_id, duedate, documentno
 ) op
 join c_bpartner bp using (c_bpartner_id)
