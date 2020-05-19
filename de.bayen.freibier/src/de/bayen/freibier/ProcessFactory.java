@@ -25,7 +25,7 @@ public class ProcessFactory implements IProcessFactory {
 				try {
 					Class<?> clazz = cl.loadClass(className);
 					if (ProcessCall.class.isAssignableFrom(clazz)) {
-						return (ProcessCall) clazz.newInstance();
+						return (ProcessCall) clazz.getConstructor().newInstance();
 					}
 				} catch (Exception e) {
 					if(e instanceof ClassNotFoundException)
