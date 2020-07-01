@@ -687,7 +687,7 @@ public class OrderDotMatrixFormat {
 			bw.write(anzahlMsg);
 			if (isRechnung) {
 				if ("Y".equals(headerData.IsTaxIncluded)) {
-					bw.write("   MwSt 19.0%                _________");
+					bw.write("   MwSt " + headerData.TaxRate + "                _________");
 				} else {
 					bw.write("                             =========");
 				}
