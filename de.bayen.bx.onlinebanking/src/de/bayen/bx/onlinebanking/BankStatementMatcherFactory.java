@@ -29,7 +29,7 @@ public class BankStatementMatcherFactory implements IBankStatementMatcherFactory
 		if (index == -1) {
 			try {
 				Class<?> clazz = getClass().getClassLoader().loadClass(className);
-				return (BankStatementMatcherInterface) clazz.newInstance();
+				return (BankStatementMatcherInterface) clazz.getDeclaredConstructor().newInstance();
 			} catch (Exception ex) {}
 		} else {
 			String clazzName = className.substring(0, index);
