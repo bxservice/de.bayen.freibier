@@ -16,6 +16,7 @@ package de.bayen.bx.util;
 import java.sql.ResultSet;
 import java.sql.Statement;
 
+import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
 import org.compiere.util.DB;
@@ -85,6 +86,9 @@ public abstract class AbstractRecordProcessor<T extends PO> extends AbstractSvrP
 			 * Spalte P_String in AD_PInstance_Para muss verlängert werden, z.B.
 			 * auf 5000 Zeichen.
 			 */
+			if (sql == null) {
+				throw new AdempiereException("Parameter TabInfoSQL not found");
+			}
 			Statement stmt = DB.createStatement();
 			ResultSet rs = stmt.executeQuery(sql);
 			String result = "";

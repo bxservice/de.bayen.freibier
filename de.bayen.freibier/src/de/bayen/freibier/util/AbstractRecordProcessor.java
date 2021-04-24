@@ -192,6 +192,9 @@ public abstract class AbstractRecordProcessor<T extends PO> extends SvrProcess {
 			String sql = bean.getTabInfoSQL();
 			// Spalte P_String in AD_PInstance_Para muss verlängert werden,
 			// z.B. auf 5000 Zeichen
+			if (sql == null) {
+				throw new AdempiereException("Parameter TabInfoSQL not found");
+			}
 			Statement stmt = DB.createStatement();
 			ResultSet rs = stmt.executeQuery(sql);
 			String result = "";
