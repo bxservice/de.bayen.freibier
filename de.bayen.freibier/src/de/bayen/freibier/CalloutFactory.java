@@ -14,6 +14,7 @@ import de.bayen.freibier.model.CalloutInterestCalculationLine;
 import de.bayen.freibier.model.CalloutInvoiceBatchLine;
 import de.bayen.freibier.model.CalloutOpenSalesOrder;
 import de.bayen.freibier.model.CalloutProduct;
+import de.bayen.freibier.model.CalloutSalesOrder;
 import de.bayen.freibier.model.I_BAY_Contract;
 import de.bayen.freibier.model.I_BAY_InterestCalculation;
 import de.bayen.freibier.model.MBAYInterestCalculation;
@@ -52,7 +53,9 @@ public class CalloutFactory implements IColumnCalloutFactory {
 		if(tableName.equalsIgnoreCase(I_C_Order.Table_Name) &&
 				columnName.equalsIgnoreCase(I_C_Order.COLUMNNAME_C_BPartner_ID)){
 				list.add(new CalloutOpenSalesOrder());
+				list.add(new CalloutSalesOrder());
 		}
+		
 		
 		//
 		return list.toArray(new IColumnCallout[0]);
