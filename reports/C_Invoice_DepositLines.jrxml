@@ -132,7 +132,7 @@ LIMIT 1
 )
 
 SELECT
-	M_Product_ID,
+	M_Product.M_Product_ID,
 	M_Product.Value AS productvalue,
 	M_Product.Name AS name,
 	coalesce(lz.priceentered, (
@@ -141,8 +141,8 @@ SELECT
 	  JOIN C_BPartner USING(C_BPartner_ID)
 	  JOIN M_PriceList_Version USING(M_PriceList_ID)
 	  JOIN M_ProductPrice USING(M_PriceList_Version_ID)
-	  WHERE M_ProductPrice.M_Product_ID=M_Product_ID
-	  ORDER BY ValidFrom
+	WHERE M_ProductPrice.M_Product_ID=M_Product.M_Product_ID AND M_PriceList_Version.isactive ='Y'	  
+	ORDER BY ValidFrom
 	  LIMIT 1
 	)) AS priceentered,
 	lz.doctablename,
@@ -158,7 +158,7 @@ JOIN M_Product USING(M_Product_ID)
 LEFT JOIN deposit_lines lz USING(M_Product_ID)
 FULL JOIN (SELECT deposit_balance.* FROM deposit_balance JOIN mybp USING(C_BPartner_ID)) ls USING(M_Product_ID)
 GROUP BY
-	M_Product_ID,
+	M_Product.M_Product_ID,
 	lz.priceentered,
 	lz.doctablename,
 	M_Product.Value,

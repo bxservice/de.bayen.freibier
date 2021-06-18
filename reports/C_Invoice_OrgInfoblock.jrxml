@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2018-06-05T15:01:20 -->
+<!-- Created with Jaspersoft Studio version 6.4.0.final using JasperReports Library version 6.4.1  -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Document Org Infoblock" pageWidth="210" pageHeight="200" columnWidth="210" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" resourceBundle="C_Invoice_Localization" uuid="8b33ad11-7673-4699-9c51-caba44c76391">
 	<property name="com.jaspersoft.studio.unit." value="pixel"/>
 	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
@@ -11,7 +10,7 @@
 	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
 	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
 	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
-	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="Controlling"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="Freibier"/>
 	<property name="ireport.zoom" value="1.0"/>
 	<property name="ireport.x" value="0"/>
 	<property name="ireport.y" value="0"/>
@@ -43,6 +42,7 @@
 		<![CDATA[WITH h AS
 (SELECT ih.documentno,
 	ih.bpvalue,
+	bp.value AS orderbpvalue,
 	ih.bptaxid,
 	ih.taxid,
 	ih.documenttype,
@@ -84,12 +84,16 @@
 	ih.AD_Org_ID,
 	ih.logo_id,
 	ih.c_invoice_id AS record_id,
+	ih.poreference,
 	'C_Invoice' AS doctablename
 FROM c_invoice_header_v ih
+JOIN c_order o ON ih.c_order_id = o.c_order_id 
+JOIN C_BPartner bp ON bp.c_bpartner_id = o.c_bpartner_id 
 WHERE ih.c_invoice_id=$P{RECORD_ID}
 UNION ALL
 SELECT oh.documentno,
-	oh.bpvalue,
+	oh.bill_bpvalue AS bpvalue,
+	oh.bpvalue AS orderbpvalue,
 	oh.bptaxid,
 	oh.taxid,
 	oh.documenttype,
@@ -131,6 +135,7 @@ SELECT oh.documentno,
 	oh.AD_Org_ID,
 	oh.logo_id,
 	oh.c_order_id AS record_id,
+	oh.poreference,
 	'C_Order' AS doctablename
 	FROM c_order_header_v oh
 WHERE oh.c_order_id=$P{RECORD_ID}
@@ -154,7 +159,6 @@ SELECT
 	 JOIN M_Product_Category pc ON pc.M_Product_Category_ID = p.M_Product_Category_ID
 	 WHERE (h.Record_ID=l.C_Order_ID AND pc.Value = '99')
 	) AS TotalDeposit
-
 FROM h
 	 LEFT JOIN c_bp_group ON (c_bp_group.c_bp_group_id = h.bp_c_bp_group_id)
 	 JOIN AD_Org ON(AD_Org.AD_Org_ID = h.AD_Org_ID)
@@ -162,10 +166,12 @@ FROM h
 	 JOIN AD_Table ON(AD_Table.tablename = h.doctablename)
 WHERE
      AD_Table.AD_Table_ID= CAST($P{AD_TABLE_ID} AS NUMERIC)
-	 AND record_id =  CAST( $P{RECORD_ID} AS NUMERIC)]]>
+	 AND record_id =  CAST( $P{RECORD_ID} AS NUMERIC)
+	]]>
 	</queryString>
 	<field name="documentno" class="java.lang.String"/>
 	<field name="bpvalue" class="java.lang.String"/>
+	<field name="orderbpvalue" class="java.lang.String"/>
 	<field name="bptaxid" class="java.lang.String"/>
 	<field name="taxid" class="java.lang.String"/>
 	<field name="documenttype" class="java.lang.String"/>
@@ -207,6 +213,7 @@ WHERE
 	<field name="ad_org_id" class="java.math.BigDecimal"/>
 	<field name="logo_id" class="java.math.BigDecimal"/>
 	<field name="record_id" class="java.math.BigDecimal"/>
+	<field name="poreference" class="java.lang.String"/>
 	<field name="doctablename" class="java.lang.String"/>
 	<field name="org_name" class="java.lang.String"/>
 	<field name="c_bp_group_description" class="java.lang.String"/>
@@ -214,7 +221,7 @@ WHERE
 	<field name="totalnondeposit" class="java.math.BigDecimal"/>
 	<field name="totaldeposit" class="java.math.BigDecimal"/>
 	<detail>
-		<band height="84" splitType="Stretch">
+		<band height="96" splitType="Stretch">
 			<property name="local_mesure_unitheight" value="pixel"/>
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<textField>
@@ -229,7 +236,7 @@ WHERE
 				<textElement textAlignment="Right">
 					<font size="9"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{bpvalue}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{bpvalue} + (!$F{bpvalue}.equals($F{orderbpvalue}) ? "/" + $F{orderbpvalue} : "")]]></textFieldExpression>
 			</textField>
 			<textField>
 				<reportElement style="Report Standard Font" x="0" y="36" width="84" height="12" isRemoveLineWhenBlank="true" uuid="4d7aab72-a187-46e3-80a7-529568895600">
@@ -362,6 +369,30 @@ WHERE
 				<reportElement positionType="Float" x="0" y="60" width="84" height="12" uuid="f98a11d1-9099-4566-8f0d-1d472a9512ae"/>
 				<text><![CDATA[]]></text>
 			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement style="Report Standard Font" positionType="Float" x="0" y="84" width="110" height="12" isRemoveLineWhenBlank="true" uuid="c2d12d3d-5830-4a3d-a811-a48ca575eb87">
+					<printWhenExpression><![CDATA[$F{poreference} != null]]></printWhenExpression>
+				</reportElement>
+				<textElement markup="none">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Kunden-Bestellnummer"]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement style="Report Monospace Font" positionType="Float" x="84" y="84" width="126" height="12" isRemoveLineWhenBlank="true" uuid="4627945e-e769-48a7-bd6d-7a4ca0b95290">
+					<property name="local_mesure_unitx" value="mm"/>
+					<property name="com.jaspersoft.studio.unit.x" value="mm"/>
+					<property name="local_mesure_unity" value="mm"/>
+					<property name="com.jaspersoft.studio.unit.y" value="mm"/>
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<printWhenExpression><![CDATA[$F{poreference} != null]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{poreference}]]></textFieldExpression>
+			</textField>
 		</band>
 	</detail>
 </jasperReport>

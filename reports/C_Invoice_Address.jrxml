@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2018-06-05T14:50:18 -->
-<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Invoice Address" pageWidth="240" pageHeight="127" columnWidth="240" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" uuid="30ceeae4-aeff-40ff-b8e1-5e8d8d1d0e83">
-	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="druiz2 beveragedemo"/>
+<!-- Created with Jaspersoft Studio version 6.4.0.final using JasperReports Library version 6.4.1  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Invoice Address" pageWidth="240" pageHeight="240" whenNoDataType="NoPages" columnWidth="240" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" uuid="30ceeae4-aeff-40ff-b8e1-5e8d8d1d0e83">
 	<property name="com.jaspersoft.studio.unit." value="pixel"/>
 	<property name="com.jaspersoft.studio.unit.pageWidth" value="mm"/>
 	<property name="com.jaspersoft.studio.unit.pageHeight" value="mm"/>
@@ -15,6 +13,8 @@
 	<property name="ireport.zoom" value="1.0"/>
 	<property name="ireport.x" value="0"/>
 	<property name="ireport.y" value="0"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="Freibier"/>
+	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
 	<template><![CDATA["BayenStyles.jrtx"]]></template>
 	<parameter name="RECORD_ID" class="java.lang.Integer" isForPrompting="false">
 		<defaultValueExpression><![CDATA[1000000]]></defaultValueExpression>
@@ -39,38 +39,69 @@ SELECT
 	ih.city,
 	ih.regionname,
 	ih.C_Location_ID,
+	bpg.greeting deliverygreeting,
+	bp.name deliverybpname,
+	bp.name2 deliverybpname2,
+	l.address1 AS deliveryadress,
+	l.address2 AS deliveryadress2,
+	l.address3 AS deliveryadress3,
+	l.address4 AS deliveryadress4,
+	l.city AS deliverycity, 
+	l.regionname AS deliveryregionname,
+	bpl.name locationname,
+	l.c_location_id AS deliverylocation_id,
 	ih.AD_Org_ID,
 	ih.Org_Location_ID,
 	ih.C_Invoice_ID AS Record_ID,
 	'C_Invoice' AS doctypename
 FROM c_invoice_header_v ih
+JOIN c_order o ON ih.c_order_id = o.c_order_id 
+JOIN C_BPartner bp ON bp.c_bpartner_id = o.c_bpartner_id 
+LEFT JOIN c_greeting bpg ON bp.c_greeting_id = bpg.c_greeting_id
+JOIN c_bpartner_location bpl ON o.c_bpartner_location_id = bpl.c_bpartner_location_id
+JOIN c_location l ON bpl.c_location_id = l.c_location_id
 WHERE ih.c_invoice_id=$P{RECORD_ID}
 UNION ALL
 SELECT
 	oh.documentno,
-	oh.bpgreeting,
-	oh.name,
-	oh.name2,
+	bpg.greeting AS bpgreeting,
+	oh.bill_name AS name,
+	oh.bill_name2 AS name2,
 	oh.bpcontactgreeting,
 	oh.contactname,
-	oh.address1,
-	oh.address2,
-	oh.address3,
-	oh.address4,
-	oh.city,
-	oh.regionname,
-	oh.C_Location_ID,
+	l.address1,
+	l.address2,
+	l.address3,
+	l.address4,
+	l.city,
+	l.regionname,
+	l.C_Location_ID, 
+	oh.bpgreeting as deliverygreeting,
+	oh.name AS deliverybpname,
+	oh.name2 AS deliverybpname2,
+	oh.address1 AS deliveryadress,
+	oh.address2 AS deliveryadress2,
+	oh.address3 AS deliveryadress3,
+	oh.address4 AS deliveryadress4,
+	oh.city AS deliverycity, 
+	oh.regionname AS deliveryregionname,
+	oh.bp_location_name AS locationname,
+	oh.c_location_id AS deliverylocation_id,
 	oh.AD_Org_ID,
 	oh.Org_Location_ID,
 	oh.C_Order_ID AS Record_ID,
 	'C_Order' AS doctypename
 FROM c_order_header_v oh
+JOIN c_location l ON oh.bill_c_location_id = l.c_location_id
+LEFT JOIN c_greeting bpg ON oh.bill_bp_c_greeting_id = bpg.c_greeting_id
 WHERE oh.c_order_id=$P{RECORD_ID}
 )
 SELECT
 	h.*,
 	COALESCE(c_location.postal || c_location.postal_add, c_location.postal, c_location.postal_add) AS postal,
 	C_Country.name AS countryname,
+	COALESCE(dl.postal || dl.postal_add, dl.postal, dl.postal_add) AS deliverypostal,
+	dc.name AS deliverycountryname,
 	AD_Org.name AS org_name,
 	OrgLocation.address1 AS org_address1,
 	OrgLocation.address2 AS org_address2,
@@ -83,7 +114,9 @@ SELECT
 FROM h
 JOIN AD_Table ON(AD_Table.tablename = h.doctypename)
 JOIN C_Location USING (C_Location_ID)
-JOIN C_Country ON(C_Country.C_Country_ID = C_Location.C_Country_ID)
+JOIN C_Location dl ON h.deliverylocation_id = dl.c_location_id 
+JOIN C_Country ON (C_Country.C_Country_ID = C_Location.C_Country_ID)
+JOIN C_Country dc ON (dc.C_Country_ID = dl.C_Country_ID)
 JOIN AD_Org ON(AD_Org.AD_Org_ID = h.AD_Org_ID)
 JOIN C_Location OrgLocation ON (OrgLocation.C_Location_ID = h.org_Location_ID)
 JOIN C_Country OrgCountry ON (OrgCountry.C_Country_ID = OrgLocation.C_Country_ID)
@@ -104,11 +137,25 @@ WHERE
 	<field name="city" class="java.lang.String"/>
 	<field name="regionname" class="java.lang.String"/>
 	<field name="c_location_id" class="java.math.BigDecimal"/>
+	<field name="deliverygreeting" class="java.lang.String"/>
+	<field name="deliverybpname" class="java.lang.String"/>
+	<field name="deliverybpname2" class="java.lang.String"/>
+	<field name="deliveryadress" class="java.lang.String"/>
+	<field name="deliveryadress2" class="java.lang.String"/>
+	<field name="deliveryadress3" class="java.lang.String"/>
+	<field name="deliveryadress4" class="java.lang.String"/>
+	<field name="deliverycity" class="java.lang.String"/>
+	<field name="deliveryregionname" class="java.lang.String"/>
+	<field name="locationname" class="java.lang.String"/>
+	<field name="deliverylocation_id" class="java.math.BigDecimal"/>
 	<field name="ad_org_id" class="java.math.BigDecimal"/>
 	<field name="org_location_id" class="java.math.BigDecimal"/>
 	<field name="record_id" class="java.math.BigDecimal"/>
+	<field name="doctypename" class="java.lang.String"/>
 	<field name="postal" class="java.lang.String"/>
 	<field name="countryname" class="java.lang.String"/>
+	<field name="deliverypostal" class="java.lang.String"/>
+	<field name="deliverycountryname" class="java.lang.String"/>
 	<field name="org_name" class="java.lang.String"/>
 	<field name="org_address1" class="java.lang.String"/>
 	<field name="org_address2" class="java.lang.String"/>
@@ -119,9 +166,9 @@ WHERE
 	<field name="org_countryname" class="java.lang.String"/>
 	<field name="org_countrycode" class="java.lang.String"/>
 	<detail>
-		<band height="115" splitType="Stretch">
+		<band height="222" splitType="Stretch">
 			<property name="local_mesure_unitheight" value="pixel"/>
-			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<textField isBlankWhenNull="true">
 				<reportElement positionType="Float" x="0" y="60" width="240" height="12" isRemoveLineWhenBlank="true" uuid="4cf0a830-b736-421b-8bbb-624430c30e2a"/>
 				<textFieldExpression><![CDATA[$F{address2}]]></textFieldExpression>
@@ -166,16 +213,99 @@ WHERE
 				<textFieldExpression><![CDATA[$F{org_name}+", " + ($F{org_address1}!=null?$F{org_address1}+", ":"") + ($F{org_address2}!=null?$F{org_address2}+", ":"") + ($F{org_address3}!=null?$F{org_address3}+", ":"") + ($F{org_address4}!=null?$F{org_address4}+", ":"") + (!$F{countryname}.equals($F{org_countryname})?$F{org_countrycode}+"-":"") + ($F{org_postal}!=null?$F{org_postal}+" ":"") + ($F{org_city}!=null?$F{org_city}:"")]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement positionType="Float" x="0" y="96" width="240" height="19" isRemoveLineWhenBlank="true" uuid="fa1dc96d-b443-469d-9aa5-73b63b193c97">
+				<reportElement positionType="Float" x="0" y="96" width="240" height="15" isRemoveLineWhenBlank="true" uuid="fa1dc96d-b443-469d-9aa5-73b63b193c97">
 					<property name="local_mesure_unitheight" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
 				<box topPadding="0"/>
-				<textElement verticalAlignment="Bottom">
+				<textElement verticalAlignment="Bottom" markup="html">
 					<font isBold="true" isUnderline="true"/>
 				</textElement>
 				<textFieldExpression><![CDATA[(!$F{countryname}.equals($F{org_countryname})?$F{countryname}:null)]]></textFieldExpression>
 			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement key="" positionType="Float" x="0" y="150" width="240" height="10" isRemoveLineWhenBlank="true" uuid="ed3abdcc-aa49-4c39-8bf2-d727e572ecb8">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<printWhenExpression><![CDATA[$F{c_location_id}.intValue()!=$F{deliverylocation_id}.intValue()]]></printWhenExpression>
+				</reportElement>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{name}.equals($F{deliverybpname}) ? $F{locationname} : $F{deliverygreeting}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement positionType="Float" x="0" y="160" width="240" height="10" isRemoveLineWhenBlank="true" uuid="c28fb47c-6ae1-4be0-978e-a122f8ea38a6">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<printWhenExpression><![CDATA[$F{c_location_id}.intValue()!=$F{deliverylocation_id}.intValue()  && !$F{name}.equals($F{deliverybpname})]]></printWhenExpression>
+				</reportElement>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{deliverybpname}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement positionType="Float" x="0" y="170" width="240" height="10" isRemoveLineWhenBlank="true" uuid="05463a0b-69b8-4809-a0a1-e0f5bdcfaf04">
+					<printWhenExpression><![CDATA[$F{c_location_id}.intValue()!=$F{deliverylocation_id}.intValue() && !$F{name}.equals($F{deliverybpname})]]></printWhenExpression>
+				</reportElement>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{deliverybpname2}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement positionType="Float" x="0" y="180" width="240" height="10" isRemoveLineWhenBlank="true" uuid="142697c4-3ca5-48d2-b094-f7e00ae454f1">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<printWhenExpression><![CDATA[$F{c_location_id}.intValue()!=$F{deliverylocation_id}.intValue()]]></printWhenExpression>
+				</reportElement>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{deliveryadress}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement positionType="Float" x="0" y="190" width="240" height="10" isRemoveLineWhenBlank="true" uuid="6e96ddad-2abc-4beb-9b74-5d38b9cfeec6">
+					<printWhenExpression><![CDATA[$F{c_location_id}.intValue()!=$F{deliverylocation_id}.intValue()]]></printWhenExpression>
+				</reportElement>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{deliveryadress2}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" x="0" y="200" width="240" height="10" uuid="06d8fb2c-fba7-4e57-9e7c-3ef7ce56758b">
+					<printWhenExpression><![CDATA[$F{c_location_id}.intValue()!=$F{deliverylocation_id}.intValue()]]></printWhenExpression>
+				</reportElement>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[($F{deliverypostal}!=null?$F{deliverypostal} + " ":"") + $F{deliverycity}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement positionType="Float" x="0" y="210" width="240" height="10" isRemoveLineWhenBlank="true" uuid="9ff8ba4f-5207-4bc0-b110-970e066dfc59">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<printWhenExpression><![CDATA[$F{c_location_id}.intValue()!=$F{deliverylocation_id}.intValue()]]></printWhenExpression>
+				</reportElement>
+				<box topPadding="0"/>
+				<textElement verticalAlignment="Bottom">
+					<font size="8" isBold="false" isUnderline="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[(!$F{deliverycountryname}.equals($F{org_countryname})?$F{deliverycountryname}:null)]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="140" width="240" height="10" uuid="0fd26476-c395-40c7-b6e5-3c4cf7594a12">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<printWhenExpression><![CDATA[$F{c_location_id}.intValue()!=$F{deliverylocation_id}.intValue()]]></printWhenExpression>
+				</reportElement>
+				<textElement>
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Lieferadresse]]></text>
+			</staticText>
 		</band>
 	</detail>
 </jasperReport>
