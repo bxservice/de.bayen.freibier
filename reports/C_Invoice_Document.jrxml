@@ -650,7 +650,7 @@ WHERE
 						<property name="com.jaspersoft.studio.unit.y" value="mm"/>
 						<property name="local_mesure_unitheight" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.height" value="px"/>
-						<printWhenExpression><![CDATA[$F{processedon}!=null]]></printWhenExpression>
+						<printWhenExpression><![CDATA[$F{processedon}!=null && $F{o_documentno} != null]]></printWhenExpression>
 					</reportElement>
 					<textElement textAlignment="Right">
 						<font size="9" isBold="true"/>
@@ -1048,7 +1048,7 @@ WHERE
 					</textElement>
 					<textFieldExpression><![CDATA["Lieferschein"]]></textFieldExpression>
 				</textField>
-				<textField>
+				<textField isBlankWhenNull="true">
 					<reportElement style="Report Monospace Font" x="101" y="41" width="108" height="12" forecolor="#808080" uuid="cf42be7d-fff4-410e-a413-7bdc9ca635fc">
 						<property name="local_mesure_unitx" value="mm"/>
 						<property name="com.jaspersoft.studio.unit.x" value="mm"/>

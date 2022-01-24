@@ -39,27 +39,27 @@ SELECT
 	ih.city,
 	ih.regionname,
 	ih.C_Location_ID,
-	bpg.greeting deliverygreeting,
-	bp.name deliverybpname,
-	bp.name2 deliverybpname2,
-	l.address1 AS deliveryadress,
-	l.address2 AS deliveryadress2,
-	l.address3 AS deliveryadress3,
-	l.address4 AS deliveryadress4,
-	l.city AS deliverycity, 
-	l.regionname AS deliveryregionname,
-	bpl.name locationname,
-	l.c_location_id AS deliverylocation_id,
+	COALESCE(bpg.greeting,ih.bpgreeting) AS deliverygreeting,
+	COALESCE(bp.name,ih.name) deliverybpname,
+	COALESCE(bp.name2,ih.name2) deliverybpname2,
+	COALESCE(l.address1,ih.address1) AS deliveryadress,
+	COALESCE(l.address2,ih.address2) AS deliveryadress2,
+	COALESCE(l.address3,ih.address3) AS deliveryadress3,
+	COALESCE(l.address4,ih.address4) AS deliveryadress4,
+	COALESCE(l.city,ih.city) AS deliverycity, 
+	COALESCE(l.regionname,ih.regionname) AS deliveryregionname,
+	COALESCE(bpl.name,ih.bp_location_name) locationname,
+	COALESCE(l.c_location_id, ih.c_location_id) AS deliverylocation_id,
 	ih.AD_Org_ID,
 	ih.Org_Location_ID,
 	ih.C_Invoice_ID AS Record_ID,
 	'C_Invoice' AS doctypename
 FROM c_invoice_header_v ih
-JOIN c_order o ON ih.c_order_id = o.c_order_id 
-JOIN C_BPartner bp ON bp.c_bpartner_id = o.c_bpartner_id 
+LEFT JOIN c_order o ON ih.c_order_id = o.c_order_id 
+LEFT JOIN C_BPartner bp ON bp.c_bpartner_id = o.c_bpartner_id 
 LEFT JOIN c_greeting bpg ON bp.c_greeting_id = bpg.c_greeting_id
-JOIN c_bpartner_location bpl ON o.c_bpartner_location_id = bpl.c_bpartner_location_id
-JOIN c_location l ON bpl.c_location_id = l.c_location_id
+LEFT JOIN c_bpartner_location bpl ON o.c_bpartner_location_id = bpl.c_bpartner_location_id
+LEFT JOIN c_location l ON bpl.c_location_id = l.c_location_id
 WHERE ih.c_invoice_id=$P{RECORD_ID}
 UNION ALL
 SELECT

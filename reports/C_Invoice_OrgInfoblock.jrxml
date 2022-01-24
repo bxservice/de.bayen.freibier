@@ -87,8 +87,8 @@
 	ih.poreference,
 	'C_Invoice' AS doctablename
 FROM c_invoice_header_v ih
-JOIN c_order o ON ih.c_order_id = o.c_order_id 
-JOIN C_BPartner bp ON bp.c_bpartner_id = o.c_bpartner_id 
+LEFT JOIN c_order o ON ih.c_order_id = o.c_order_id 
+LEFT JOIN C_BPartner bp ON bp.c_bpartner_id = o.c_bpartner_id 
 WHERE ih.c_invoice_id=$P{RECORD_ID}
 UNION ALL
 SELECT oh.documentno,
@@ -166,8 +166,7 @@ FROM h
 	 JOIN AD_Table ON(AD_Table.tablename = h.doctablename)
 WHERE
      AD_Table.AD_Table_ID= CAST($P{AD_TABLE_ID} AS NUMERIC)
-	 AND record_id =  CAST( $P{RECORD_ID} AS NUMERIC)
-	]]>
+	 AND record_id =  CAST( $P{RECORD_ID} AS NUMERIC)]]>
 	</queryString>
 	<field name="documentno" class="java.lang.String"/>
 	<field name="bpvalue" class="java.lang.String"/>
@@ -236,7 +235,7 @@ WHERE
 				<textElement textAlignment="Right">
 					<font size="9"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{bpvalue} + (!$F{bpvalue}.equals($F{orderbpvalue}) ? "/" + $F{orderbpvalue} : "")]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{bpvalue} + (!$F{bpvalue}.equals($F{orderbpvalue})&& $F{orderbpvalue} != null ? "/" + $F{orderbpvalue} : "")]]></textFieldExpression>
 			</textField>
 			<textField>
 				<reportElement style="Report Standard Font" x="0" y="36" width="84" height="12" isRemoveLineWhenBlank="true" uuid="4d7aab72-a187-46e3-80a7-529568895600">
