@@ -68,14 +68,20 @@ public class FreiBierEventHandler extends AbstractEventHandler {
 					}
 				}
 			}
+		} else if (IEventTopics.DOC_BEFORE_PREPARE.equals(type)) {
+			if (getPO(event) instanceof MOrder) {
+				OrderLineSQLCreator orderLineCreator = new OrderLineSQLCreator((MOrder) getPO(event));
+				orderLineCreator.createLinesFromSQLFunction();				
+			}
 		}
-
 	}
-
+	
 	@Override
 	protected void initialize() {
 		registerEvent(IEventTopics.AFTER_LOGIN);
 		registerTableEvent(IEventTopics.DOCACTION, MOrder.Table_Name);
+		
+		registerTableEvent(IEventTopics.DOC_BEFORE_PREPARE, MOrder.Table_Name);
 	}
 	
 }
