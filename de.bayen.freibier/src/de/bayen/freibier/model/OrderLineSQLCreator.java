@@ -18,7 +18,6 @@ public class OrderLineSQLCreator {
 	private static CLogger log = CLogger.getCLogger(OrderLineSQLCreator.class);
 	
 	private static final String SYSCONGIF_FUNCTION_NAME = "BAY_ORDERLINES_SQL";
-	private static final String DEFAULT_FUNCTION_NAME = "bay_additional_order_lines";
 	private static final int LINE_NO = 1;
 	private static final int M_PRODUCT_ID = 2;
 	private static final int QTY_ENTERED = 3;
@@ -31,7 +30,7 @@ public class OrderLineSQLCreator {
 	}
 	
 	public void createLinesFromSQLFunction() {
-		String orderLinesSQLFunction = MSysConfig.getValue(SYSCONGIF_FUNCTION_NAME, DEFAULT_FUNCTION_NAME, order.getAD_Client_ID());
+		String orderLinesSQLFunction = MSysConfig.getValue(SYSCONGIF_FUNCTION_NAME, order.getAD_Client_ID());
 		
 		if (!Util.isEmpty(orderLinesSQLFunction)) {
 			String sql = "SELECT * FROM " + orderLinesSQLFunction + "(?)";
