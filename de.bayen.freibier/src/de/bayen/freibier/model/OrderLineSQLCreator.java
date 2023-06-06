@@ -32,7 +32,7 @@ public class OrderLineSQLCreator {
 	public void createLinesFromSQLFunction() {
 		String orderLinesSQLFunction = MSysConfig.getValue(SYSCONGIF_FUNCTION_NAME, order.getAD_Client_ID());
 		
-		if (!Util.isEmpty(orderLinesSQLFunction)) {
+		if (order.isSOTrx() && !Util.isEmpty(orderLinesSQLFunction)) {
 			String sql = "SELECT * FROM " + orderLinesSQLFunction + "(?)";
 			PreparedStatement pstmt = null;
 			ResultSet rs = null;
