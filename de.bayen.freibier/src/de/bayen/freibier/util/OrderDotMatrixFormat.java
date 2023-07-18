@@ -139,7 +139,8 @@ public class OrderDotMatrixFormat {
 				+ " bp.BAY_IsPrintOpenItems,"
 				+ " h.C_BPartner_ID,"
 				+ " h.Bill_Location_ID,"
-				+ " h.C_Order_ID"
+				+ " h.C_Order_ID,"
+				+ " COALESCE(bd.description,'') AS deliveryconstraint"
 				+ " FROM C_Order_Header_V h"
 				+ " JOIN C_Order o ON (h.C_Order_ID=o.C_Order_ID)"
 				+ " LEFT JOIN C_Tax t ON (t.C_Tax_ID=(SELECT MAX(C_Tax_ID) FROM C_OrderTax ot WHERE ot.C_Order_ID=o.C_Order_ID AND ot.TaxAmt!=0))"
@@ -150,6 +151,7 @@ public class OrderDotMatrixFormat {
 				+ " LEFT JOIN C_DocType d ON (d.C_DocType_ID=o.C_DocTypeTarget_ID)"
 				+ " LEFT JOIN BAY_Route r ON (o.BAY_Route_ID=r.BAY_Route_ID)"
 				+ " LEFT JOIN AD_User u ON (h.CreatedBy=u.AD_User_ID)"
+				+ " LEFT JOIN BAY_DeliveryConstraint bd ON (bd.bay_deliveryconstraint_id=bp.bay_deliveryconstraint_id)"
 				+ " WHERE h.C_Order_ID=?";
 		try {
 			pstmt = DB.prepareStatement(sqlHeader, trxName);
@@ -180,6 +182,7 @@ public class OrderDotMatrixFormat {
 				headerData.Description = rs.getString("Description");
 				headerData.PaymentTermNote = rs.getString("PaymentTermNote");
 				headerData.TargetDocumentTypeNote = rs.getString("TargetDocumentTypeNote");
+				headerData.DeliveryConstraintDescription = rs.getString("deliveryconstraint");
 				headerData.TaxRate = rs.getString("TaxRate");
 				headerData.IsTaxIncluded = rs.getString("IsTaxIncluded");
 				headerData.CreatedBy = rs.getString("CreatedBy");
@@ -190,6 +193,7 @@ public class OrderDotMatrixFormat {
 				headerData.Description = sanitizeCRLF(headerData.Description);
 				headerData.PaymentTermNote = sanitizeCRLF(headerData.PaymentTermNote);
 				headerData.TargetDocumentTypeNote = sanitizeCRLF(headerData.TargetDocumentTypeNote);
+				headerData.DeliveryConstraintDescription = sanitizeCRLF(headerData.DeliveryConstraintDescription);
 			}
 		} catch (SQLException e) {
 			throw new AdempiereException(e);
@@ -379,6 +383,7 @@ public class OrderDotMatrixFormat {
 		public int C_BPartner_ID;
 		public int Bill_Location_ID;
 		public String Saldo;
+		public String DeliveryConstraintDescription;
 	}
 
 	public static class DetailData {
@@ -421,6 +426,7 @@ public class OrderDotMatrixFormat {
 		if (isRechnung) {
 			evaluateFooterLines(headerData.PaymentTermNote);
 		}
+		evaluateFooterLines(headerData.DeliveryConstraintDescription);
 		evaluateFooterLines(headerData.Description);
 		evaluateFooterLines(headerData.TargetDocumentTypeNote);
 
@@ -756,6 +762,12 @@ public class OrderDotMatrixFormat {
 					bw.write(headerData.PaymentTermNote);
 					carriageReturn(bw);
 				}
+			}
+			if (! Util.isEmpty(headerData.DeliveryConstraintDescription, true)) {
+				lineFeed(bw);
+				lineFeed(bw);
+				bw.write(headerData.DeliveryConstraintDescription);
+				carriageReturn(bw);
 			}
 			if (! Util.isEmpty(headerData.Description, true)) {
 				lineFeed(bw);
