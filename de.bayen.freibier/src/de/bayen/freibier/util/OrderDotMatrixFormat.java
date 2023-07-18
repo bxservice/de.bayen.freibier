@@ -140,7 +140,8 @@ public class OrderDotMatrixFormat {
 				+ " h.C_BPartner_ID,"
 				+ " h.Bill_Location_ID,"
 				+ " h.C_Order_ID,"
-				+ " COALESCE(bd.description,'') AS deliveryconstraint"
+				+ " COALESCE(bd.description,'') AS deliveryconstraint,"
+				+ " (select COALESCE(max(c.AD_User_ID),0) from AD_User c where bp.C_BPartner_ID=c.C_BPartner_ID AND c.IsActive='Y' AND c.IsShipTo='Y') as ShipTo_User_ID"
 				+ " FROM C_Order_Header_V h"
 				+ " JOIN C_Order o ON (h.C_Order_ID=o.C_Order_ID)"
 				+ " LEFT JOIN C_Tax t ON (t.C_Tax_ID=(SELECT MAX(C_Tax_ID) FROM C_OrderTax ot WHERE ot.C_Order_ID=o.C_Order_ID AND ot.TaxAmt!=0))"
@@ -189,6 +190,7 @@ public class OrderDotMatrixFormat {
 				headerData.BAY_IsPrintOpenItems = rs.getString("BAY_IsPrintOpenItems");
 				headerData.C_BPartner_ID = rs.getInt("C_BPartner_ID");
 				headerData.Bill_Location_ID = rs.getInt("Bill_Location_ID");
+				headerData.ShipTo_User_ID = rs.getInt("ShipTo_User_ID");
 				// add newlines if needed
 				headerData.Description = sanitizeCRLF(headerData.Description);
 				headerData.PaymentTermNote = sanitizeCRLF(headerData.PaymentTermNote);
@@ -384,6 +386,7 @@ public class OrderDotMatrixFormat {
 		public int Bill_Location_ID;
 		public String Saldo;
 		public String DeliveryConstraintDescription;
+		public int ShipTo_User_ID;
 	}
 
 	public static class DetailData {
@@ -852,9 +855,23 @@ public class OrderDotMatrixFormat {
 		bw.write("      ");
 		boldOn(bw);
 		bw.write(headerData.Name);
+		
+		//Redmine10257 - Print ship contact info on the right side of the address
+		if (headerData.ShipTo_User_ID > 0) {
+			MUser shipUser = MUser.get(headerData.ShipTo_User_ID);
+			bw.write("                          " + shipUser.getName());
+		}
+	
 		carriageReturn(bw); lineFeed(bw);
 		bw.write("      ");
 		bw.write(headerData.Name2);
+		
+		if (headerData.ShipTo_User_ID > 0) {
+			MUser shipUser = MUser.get(headerData.ShipTo_User_ID);
+			if (!Util.isEmpty(shipUser.getPhone()))
+				bw.write("                          " + shipUser.getPhone());
+		}
+		
 		carriageReturn(bw); lineFeed(bw);
 		bw.write("      ");
 		bw.write(headerData.Address1);
@@ -899,6 +916,15 @@ public class OrderDotMatrixFormat {
 		bw.write(headerData.DeliveryRoute);
 		boldOff(bw);
 		carriageReturn(bw); lineFeed(bw);
+	}
+	
+	private void printShipContactInfo(BufferedWriter bw) throws IOException {
+		if (headerData.ShipTo_User_ID > 0) {
+			MUser shipUser = MUser.get(headerData.ShipTo_User_ID);
+			bw.write("                " + shipUser.getName());
+			if (!Util.isEmpty(shipUser.getPhone()))
+				bw.write("                " + shipUser.getPhone());
+		}
 	}
 
 	private void carriageReturn(BufferedWriter bw) throws IOException {
