@@ -109,7 +109,7 @@ public class OrderDotMatrixFormat {
 		ResultSet rs = null;
 		final String sqlHeader =
 				"SELECT "
-				+ " rpad(substring(coalesce(h.DocumentNo,''),1,6),6,' ') AS DocumentNo,"
+				+ " rpad(substring(coalesce(h.DocumentNo,''),1,7),7,' ') AS DocumentNo,"
 				+ " coalesce(h.TaxId,'') AS TaxId,"
 				+ " coalesce(h.DocumentType,'') AS DocumentType,"
 				+ " h.Name AS Name,"
@@ -267,7 +267,7 @@ public class OrderDotMatrixFormat {
 		final String sqlOpenItems =
 				"SELECT "
 				+ " i.DateInvoiced,"
-				+ " rpad(substring(coalesce(i.DocumentNo,''),1,6),6,' ') AS DocumentNo,"
+				+ " rpad(substring(coalesce(i.DocumentNo,''),1,7),7,' ') AS DocumentNo,"
 				+ " to_char(coalesce(i.OpenAmt,0),'999990.00') AS Amount,"
 				+ " i.OpenAmt"  // USED in the query sqlSaldo below
 				+ " FROM RV_OpenItem i"
@@ -278,7 +278,7 @@ public class OrderDotMatrixFormat {
 				+ " UNION ALL"
 				+ " SELECT"
 				+ " p.DateTrx,"
-				+ " rpad(substring(coalesce(p.DocumentNo,''),1,6),6,' ') AS DocumentNo,"
+				+ " rpad(substring(coalesce(p.DocumentNo,''),1,7),7,' ') AS DocumentNo,"
 				+ " to_char(coalesce(-p.AvailableAmt,0),'999990.00') AS Amount,"
 				+ " -p.AvailableAmt"
 				+ " FROM RV_Payment p"
