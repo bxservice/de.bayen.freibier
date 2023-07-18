@@ -859,7 +859,7 @@ public class OrderDotMatrixFormat {
 		//Redmine10257 - Print ship contact info on the right side of the address
 		if (headerData.ShipTo_User_ID > 0) {
 			MUser shipUser = MUser.get(headerData.ShipTo_User_ID);
-			bw.write("                          " + shipUser.getName());
+			printUserDataWithSpaces(bw, shipUser.getName(), headerData.Name.length());
 		}
 	
 		carriageReturn(bw); lineFeed(bw);
@@ -869,7 +869,7 @@ public class OrderDotMatrixFormat {
 		if (headerData.ShipTo_User_ID > 0) {
 			MUser shipUser = MUser.get(headerData.ShipTo_User_ID);
 			if (!Util.isEmpty(shipUser.getPhone()))
-				bw.write("                          " + shipUser.getPhone());
+				printUserDataWithSpaces(bw, shipUser.getPhone(), headerData.Name2.length());
 		}
 		
 		carriageReturn(bw); lineFeed(bw);
@@ -918,13 +918,14 @@ public class OrderDotMatrixFormat {
 		carriageReturn(bw); lineFeed(bw);
 	}
 	
-	private void printShipContactInfo(BufferedWriter bw) throws IOException {
-		if (headerData.ShipTo_User_ID > 0) {
-			MUser shipUser = MUser.get(headerData.ShipTo_User_ID);
-			bw.write("                " + shipUser.getName());
-			if (!Util.isEmpty(shipUser.getPhone()))
-				bw.write("                " + shipUser.getPhone());
-		}
+	private void printUserDataWithSpaces(BufferedWriter bw, String data, int previousDataLength) throws IOException {
+		int col = 40;
+		StringBuilder shipUserData = new StringBuilder();
+		for (int i = previousDataLength ; i < col; i++)
+			shipUserData.append(" ");
+		
+		shipUserData.append(data);
+		bw.write(shipUserData.toString());
 	}
 
 	private void carriageReturn(BufferedWriter bw) throws IOException {
