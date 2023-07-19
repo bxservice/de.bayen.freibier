@@ -14,6 +14,8 @@ import org.compiere.model.X_C_BP_Relation;
 import org.compiere.util.Env;
 
 public class CalloutSalesOrder extends CalloutEngine implements IColumnCallout {
+	
+	private static final String DELIVERY_CONSTRAINT_COLUMNNAME = "BAY_DeliveryConstraint_ID";
 
 	@Override
 	public String start(Properties ctx, int WindowNo, GridTab mTab, GridField mField, Object value, Object oldValue) {
@@ -27,6 +29,10 @@ public class CalloutSalesOrder extends CalloutEngine implements IColumnCallout {
 			mTab.setValue(I_C_Order.COLUMNNAME_Bill_BPartner_ID, invoicePartner.getC_BPartner_ID());
 		}
 		
+		int deliveryConstraint_ID = getDeliveryConstraint(ctx, order.getC_BPartner_ID());
+		if (deliveryConstraint_ID > 0)
+			mTab.setValue(DELIVERY_CONSTRAINT_COLUMNNAME, deliveryConstraint_ID);
+
 		return "";
 	}
 	
@@ -42,5 +48,11 @@ public class CalloutSalesOrder extends CalloutEngine implements IColumnCallout {
 		} 
 		
 		return null;
+	}
+	
+	private int getDeliveryConstraint(Properties ctx, int C_BPartner_ID) {
+		MBPartner businessPartner = MBPartner.get(ctx, C_BPartner_ID);
+		int deliveryConstraintID = businessPartner.get_ValueAsInt(DELIVERY_CONSTRAINT_COLUMNNAME);
+		return deliveryConstraintID;
 	}
 }

@@ -109,7 +109,7 @@ public class OrderDotMatrixFormat {
 		ResultSet rs = null;
 		final String sqlHeader =
 				"SELECT "
-				+ " rpad(substring(coalesce(h.DocumentNo,''),1,6),6,' ') AS DocumentNo,"
+				+ " rpad(substring(coalesce(h.DocumentNo,''),1,7),7,' ') AS DocumentNo,"
 				+ " coalesce(h.TaxId,'') AS TaxId,"
 				+ " coalesce(h.DocumentType,'') AS DocumentType,"
 				+ " h.Name AS Name,"
@@ -139,7 +139,9 @@ public class OrderDotMatrixFormat {
 				+ " bp.BAY_IsPrintOpenItems,"
 				+ " h.C_BPartner_ID,"
 				+ " h.Bill_Location_ID,"
-				+ " h.C_Order_ID"
+				+ " h.C_Order_ID,"
+				+ " COALESCE(bd.description,'') AS deliveryconstraint,"
+				+ " (select COALESCE(max(c.AD_User_ID),0) from AD_User c where bp.C_BPartner_ID=c.C_BPartner_ID AND c.IsActive='Y' AND c.IsShipTo='Y') as ShipTo_User_ID"
 				+ " FROM C_Order_Header_V h"
 				+ " JOIN C_Order o ON (h.C_Order_ID=o.C_Order_ID)"
 				+ " LEFT JOIN C_Tax t ON (t.C_Tax_ID=(SELECT MAX(C_Tax_ID) FROM C_OrderTax ot WHERE ot.C_Order_ID=o.C_Order_ID AND ot.TaxAmt!=0))"
@@ -150,6 +152,7 @@ public class OrderDotMatrixFormat {
 				+ " LEFT JOIN C_DocType d ON (d.C_DocType_ID=o.C_DocTypeTarget_ID)"
 				+ " LEFT JOIN BAY_Route r ON (o.BAY_Route_ID=r.BAY_Route_ID)"
 				+ " LEFT JOIN AD_User u ON (h.CreatedBy=u.AD_User_ID)"
+				+ " LEFT JOIN BAY_DeliveryConstraint bd ON (bd.bay_deliveryconstraint_id=o.bay_deliveryconstraint_id)"
 				+ " WHERE h.C_Order_ID=?";
 		try {
 			pstmt = DB.prepareStatement(sqlHeader, trxName);
@@ -180,16 +183,19 @@ public class OrderDotMatrixFormat {
 				headerData.Description = rs.getString("Description");
 				headerData.PaymentTermNote = rs.getString("PaymentTermNote");
 				headerData.TargetDocumentTypeNote = rs.getString("TargetDocumentTypeNote");
+				headerData.DeliveryConstraintDescription = rs.getString("deliveryconstraint");
 				headerData.TaxRate = rs.getString("TaxRate");
 				headerData.IsTaxIncluded = rs.getString("IsTaxIncluded");
 				headerData.CreatedBy = rs.getString("CreatedBy");
 				headerData.BAY_IsPrintOpenItems = rs.getString("BAY_IsPrintOpenItems");
 				headerData.C_BPartner_ID = rs.getInt("C_BPartner_ID");
 				headerData.Bill_Location_ID = rs.getInt("Bill_Location_ID");
+				headerData.ShipTo_User_ID = rs.getInt("ShipTo_User_ID");
 				// add newlines if needed
 				headerData.Description = sanitizeCRLF(headerData.Description);
 				headerData.PaymentTermNote = sanitizeCRLF(headerData.PaymentTermNote);
 				headerData.TargetDocumentTypeNote = sanitizeCRLF(headerData.TargetDocumentTypeNote);
+				headerData.DeliveryConstraintDescription = sanitizeCRLF(headerData.DeliveryConstraintDescription);
 			}
 		} catch (SQLException e) {
 			throw new AdempiereException(e);
@@ -267,7 +273,7 @@ public class OrderDotMatrixFormat {
 		final String sqlOpenItems =
 				"SELECT "
 				+ " i.DateInvoiced,"
-				+ " rpad(substring(coalesce(i.DocumentNo,''),1,6),6,' ') AS DocumentNo,"
+				+ " rpad(substring(coalesce(i.DocumentNo,''),1,7),7,' ') AS DocumentNo,"
 				+ " to_char(coalesce(i.OpenAmt,0),'999990.00') AS Amount,"
 				+ " i.OpenAmt"  // USED in the query sqlSaldo below
 				+ " FROM RV_OpenItem i"
@@ -278,7 +284,7 @@ public class OrderDotMatrixFormat {
 				+ " UNION ALL"
 				+ " SELECT"
 				+ " p.DateTrx,"
-				+ " rpad(substring(coalesce(p.DocumentNo,''),1,6),6,' ') AS DocumentNo,"
+				+ " rpad(substring(coalesce(p.DocumentNo,''),1,7),7,' ') AS DocumentNo,"
 				+ " to_char(coalesce(-p.AvailableAmt,0),'999990.00') AS Amount,"
 				+ " -p.AvailableAmt"
 				+ " FROM RV_Payment p"
@@ -379,6 +385,8 @@ public class OrderDotMatrixFormat {
 		public int C_BPartner_ID;
 		public int Bill_Location_ID;
 		public String Saldo;
+		public String DeliveryConstraintDescription;
+		public int ShipTo_User_ID;
 	}
 
 	public static class DetailData {
@@ -421,6 +429,7 @@ public class OrderDotMatrixFormat {
 		if (isRechnung) {
 			evaluateFooterLines(headerData.PaymentTermNote);
 		}
+		evaluateFooterLines(headerData.DeliveryConstraintDescription);
 		evaluateFooterLines(headerData.Description);
 		evaluateFooterLines(headerData.TargetDocumentTypeNote);
 
@@ -559,7 +568,7 @@ public class OrderDotMatrixFormat {
 			if (pageControl.Line < FooterLine) {
 				// fill lines until footer margin
 				int start = pageControl.Line;
-				for (int i = start; i < FooterLine; i++)
+				for (int i = start; i < FooterLine+1; i++)
 					lineFeed(bw);
 			}
 			if (isRechnung) {
@@ -748,23 +757,26 @@ public class OrderDotMatrixFormat {
 				carriageReturn(bw);
 			} else {
 				bw.write("--");
+				carriageReturn(bw);
 			}
 			if (isRechnung) {
 				if (! Util.isEmpty(headerData.PaymentTermNote, true)) {
-					lineFeed(bw);
 					lineFeed(bw);
 					bw.write(headerData.PaymentTermNote);
 					carriageReturn(bw);
 				}
 			}
-			if (! Util.isEmpty(headerData.Description, true)) {
+			if (! Util.isEmpty(headerData.DeliveryConstraintDescription, true)) {
 				lineFeed(bw);
+				bw.write(headerData.DeliveryConstraintDescription);
+				carriageReturn(bw);
+			}
+			if (! Util.isEmpty(headerData.Description, true)) {
 				lineFeed(bw);
 				bw.write(headerData.Description);
 				carriageReturn(bw);
 			}
 			if (! Util.isEmpty(headerData.TargetDocumentTypeNote, true)) {
-				lineFeed(bw);
 				lineFeed(bw);
 				boldOn(bw);
 				bw.write(headerData.TargetDocumentTypeNote);
@@ -790,7 +802,7 @@ public class OrderDotMatrixFormat {
 
 	private void evaluateFooterLines(String str) {
 		if (Util.isEmpty(str, true)) {
-			FooterLine = FooterLine + 2;
+			FooterLine = FooterLine + 1;
 		} else {
 			int count = countCR(str);
 			FooterLine = FooterLine - count;
@@ -840,10 +852,28 @@ public class OrderDotMatrixFormat {
 		bw.write("      ");
 		boldOn(bw);
 		bw.write(headerData.Name);
+		boldOff(bw);
+		
+		//Redmine10257 - Print ship contact info on the right side of the address
+		if (headerData.ShipTo_User_ID > 0) {
+			MUser shipUser = MUser.get(headerData.ShipTo_User_ID);
+			printUserDataWithSpaces(bw, shipUser.getName(), headerData.Name.length());
+		}
+	
 		carriageReturn(bw); lineFeed(bw);
 		bw.write("      ");
+		boldOn(bw);
 		bw.write(headerData.Name2);
+		boldOff(bw);
+		
+		if (headerData.ShipTo_User_ID > 0) {
+			MUser shipUser = MUser.get(headerData.ShipTo_User_ID);
+			if (!Util.isEmpty(shipUser.getPhone()))
+				printUserDataWithSpaces(bw, shipUser.getPhone(), headerData.Name2.length());
+		}
+		
 		carriageReturn(bw); lineFeed(bw);
+		boldOn(bw);
 		bw.write("      ");
 		bw.write(headerData.Address1);
 		carriageReturn(bw); lineFeed(bw);
@@ -887,6 +917,16 @@ public class OrderDotMatrixFormat {
 		bw.write(headerData.DeliveryRoute);
 		boldOff(bw);
 		carriageReturn(bw); lineFeed(bw);
+	}
+	
+	private void printUserDataWithSpaces(BufferedWriter bw, String data, int previousDataLength) throws IOException {
+		int col = 44;
+		StringBuilder shipUserData = new StringBuilder();
+		for (int i = previousDataLength ; i < col; i++)
+			shipUserData.append(" ");
+		
+		shipUserData.append(data);
+		bw.write(shipUserData.toString());
 	}
 
 	private void carriageReturn(BufferedWriter bw) throws IOException {
