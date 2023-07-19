@@ -568,7 +568,7 @@ public class OrderDotMatrixFormat {
 			if (pageControl.Line < FooterLine) {
 				// fill lines until footer margin
 				int start = pageControl.Line;
-				for (int i = start; i < FooterLine; i++)
+				for (int i = start; i < FooterLine+1; i++)
 					lineFeed(bw);
 			}
 			if (isRechnung) {
@@ -757,10 +757,10 @@ public class OrderDotMatrixFormat {
 				carriageReturn(bw);
 			} else {
 				bw.write("--");
+				carriageReturn(bw);
 			}
 			if (isRechnung) {
 				if (! Util.isEmpty(headerData.PaymentTermNote, true)) {
-					lineFeed(bw);
 					lineFeed(bw);
 					bw.write(headerData.PaymentTermNote);
 					carriageReturn(bw);
@@ -768,19 +768,15 @@ public class OrderDotMatrixFormat {
 			}
 			if (! Util.isEmpty(headerData.DeliveryConstraintDescription, true)) {
 				lineFeed(bw);
-				lineFeed(bw);
 				bw.write(headerData.DeliveryConstraintDescription);
 				carriageReturn(bw);
 			}
 			if (! Util.isEmpty(headerData.Description, true)) {
-				if (Util.isEmpty(headerData.DeliveryConstraintDescription, true))
-					lineFeed(bw);
 				lineFeed(bw);
 				bw.write(headerData.Description);
 				carriageReturn(bw);
 			}
 			if (! Util.isEmpty(headerData.TargetDocumentTypeNote, true)) {
-				lineFeed(bw);
 				lineFeed(bw);
 				boldOn(bw);
 				bw.write(headerData.TargetDocumentTypeNote);
@@ -806,7 +802,7 @@ public class OrderDotMatrixFormat {
 
 	private void evaluateFooterLines(String str) {
 		if (Util.isEmpty(str, true)) {
-			FooterLine = FooterLine + 2;
+			FooterLine = FooterLine + 1;
 		} else {
 			int count = countCR(str);
 			FooterLine = FooterLine - count;
@@ -856,16 +852,19 @@ public class OrderDotMatrixFormat {
 		bw.write("      ");
 		boldOn(bw);
 		bw.write(headerData.Name);
+		boldOff(bw);
 		
 		//Redmine10257 - Print ship contact info on the right side of the address
 		if (headerData.ShipTo_User_ID > 0) {
 			MUser shipUser = MUser.get(headerData.ShipTo_User_ID);
-			printUserDataWithSpaces(bw, shipUser.getName(), headerData.Name.length() + 2 /*2 invisible characters coming from the bold string*/);
+			printUserDataWithSpaces(bw, shipUser.getName(), headerData.Name.length());
 		}
 	
 		carriageReturn(bw); lineFeed(bw);
 		bw.write("      ");
+		boldOn(bw);
 		bw.write(headerData.Name2);
+		boldOff(bw);
 		
 		if (headerData.ShipTo_User_ID > 0) {
 			MUser shipUser = MUser.get(headerData.ShipTo_User_ID);
@@ -874,6 +873,7 @@ public class OrderDotMatrixFormat {
 		}
 		
 		carriageReturn(bw); lineFeed(bw);
+		boldOn(bw);
 		bw.write("      ");
 		bw.write(headerData.Address1);
 		carriageReturn(bw); lineFeed(bw);
