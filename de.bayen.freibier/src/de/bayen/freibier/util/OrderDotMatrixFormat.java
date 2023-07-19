@@ -152,7 +152,7 @@ public class OrderDotMatrixFormat {
 				+ " LEFT JOIN C_DocType d ON (d.C_DocType_ID=o.C_DocTypeTarget_ID)"
 				+ " LEFT JOIN BAY_Route r ON (o.BAY_Route_ID=r.BAY_Route_ID)"
 				+ " LEFT JOIN AD_User u ON (h.CreatedBy=u.AD_User_ID)"
-				+ " LEFT JOIN BAY_DeliveryConstraint bd ON (bd.bay_deliveryconstraint_id=bp.bay_deliveryconstraint_id)"
+				+ " LEFT JOIN BAY_DeliveryConstraint bd ON (bd.bay_deliveryconstraint_id=o.bay_deliveryconstraint_id)"
 				+ " WHERE h.C_Order_ID=?";
 		try {
 			pstmt = DB.prepareStatement(sqlHeader, trxName);
@@ -773,7 +773,8 @@ public class OrderDotMatrixFormat {
 				carriageReturn(bw);
 			}
 			if (! Util.isEmpty(headerData.Description, true)) {
-				lineFeed(bw);
+				if (Util.isEmpty(headerData.DeliveryConstraintDescription, true))
+					lineFeed(bw);
 				lineFeed(bw);
 				bw.write(headerData.Description);
 				carriageReturn(bw);
@@ -859,7 +860,7 @@ public class OrderDotMatrixFormat {
 		//Redmine10257 - Print ship contact info on the right side of the address
 		if (headerData.ShipTo_User_ID > 0) {
 			MUser shipUser = MUser.get(headerData.ShipTo_User_ID);
-			printUserDataWithSpaces(bw, shipUser.getName(), headerData.Name.length());
+			printUserDataWithSpaces(bw, shipUser.getName(), headerData.Name.length() + 2 /*2 invisible characters coming from the bold string*/);
 		}
 	
 		carriageReturn(bw); lineFeed(bw);
@@ -919,7 +920,7 @@ public class OrderDotMatrixFormat {
 	}
 	
 	private void printUserDataWithSpaces(BufferedWriter bw, String data, int previousDataLength) throws IOException {
-		int col = 40;
+		int col = 44;
 		StringBuilder shipUserData = new StringBuilder();
 		for (int i = previousDataLength ; i < col; i++)
 			shipUserData.append(" ");
