@@ -68,6 +68,13 @@ public class FreiBierEventHandler extends AbstractEventHandler {
 					}
 				}
 			}
+		} else if (getPO(event) instanceof MOrder
+				&& (type.equals(IEventTopics.PO_BEFORE_NEW) || type.equals(IEventTopics.PO_BEFORE_CHANGE))) {
+			
+			MOrder order = (MOrder) getPO(event);
+			int BAY_Route_ID = order.get_ValueAsInt("BAY_Route_ID");
+			int warehouseID = WarehouseHelper.getWarehouseID(BAY_Route_ID);
+			order.setM_Warehouse_ID(warehouseID);
 		}
 
 	}
@@ -76,6 +83,9 @@ public class FreiBierEventHandler extends AbstractEventHandler {
 	protected void initialize() {
 		registerEvent(IEventTopics.AFTER_LOGIN);
 		registerTableEvent(IEventTopics.DOCACTION, MOrder.Table_Name);
+		
+		registerTableEvent(IEventTopics.PO_BEFORE_CHANGE, MOrder.Table_Name);
+		registerTableEvent(IEventTopics.PO_BEFORE_NEW, MOrder.Table_Name);
 	}
 	
 }
