@@ -35,7 +35,7 @@ public class CalloutRouteWarehouse implements IColumnCallout {
 	@Override
 	public String start(Properties ctx, int WindowNo, GridTab mTab, GridField mField, Object value, Object oldValue) {
 		
-		if (value != null) {
+		if (value != null && WarehouseHelper.isUpdateWarehouse()) {
 			int BAY_Route_ID = ((Integer) value).intValue();
 			int warehouseID = WarehouseHelper.getWarehouseID(BAY_Route_ID);
 			

@@ -21,14 +21,17 @@
  **********************************************************************/
 package de.bayen.freibier.model;
 
+import org.compiere.model.MSysConfig;
 import org.compiere.util.DB;
+import org.compiere.util.Env;
 
 public class WarehouseHelper {
 	
 	final private static String ABHOLMARKT_ROUTE_UU = "cf63f734-1d6c-4cdf-bbf0-4a640648622a"; 
 	final private static String ABHOLMARKT_WAREHOUSE_UU = "ed734710-3e60-48c3-82d2-b1afa7b30fa1"; 
-	final private static String STANDARD_WAREHOUSE_UU = "01f5367d-0dec-4a8c-b15c-404a3417ab69"; 
-	
+	final private static String STANDARD_WAREHOUSE_UU = "01f5367d-0dec-4a8c-b15c-404a3417ab69";
+	final private static String WAREHOUSE_SYSCONFIG = "BAY_ISSETWAREHOUSEROUTE";
+		
 	public static int getWarehouseID(int BAY_Route_ID) {
 		
 		String BAY_Route_UU = getBAYRouteUUID(BAY_Route_ID);
@@ -39,6 +42,10 @@ public class WarehouseHelper {
 		String sql = "SELECT M_Warehouse_ID FROM M_Warehouse WHERE M_Warehouse_UU = ?";
 		return DB.getSQLValue(null, sql, warehouseUUID);
 
+	}
+	
+	public static boolean isUpdateWarehouse() {
+		return MSysConfig.getBooleanValue(WAREHOUSE_SYSCONFIG, false, Env.getAD_Client_ID(Env.getCtx()));
 	}
 	
 	private static String getBAYRouteUUID(int BAY_Route_ID) {

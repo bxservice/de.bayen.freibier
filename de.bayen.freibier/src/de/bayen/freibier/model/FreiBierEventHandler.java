@@ -71,10 +71,12 @@ public class FreiBierEventHandler extends AbstractEventHandler {
 		} else if (getPO(event) instanceof MOrder
 				&& (type.equals(IEventTopics.PO_BEFORE_NEW) || type.equals(IEventTopics.PO_BEFORE_CHANGE))) {
 			
-			MOrder order = (MOrder) getPO(event);
-			int BAY_Route_ID = order.get_ValueAsInt("BAY_Route_ID");
-			int warehouseID = WarehouseHelper.getWarehouseID(BAY_Route_ID);
-			order.setM_Warehouse_ID(warehouseID);
+			if (WarehouseHelper.isUpdateWarehouse()) {
+				MOrder order = (MOrder) getPO(event);
+				int BAY_Route_ID = order.get_ValueAsInt("BAY_Route_ID");
+				int warehouseID = WarehouseHelper.getWarehouseID(BAY_Route_ID);
+				order.setM_Warehouse_ID(warehouseID);				
+			}
 		}
 
 	}
