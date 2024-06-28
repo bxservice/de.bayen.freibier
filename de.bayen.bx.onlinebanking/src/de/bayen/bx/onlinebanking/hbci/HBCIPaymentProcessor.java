@@ -13,7 +13,6 @@
  *****************************************************************************/
 package de.bayen.bx.onlinebanking.hbci;
 
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;

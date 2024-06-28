@@ -1,14 +1,15 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
+Automatic-Module-Name: de.bayen.bx.lde
 Bundle-Name: de.bayen.bx.lde
 Bundle-SymbolicName: de.bayen.bx.lde
 Bundle-Version: 1.0.3.qualifier
-Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-RequiredExecutionEnvironment: JavaSE-17
 Require-Bundle: de.bayen.bx.leu;bundle-version="1.0.4",
- org.adempiere.base;bundle-version="2.0.0",
+ org.adempiere.base;bundle-version="11.0.0",
  de.bxservice.report;bundle-version="1.0.1",
  de.bxservice.report.libraries;bundle-version="1.0.0",
- org.adempiere.plugin.utils;bundle-version="2.0.0"
+ org.adempiere.plugin.utils;bundle-version="11.0.0"
 Service-Component: OSGI-INF/reportfileresolverfactory.xml
 Import-Package: org.osgi.framework;version="1.6.0",
  org.osgi.util.tracker;version="1.5.0"
