@@ -213,10 +213,10 @@ public class OrderDotMatrixFormat {
 		// Added UNION clause for ticket gforge #3017 -> print the lines for related 'services' when master line is not null and isDeposit='N' 
 		final String sqlDetail =
 				"SELECT d.line,"
-				+ " CASE WHEN l.C_UOM_ID!=p.C_UOM_ID THEN rpad(substring(coalesce(m.UOMSymbol,''),1,4),4,' ') ELSE '   ' END AS UOMSymbol,"
+				+ " CASE WHEN l.C_UOM_ID!=p.C_UOM_ID THEN rpad(substring(coalesce(m.UOMSymbol,''),1,4),4,' ') ELSE '    ' END AS UOMSymbol,"
 				+ " CASE WHEN p.Description IS NOT NULL AND t.Name IS NOT NULL THEN rpad(substring(p.Description,1,44-length(REPLACE(t.Name,' x ','x'))),44-length(REPLACE(t.Name,' x ','x')),' ') || ' ' || REPLACE(t.Name,' x ','x') ELSE rpad(substring(coalesce(d.Name,''),1,45),45,' ') END AS Name,"
 				+ " rpad(substring(coalesce(d.ProductValue,''),1,6),6,' ') AS ProductValue,"
-				+ " CASE WHEN d.QtyEntered IS NULL THEN '      ' ELSE to_char(coalesce(d.QtyEntered,0),'99990') END AS QtyEntered,"
+				+ " CASE WHEN d.QtyEntered IS NULL THEN '     ' ELSE to_char(coalesce(d.QtyEntered,0),'9990') END AS QtyEntered,"
 				+ " CASE WHEN d.LineNetAmt IS NULL THEN '            ' ELSE to_char(CASE WHEN p.IsDeposit='Y' THEN coalesce(d.LineNetAmt,0) ELSE 0 END+coalesce((SELECT sum(LineNetAmt) FROM C_OrderLine p WHERE l.c_orderline_id=p.bay_masterorderline_id),0),'99999990.00') END AS Pfand,"
 				+ " CASE WHEN d.LineNetAmt IS NULL THEN '            ' ELSE to_char(CASE WHEN p.IsDeposit!='Y' THEN coalesce(d.LineNetAmt,0) ELSE 0 END,'99999990.00') END AS LineNetAmt,"
 				+ " coalesce(d.Description,'') AS Description,"
@@ -230,10 +230,10 @@ public class OrderDotMatrixFormat {
 				+ " WHERE d.C_Order_ID=? AND d.Line < 999998 AND l.bay_masterorderline_id IS NULL"
 				+ " UNION "
 				+ " SELECT d.line,"
-				+ " CASE WHEN l.C_UOM_ID!=p.C_UOM_ID THEN rpad(substring(coalesce(m.UOMSymbol,''),1,3),3,' ') ELSE '   ' END AS UOMSymbol,"
+				+ " CASE WHEN l.C_UOM_ID!=p.C_UOM_ID THEN rpad(substring(coalesce(m.UOMSymbol,''),1,4),4,' ') ELSE '    ' END AS UOMSymbol,"
 				+ " CASE WHEN p.Description IS NOT NULL AND t.Name IS NOT NULL THEN rpad(substring(p.Description,1,44-length(REPLACE(t.Name,' x ','x'))),44-length(REPLACE(t.Name,' x ','x')),' ') || ' ' || REPLACE(t.Name,' x ','x') ELSE rpad(substring(coalesce(d.Name,''),1,45),45,' ') END AS Name,"
 				+ " rpad(substring(coalesce(d.ProductValue,''),1,6),6,' ') AS ProductValue,"
-				+ " CASE WHEN d.QtyEntered IS NULL THEN '' ELSE to_char(coalesce(d.QtyEntered,0),'99990') END AS QtyEntered,"
+				+ " CASE WHEN d.QtyEntered IS NULL THEN '' ELSE to_char(coalesce(d.QtyEntered,0),'9990') END AS QtyEntered,"
 				+ " CASE WHEN d.LineNetAmt IS NULL THEN '' ELSE to_char(CASE WHEN p.IsDeposit='Y' THEN coalesce(d.LineNetAmt,0) ELSE 0 END+coalesce((SELECT sum(LineNetAmt) FROM C_OrderLine p WHERE l.c_orderline_id=p.bay_masterorderline_id),0),'99999990.00') END AS Pfand,"
 				+ " CASE WHEN d.LineNetAmt IS NULL THEN '' ELSE to_char(CASE WHEN p.IsDeposit!='Y' THEN coalesce(d.LineNetAmt,0) ELSE 0 END,'99999990.00') END AS LineNetAmt,"
 				+ " coalesce(d.Description,'') AS Description,"
@@ -475,15 +475,15 @@ public class OrderDotMatrixFormat {
 			}
 			lineFeed(bw);
 			if (isRechnung) {
-				bw.write("Art.Nr.    Menge  Artikelbezeichnung                                 Pfand         Ware");
+				bw.write("Art.Nr.     Menge Artikelbezeichnung                                 Pfand         Ware");
 			} else {
-				bw.write("Art.Nr.    Menge  Artikelbezeichnung");
+				bw.write("Art.Nr.     Menge Artikelbezeichnung");
 			}
 			carriageReturn(bw); lineFeed(bw);
 			if (isRechnung) {
-				bw.write("----------+------+---------------------------------------------+-----------+-----------");
+				bw.write("-----------+-----+---------------------------------------------+-----------+-----------");
 			} else {
-				bw.write("----------+------+---------------------------------------------");
+				bw.write("-----------+-----+---------------------------------------------");
 			}
 			carriageReturn(bw); lineFeed(bw);
 
@@ -581,12 +581,12 @@ public class OrderDotMatrixFormat {
 			if (isRechnung) {
 				bw.write("LEERGUTR\u00dcCKGABE:        ANZAHL:                     ");
 				if ("Y".equals(headerData.IsTaxIncluded)) {
-					bw.write("Brutto");
+					bw.write("Brutto ");
 					bw.write(headerData.TaxRate);
 					bw.write("           ");
 					bw.write(headerData.GrandTotalLGAusgleich);
 				} else {
-					bw.write("Ware");
+					bw.write("Ware ");
 					bw.write(headerData.TaxRate);
 					bw.write("             ");
 					bw.write(headerData.TotalLinesLGAusgleich);
@@ -622,7 +622,7 @@ public class OrderDotMatrixFormat {
 			bw.write(anzahlMsg);
 			if (isRechnung) {
 				if ("Y".equals(headerData.IsTaxIncluded)) {
-					bw.write("   SUMME");
+					bw.write("   SUMME ");
 					bw.write(headerData.TaxRate);
 					bw.write("            ");
 					bw.write(headerData.GrandTotal);
@@ -662,7 +662,7 @@ public class OrderDotMatrixFormat {
 				if ("Y".equals(headerData.IsTaxIncluded)) {
 					bw.write("   - Leergutr\u00fcckgabe");
 				} else {
-					bw.write("   + MwSt");
+					bw.write("   + MwSt ");
 					bw.write(headerData.TaxRate);
 				}
 			} else {
@@ -735,7 +735,7 @@ public class OrderDotMatrixFormat {
 					bw.write("  M1:");
 					bw.write(headerData.TotalTax);
 				} else {
-					bw.write("NET");
+					bw.write("NET ");
 					bw.write(headerData.TaxRate);
 					bw.write(":");
 					bw.write(headerData.TotalLines);
@@ -752,7 +752,7 @@ public class OrderDotMatrixFormat {
 					bw.write("  M1:");
 					bw.write(headerData.TotalTaxLGAusgleich);
 				} else {
-					bw.write("NET");
+					bw.write("NET ");
 					bw.write(headerData.TaxRate);
 					bw.write(":");
 					bw.write(headerData.TotalLinesLGAusgleich);
@@ -828,15 +828,15 @@ public class OrderDotMatrixFormat {
 			printHeader(bw, DocumentTitle);
 			lineFeed(bw);
 			if (isRechnung) {
-				bw.write("Art.Nr.    Menge  Artikelbezeichnung                                 Pfand         Ware");
+				bw.write("Art.Nr.     Menge Artikelbezeichnung                                 Pfand         Ware");
 			} else {
-				bw.write("Art.Nr.    Menge  Artikelbezeichnung");
+				bw.write("Art.Nr.     Menge Artikelbezeichnung");
 			}
 			carriageReturn(bw); lineFeed(bw);
 			if (isRechnung) {
-				bw.write("----------+------+---------------------------------------------+-----------+-----------");
+				bw.write("-----------+-----+---------------------------------------------+-----------+-----------");
 			} else {
-				bw.write("----------+------+---------------------------------------------");
+				bw.write("-----------+-----+---------------------------------------------");
 			}
 			carriageReturn(bw); lineFeed(bw);
 		}
