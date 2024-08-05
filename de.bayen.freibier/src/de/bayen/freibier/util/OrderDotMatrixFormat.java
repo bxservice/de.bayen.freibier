@@ -133,7 +133,7 @@ public class OrderDotMatrixFormat {
 				+ " coalesce(h.Description,'') AS Description,"
 				+ " coalesce(pt.DocumentNote,'') AS PaymentTermNote,"
 				+ " coalesce(d.DocumentNote,'') AS TargetDocumentTypeNote,"
-				+ " to_char(coalesce(t.Rate,0),'90.0%') AS TaxRate,"
+				+ " to_char(coalesce(t.Rate,0),'FM90.0%') AS TaxRate,"
 				+ " h.IsTaxIncluded AS IsTaxIncluded,"
 				+ " rpad(substring(coalesce(u.Value,''),1,3),3,' ') AS CreatedBy,"
 				+ " bp.BAY_IsPrintOpenItems,"
@@ -141,11 +141,13 @@ public class OrderDotMatrixFormat {
 				+ " h.Bill_Location_ID,"
 				+ " h.C_Order_ID,"
 				+ " COALESCE(bd.description,'') AS deliveryconstraint,"
-				+ " (select COALESCE(max(c.AD_User_ID),0) from AD_User c where bp.C_BPartner_ID=c.C_BPartner_ID AND c.IsActive='Y' AND c.IsShipTo='Y') as ShipTo_User_ID"
+				+ " (select COALESCE(max(c.AD_User_ID),0) from AD_User c where bp.C_BPartner_ID=c.C_BPartner_ID AND c.IsActive='Y' AND c.IsShipTo='Y') as ShipTo_User_ID,"
+				+ " bpg.BAY_SODescription AS BPSODescription"
 				+ " FROM C_Order_Header_V h"
 				+ " JOIN C_Order o ON (h.C_Order_ID=o.C_Order_ID)"
 				+ " LEFT JOIN C_Tax t ON (t.C_Tax_ID=(SELECT MAX(C_Tax_ID) FROM C_OrderTax ot WHERE ot.C_Order_ID=o.C_Order_ID AND ot.TaxAmt!=0))"
 				+ " JOIN C_BPartner bp ON (o.C_BPartner_ID=bp.C_BPartner_ID)"
+				+ " JOIN C_BP_Group bpg ON (bpg.c_bp_group_id = bp.c_bp_group_id)"
 				+ " LEFT JOIN C_PaymentTerm pt ON (bp.C_PaymentTerm_ID=pt.C_PaymentTerm_ID)"
 				+ " JOIN C_BPartner_Location bpl ON (bpl.C_BPartner_Location_ID=o.C_BPartner_Location_ID)"
 				+ " JOIN C_Location l ON (bpl.C_Location_ID=l.C_Location_ID)"
@@ -191,11 +193,14 @@ public class OrderDotMatrixFormat {
 				headerData.C_BPartner_ID = rs.getInt("C_BPartner_ID");
 				headerData.Bill_Location_ID = rs.getInt("Bill_Location_ID");
 				headerData.ShipTo_User_ID = rs.getInt("ShipTo_User_ID");
+				headerData.BPGroupSODescription = rs.getString("BPSODescription");
+
 				// add newlines if needed
 				headerData.Description = sanitizeCRLF(headerData.Description);
 				headerData.PaymentTermNote = sanitizeCRLF(headerData.PaymentTermNote);
 				headerData.TargetDocumentTypeNote = sanitizeCRLF(headerData.TargetDocumentTypeNote);
 				headerData.DeliveryConstraintDescription = sanitizeCRLF(headerData.DeliveryConstraintDescription);
+				headerData.BPGroupSODescription = sanitizeCRLF(headerData.BPGroupSODescription);
 			}
 		} catch (SQLException e) {
 			throw new AdempiereException(e);
@@ -208,7 +213,7 @@ public class OrderDotMatrixFormat {
 		// Added UNION clause for ticket gforge #3017 -> print the lines for related 'services' when master line is not null and isDeposit='N' 
 		final String sqlDetail =
 				"SELECT d.line,"
-				+ " CASE WHEN l.C_UOM_ID!=p.C_UOM_ID THEN rpad(substring(coalesce(m.UOMSymbol,''),1,3),3,' ') ELSE '   ' END AS UOMSymbol,"
+				+ " CASE WHEN l.C_UOM_ID!=p.C_UOM_ID THEN rpad(substring(coalesce(m.UOMSymbol,''),1,4),4,' ') ELSE '   ' END AS UOMSymbol,"
 				+ " CASE WHEN p.Description IS NOT NULL AND t.Name IS NOT NULL THEN rpad(substring(p.Description,1,44-length(REPLACE(t.Name,' x ','x'))),44-length(REPLACE(t.Name,' x ','x')),' ') || ' ' || REPLACE(t.Name,' x ','x') ELSE rpad(substring(coalesce(d.Name,''),1,45),45,' ') END AS Name,"
 				+ " rpad(substring(coalesce(d.ProductValue,''),1,6),6,' ') AS ProductValue,"
 				+ " CASE WHEN d.QtyEntered IS NULL THEN '      ' ELSE to_char(coalesce(d.QtyEntered,0),'99990') END AS QtyEntered,"
@@ -387,6 +392,7 @@ public class OrderDotMatrixFormat {
 		public String Saldo;
 		public String DeliveryConstraintDescription;
 		public int ShipTo_User_ID;
+		public String BPGroupSODescription;
 	}
 
 	public static class DetailData {
@@ -430,6 +436,7 @@ public class OrderDotMatrixFormat {
 			evaluateFooterLines(headerData.PaymentTermNote);
 		}
 		evaluateFooterLines(headerData.DeliveryConstraintDescription);
+		evaluateFooterLines(headerData.BPGroupSODescription);
 		evaluateFooterLines(headerData.Description);
 		evaluateFooterLines(headerData.TargetDocumentTypeNote);
 
@@ -769,6 +776,11 @@ public class OrderDotMatrixFormat {
 			if (! Util.isEmpty(headerData.DeliveryConstraintDescription, true)) {
 				lineFeed(bw);
 				bw.write(headerData.DeliveryConstraintDescription);
+				carriageReturn(bw);
+			}
+			if (!Util.isEmpty(headerData.BPGroupSODescription, true)) {
+				lineFeed(bw);
+				bw.write(headerData.BPGroupSODescription);
 				carriageReturn(bw);
 			}
 			if (! Util.isEmpty(headerData.Description, true)) {
