@@ -142,7 +142,7 @@ public class OrderDotMatrixFormat {
 				+ " h.C_Order_ID,"
 				+ " COALESCE(bd.description,'') AS deliveryconstraint,"
 				+ " (select COALESCE(max(c.AD_User_ID),0) from AD_User c where bp.C_BPartner_ID=c.C_BPartner_ID AND c.IsActive='Y' AND c.IsShipTo='Y') as ShipTo_User_ID,"
-				+ " bpg.BAY_SODescription AS BPSODescription"
+				+ " COALESCE(bpg.BAY_SODescription,'') AS BPSODescription"
 				+ " FROM C_Order_Header_V h"
 				+ " JOIN C_Order o ON (h.C_Order_ID=o.C_Order_ID)"
 				+ " LEFT JOIN C_Tax t ON (t.C_Tax_ID=(SELECT MAX(C_Tax_ID) FROM C_OrderTax ot WHERE ot.C_Order_ID=o.C_Order_ID AND ot.TaxAmt!=0))"
