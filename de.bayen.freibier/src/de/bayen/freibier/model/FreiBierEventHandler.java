@@ -21,10 +21,18 @@ public class FreiBierEventHandler extends AbstractEventHandler {
 
 		if (IEventTopics.AFTER_LOGIN.equals(type)) {
 			LoginEventData eventData = getEventData(event);
-			if (eventData.getAD_Client_ID() == 1000000 && eventData.getAD_Org_ID() == 0) {
+			if (eventData.getAD_Client_ID() == 1000000) {
 				MRole role = MRole.get(Env.getCtx(), eventData.getAD_Role_ID());
-				if (!role.getName().toLowerCase().contains("admin") || role.isManual()) {
-					addErrorMessage(event, "Keine Organisation ausgewählt");
+				if (eventData.getAD_Org_ID() == 0) {
+					if (!role.getName().toLowerCase().contains("admin") || role.isManual()) {
+						addErrorMessage(event, "Keine Organisation ausgewählt");
+					}
+				}
+				if (role.getName().toLowerCase().contains("admin")
+					|| (role.getDescription() != null && role.getDescription().toLowerCase().contains("admin"))) {
+					if (!Env.getCtx().containsKey("#AD_Org_ID_ChangeRole")) {
+						addErrorMessage(event, "You cannot login to admin roles");
+					}
 				}
 			}
 		}
