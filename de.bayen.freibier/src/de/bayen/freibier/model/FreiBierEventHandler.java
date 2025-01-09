@@ -7,6 +7,7 @@ import org.compiere.model.MDocType;
 import org.compiere.model.MOrder;
 import org.compiere.model.MRole;
 import org.compiere.model.MSysConfig;
+import org.compiere.model.MUser;
 import org.compiere.process.DocActionEventData;
 import org.compiere.process.DocumentEngine;
 import org.compiere.util.DB;
@@ -30,7 +31,10 @@ public class FreiBierEventHandler extends AbstractEventHandler {
 				}
 				if (role.getName().toLowerCase().contains("admin")
 					|| (role.getDescription() != null && role.getDescription().toLowerCase().contains("admin"))) {
-					if (!Env.getCtx().containsKey("#AD_Org_ID_ChangeRole")) {
+					int userId = Env.getContextAsInt(Env.getCtx(), Env.AD_USER_ID);
+					MUser user = MUser.get(userId);
+					if (!Env.getCtx().containsKey("#AD_Org_ID_ChangeRole")
+						&& ! user.isSupportUser()) {
 						addErrorMessage(event, "You cannot login to admin roles");
 					}
 				}
