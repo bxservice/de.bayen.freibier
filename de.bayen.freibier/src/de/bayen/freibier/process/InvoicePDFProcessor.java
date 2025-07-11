@@ -54,7 +54,6 @@ public class InvoicePDFProcessor extends SvrProcess {
 
 	protected static final CLogger log = CLogger.getCLogger(InvoicePDFProcessor.class);
 
-	private int p_C_Order_ID = 0;
 	private boolean p_sendEmail = false;
 
 	@Override
@@ -62,9 +61,6 @@ public class InvoicePDFProcessor extends SvrProcess {
 		for (ProcessInfoParameter para : getParameter()) {
 			String name = para.getParameterName();
 			switch (name) {
-			case "C_Order_ID": 
-				p_C_Order_ID = para.getParameterAsInt();
-				break;
 			case "EMailPDF": 
 				p_sendEmail = para.getParameterAsBoolean();
 				break;
@@ -78,8 +74,8 @@ public class InvoicePDFProcessor extends SvrProcess {
 
 	@Override
 	protected String doIt() throws Exception {
-
-		MOrder order = new MOrder(getCtx(), p_C_Order_ID, get_TrxName());
+		
+		MOrder order = new MOrder(getCtx(), getRecord_ID(), get_TrxName());
 		if (!order.isComplete()) {
 			log.warning("Drucken nicht möglich: Bestellung nicht fertiggestellt");
 			return null;
@@ -99,6 +95,6 @@ public class InvoicePDFProcessor extends SvrProcess {
 	}
 	
 	private boolean isSendMail(MOrder order) {
-		return p_sendEmail;
+		return order.get_ValueAsBoolean("BAY_SendMail") || p_sendEmail;
 	}
 }

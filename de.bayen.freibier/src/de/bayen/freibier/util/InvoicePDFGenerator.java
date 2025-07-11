@@ -73,6 +73,9 @@ public class InvoicePDFGenerator {
 		boolean success = MailHelper.sendEmail(email);
 		MUserMail um = new MUserMail(mText, Env.getAD_User_ID(Env.getCtx()), email);
 		um.saveEx();
+		
+		order.set_ValueOfColumn("BAY_EMailSent", success);
+		order.saveEx();
 
 		return success;
 	}
