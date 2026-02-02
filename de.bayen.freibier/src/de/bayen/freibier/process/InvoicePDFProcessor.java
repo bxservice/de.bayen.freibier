@@ -26,6 +26,7 @@ package de.bayen.freibier.process;
 
 import java.util.logging.Level;
 
+import org.compiere.model.MInvoice;
 import org.compiere.model.MOrder;
 import org.compiere.process.ProcessInfoParameter;
 import org.compiere.process.SvrProcess;
@@ -35,7 +36,7 @@ import de.bayen.freibier.util.InvoicePDFGenerator;
 
 
 /**
- * The InvoicePdfProcessor class is responsible for generating invoice PDFs from the associated Order.
+ * The InvoicePdfProcessor class is responsible for generating invoice PDFs from the associated Invoice.
  * It determines whether the generated PDF should be downloaded by the user
  * or sent via email. Additionally, it can modify the PDF to make it
  * ZugFerd compliant if necessary.
@@ -75,17 +76,22 @@ public class InvoicePDFProcessor extends SvrProcess {
 	@Override
 	protected String doIt() throws Exception {
 		
-		MOrder order = new MOrder(getCtx(), getRecord_ID(), get_TrxName());
-		if (!order.isComplete()) {
-			log.warning("Drucken nicht möglich: Bestellung nicht fertiggestellt");
+		MInvoice invoice = new MInvoice(getCtx(), getRecord_ID(), get_TrxName());
+		if (!invoice.isComplete()) {
+			log.warning("Drucken nicht möglich: Rechnung nicht fertiggestellt");
 			return null;
 		}
+		
+		if (isEDIOrder(invoice)) {
+			log.warning("Skipping PDF generation for EDI Order Invoice: " + invoice.getDocumentNo());
+			return "EDI Order Invoice - No PDF Generated";
+		}
 
-		InvoicePDFGenerator pdfGenerator = new InvoicePDFGenerator(order, get_TrxName());
+		InvoicePDFGenerator pdfGenerator = new InvoicePDFGenerator(invoice);
 		pdfGenerator.initializeOrRetrievePDFFile();
 
 		boolean success = true;
-		if (isSendMail(order)) {
+		if (isSendMail(invoice)) {
 			success = pdfGenerator.sendInvoicePerMail();
 		} else if (processUI != null) {
 			processUI.download(pdfGenerator.getPDF());
@@ -94,7 +100,15 @@ public class InvoicePDFProcessor extends SvrProcess {
 		return success ? "Invoice Generated" : "@Error@";
 	}
 	
-	private boolean isSendMail(MOrder order) {
-		return order.get_ValueAsBoolean("BAY_SendMail") || p_sendEmail;
+	private boolean isSendMail(MInvoice invoice) {
+		return invoice.get_ValueAsBoolean("BAY_SendMail") || p_sendEmail;
+	}
+	
+	private boolean isEDIOrder(MInvoice invoice) {
+		if (invoice.getC_Order_ID() > 0 && invoice.isSOTrx()) {
+			MOrder order = new MOrder(invoice.getCtx(), invoice.getC_Order_ID(), invoice.get_TrxName());
+			return order.get_ValueAsBoolean("BAY_IsEDI");
+		}
+		return false;
 	}
 }

@@ -4,6 +4,7 @@ import org.adempiere.base.event.AbstractEventHandler;
 import org.adempiere.base.event.IEventTopics;
 import org.adempiere.base.event.LoginEventData;
 import org.compiere.model.MDocType;
+import org.compiere.model.MInvoice;
 import org.compiere.model.MOrder;
 import org.compiere.model.MRole;
 import org.compiere.model.MSysConfig;
@@ -89,6 +90,9 @@ public class FreiBierEventHandler extends AbstractEventHandler {
 				int warehouseID = WarehouseHelper.getWarehouseID(BAY_Route_ID);
 				order.setM_Warehouse_ID(warehouseID);				
 			}
+		} else if (getPO(event) instanceof MInvoice
+				&& (type.equals(IEventTopics.PO_BEFORE_NEW)) ) {
+			InvoiceHelper.copyMailValuesFromOrder((MInvoice) getPO(event));
 		}
 
 	}
@@ -100,6 +104,8 @@ public class FreiBierEventHandler extends AbstractEventHandler {
 		
 		registerTableEvent(IEventTopics.PO_BEFORE_CHANGE, MOrder.Table_Name);
 		registerTableEvent(IEventTopics.PO_BEFORE_NEW, MOrder.Table_Name);
+		
+		registerTableEvent(IEventTopics.PO_BEFORE_NEW, MInvoice.Table_Name);
 	}
 	
 }

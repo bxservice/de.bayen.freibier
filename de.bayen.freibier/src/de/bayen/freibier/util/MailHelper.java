@@ -26,8 +26,8 @@ package de.bayen.freibier.util;
 
 import org.compiere.model.MBPartner;
 import org.compiere.model.MClient;
+import org.compiere.model.MInvoice;
 import org.compiere.model.MMailText;
-import org.compiere.model.MOrder;
 import org.compiere.model.MSysConfig;
 import org.compiere.util.AdempiereUserError;
 import org.compiere.util.CLogger;
@@ -38,19 +38,19 @@ public class MailHelper {
 	protected static final CLogger log = CLogger.getCLogger(MailHelper.class);
 	private static final String INVOICE_MAIL_TEMPLATE_VALUE = "INVOICE_MAIL_TEMPLATE";
 	
-	public static MMailText getMMailTextRecord(MOrder order) {
-		int R_MailText_ID = MSysConfig.getIntValue(INVOICE_MAIL_TEMPLATE_VALUE, 0, order.getAD_Client_ID());
+	public static MMailText getMMailTextRecord(MInvoice invoice) {
+		int R_MailText_ID = MSysConfig.getIntValue(INVOICE_MAIL_TEMPLATE_VALUE, 0, invoice.getAD_Client_ID());
 		if (R_MailText_ID <= 0)
 			throw new AdempiereUserError("@Error@: No mail template defined");
 
-		MMailText mText = new MMailText(order.getCtx(), R_MailText_ID, order.get_TrxName());
-		mText.setBPartner(MBPartner.get(order.getCtx(), order.getBill_BPartner_ID()));
-		mText.setPO(order);
+		MMailText mText = new MMailText(invoice.getCtx(), R_MailText_ID, invoice.get_TrxName());
+		mText.setBPartner(MBPartner.get(invoice.getCtx(), invoice.getC_BPartner_ID()));
+		mText.setPO(invoice);
 		return mText;
 	}
 
-	public static EMail getEMail(MMailText mText, String emailAddress, MOrder order) {
-		MClient client = MClient.get(order.getCtx());
+	public static EMail getEMail(MMailText mText, String emailAddress, MInvoice invoice) {
+		MClient client = MClient.get(invoice.getCtx());
 		String subject = mText.getMailHeader();
 
 		EMail email = client.createEMail(emailAddress, subject, null);

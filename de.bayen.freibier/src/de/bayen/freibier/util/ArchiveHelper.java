@@ -6,7 +6,7 @@ import java.nio.file.Files;
 import java.util.logging.Level;
 
 import org.compiere.model.MArchive;
-import org.compiere.model.MOrder;
+import org.compiere.model.MInvoice;
 import org.compiere.model.PrintInfo;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
@@ -16,9 +16,9 @@ public class ArchiveHelper {
 	
 	protected static final CLogger log = CLogger.getCLogger(ArchiveHelper.class);
 	
-	public static File getPDFArchiveFromOrder(MOrder order, String fileName, String trxName) {
+	public static File getPDFArchiveFromInvoice(MInvoice invoice, String fileName, String trxName) {
 		File pdfFile = null;
-		MArchive[] archives = getArchivesFromOrder(order, fileName, trxName);
+		MArchive[] archives = getArchivesFromInvoice(invoice, fileName, trxName);
 		
 		if (archives != null && archives.length > 0) {
 			pdfFile = new File(fileName);
@@ -32,25 +32,25 @@ public class ArchiveHelper {
 		return pdfFile;
 	}
 	
-	private static MArchive[] getArchivesFromOrder(MOrder order, String fileName, String trxName) {
+	private static MArchive[] getArchivesFromInvoice(MInvoice invoice, String fileName, String trxName) {
 		StringBuilder sqlWhere = new StringBuilder(" AND AD_Table_ID=")
-				.append(order.get_Table_ID())
-				.append(" AND Record_ID=").append(order.getC_Order_ID())
+				.append(invoice.get_Table_ID())
+				.append(" AND Record_ID=").append(invoice.getC_Order_ID())
 				.append(" AND Name=").append(DB.TO_STRING(fileName));
 		
 		return MArchive.get(Env.getCtx(), sqlWhere.toString(), trxName);
 	}
 	
-	public static void archivePDFPrintout(MOrder order, File pdfFile, String trxName) {
-		PrintInfo printInfo = new PrintInfo(pdfFile.getName(), order.get_Table_ID(), order.get_ID(), order.getC_BPartner_ID());
+	public static void archivePDFPrintout(MInvoice invoice, File pdfFile, String trxName) {
+		PrintInfo printInfo = new PrintInfo(pdfFile.getName(), invoice.get_Table_ID(), invoice.get_ID(), invoice.getC_BPartner_ID());
 		byte[] data = getFileByteData(pdfFile);
 		MArchive archive = new MArchive(Env.getCtx(), printInfo, trxName);
 		archive.setBinaryData(data);
 		archive.save();
 	}
 	
-	public static File getOrderPrintoutFromArchive(MOrder order, String trxName) {
-		return getPDFArchiveFromOrder(order, PrintoutHelper.getFileName(order), trxName);
+	public static File getInvoicePrintoutFromArchive(MInvoice invoice, String trxName) {
+		return getPDFArchiveFromInvoice(invoice, PrintoutHelper.getFileName(invoice), trxName);
 	}
 	
 	/** 

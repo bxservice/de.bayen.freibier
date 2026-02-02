@@ -30,17 +30,34 @@ import java.io.IOException;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MBankAccount;
 import org.compiere.model.MInvoice;
-import org.compiere.model.MOrder;
 import org.compiere.model.MSysConfig;
 
 import auler.gmbh.zugferdxinvoice.process.ZugFerdGenerator;
 
 public class ZugFerdHelper {
-
-	public static void convertPDFtoZugFerd(MOrder order, File pdfFile) {
-		MInvoice invoice = MInvoice.get(order.getC_Invoice_ID());
+	
+	public static File createZugFerdPDF(MInvoice invoice) {
 		ZugFerdGenerator zugFerdGenerator = new ZugFerdGenerator(invoice);
-		setBankDetails(zugFerdGenerator, order);
+		try {
+			File pdfFile = invoice.createPDF();
+			setBankDetails(zugFerdGenerator, invoice);
+			zugFerdGenerator.generateZugFerdXML(pdfFile);
+			
+			//Rename file after processing
+			File renamedFile =  new File(pdfFile.getParent(), PrintoutHelper.getFileName(invoice));
+	        if (!pdfFile.renameTo(renamedFile)) {
+	            throw new AdempiereException("Failed to rename PDF file");
+	        }
+	        
+	        return renamedFile;
+		} catch (IOException e) {
+			throw new AdempiereException(e.getLocalizedMessage());
+		}
+	}
+
+	public static void convertPDFtoZugFerd(MInvoice invoice, File pdfFile) {
+		ZugFerdGenerator zugFerdGenerator = new ZugFerdGenerator(invoice);
+		setBankDetails(zugFerdGenerator, invoice);
 		try {
 			zugFerdGenerator.generateZugFerdXML(pdfFile);
 		} catch (IOException e) {
@@ -52,21 +69,24 @@ public class ZugFerdHelper {
 		return true;
 	}
 
-	private static void setBankDetails(ZugFerdGenerator zugFerdGenerator, MOrder order) {
-		int bankAccountID = getDefaultBankAccount(order); //TODO:Change for SysConfig??
+	private static void setBankDetails(ZugFerdGenerator zugFerdGenerator, MInvoice invoice) {
+		int bankAccountID = getDefaultBankAccount(invoice);
 		if (bankAccountID <= 0) {
 			throw new AdempiereException("Default bank account not configured. Contact the administrator");
 		}
 
 		MBankAccount bankAccount = MBankAccount.get(bankAccountID);
+		if (bankAccount == null) {
+			throw new AdempiereException("Invalid default bank account. Contact the administrator");
+		}
 		zugFerdGenerator.setBank(bankAccount.getC_Bank_ID());
 		zugFerdGenerator.setBankAccount(bankAccountID);
 		if (!zugFerdGenerator.isValidBankDetail())
 			throw new AdempiereException("Invalid default bank account. Contact the administrator");
 	}
 
-	private static int getDefaultBankAccount(MOrder order) {
-		int bankAccountID = MSysConfig.getIntValue("ZUGFERD_DEFAULTBANKACCOUNT_ID", 0, order.getAD_Client_ID());
+	private static int getDefaultBankAccount(MInvoice invoice) {
+		int bankAccountID = MSysConfig.getIntValue("ZUGFERD_DEFAULTBANKACCOUNT_ID", 0, invoice.getAD_Client_ID());
 		if (bankAccountID <= 0) {
 			throw new AdempiereException("Default bank account not configured. Contact theadministrator");
 		}

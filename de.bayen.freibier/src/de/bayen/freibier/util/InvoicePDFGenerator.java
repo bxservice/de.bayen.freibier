@@ -26,8 +26,8 @@ package de.bayen.freibier.util;
 
 import java.io.File;
 
+import org.compiere.model.MInvoice;
 import org.compiere.model.MMailText;
-import org.compiere.model.MOrder;
 import org.compiere.model.MUser;
 import org.compiere.model.MUserMail;
 import org.compiere.util.AdempiereUserError;
@@ -37,18 +37,18 @@ import org.compiere.util.Util;
 
 public class InvoicePDFGenerator {
 
-	private MOrder order;
+	private MInvoice invoice;
 	private File pdfFile;
 
 	private String trxName;
 
-	public InvoicePDFGenerator(MOrder order, String trxName) {
-		this.order = order;
-		this.trxName = trxName;
+	public InvoicePDFGenerator(MInvoice invoice) {
+		this.invoice = invoice;
+		this.trxName = invoice.get_TrxName();
 	}
 
 	public void initializeOrRetrievePDFFile() {
-		pdfFile = ArchiveHelper.getOrderPrintoutFromArchive(order, trxName);
+		pdfFile = ArchiveHelper.getInvoicePrintoutFromArchive(invoice, trxName);
 
 		if (pdfFile == null) {
 			generateAndArchivePDF();
@@ -56,35 +56,36 @@ public class InvoicePDFGenerator {
 	}
 
 	private void generateAndArchivePDF() {
-		pdfFile = PrintoutHelper.generatePDFPrintout(order);
-		if (ZugFerdHelper.useClientZugFerd(order.getAD_Org_ID()))
-			ZugFerdHelper.convertPDFtoZugFerd(order, pdfFile);
+		if (ZugFerdHelper.useClientZugFerd(invoice.getAD_Org_ID())) {
+			pdfFile = ZugFerdHelper.createZugFerdPDF(invoice);
+		}
 		
-		ArchiveHelper.archivePDFPrintout(order, pdfFile, trxName);
+		ArchiveHelper.archivePDFPrintout(invoice, pdfFile, trxName);
 	}
 	
 	public boolean sendInvoicePerMail() {
-		MMailText mText = MailHelper.getMMailTextRecord(order);
+		MMailText mText = MailHelper.getMMailTextRecord(invoice);
 
 		String emailAddress = getUserToEmailAddress();
-		EMail email = MailHelper.getEMail(mText, emailAddress, order);
+		EMail email = MailHelper.getEMail(mText, emailAddress, invoice);
 		email.addAttachment(pdfFile);
 
 		boolean success = MailHelper.sendEmail(email);
 		MUserMail um = new MUserMail(mText, Env.getAD_User_ID(Env.getCtx()), email);
 		um.saveEx();
 		
-		order.set_ValueOfColumn("BAY_EMailSent", success);
-		order.saveEx();
+		invoice.set_ValueOfColumn("BAY_EMailSent", success);
+		invoice.setIsPrinted(true);
+		invoice.saveEx();
 
 		return success;
 	}
 	
 	protected String getUserToEmailAddress() {
-		MUser userTo = MUser.get(order.getBill_User_ID());
+		MUser userTo = MUser.get(invoice.getAD_User_ID());
 		String emailAddress = userTo.getEMail();
 		if (Util.isEmpty(emailAddress))
-			throw new AdempiereUserError (" @RequestActionEMailError@ Bill User has an Invalid EMail: " + emailAddress);
+			throw new AdempiereUserError (" @RequestActionEMailError@ User has an Invalid EMail: " + emailAddress);
 
 		return emailAddress;
 	}
