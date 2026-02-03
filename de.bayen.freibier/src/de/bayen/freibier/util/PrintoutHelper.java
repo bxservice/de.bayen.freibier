@@ -1,5 +1,6 @@
 package de.bayen.freibier.util;
 
+import org.compiere.model.MBPartner;
 import org.compiere.model.MInvoice;
 import org.compiere.print.MPrintFormat;
 import org.compiere.print.ReportEngine;
@@ -20,10 +21,16 @@ public class PrintoutHelper {
 		
 		String fileName = null;
 		if (Util.isEmpty(fileNamePattern)) {
-			fileName = invoice.getDocumentNo();
+			fileName = getDefaultName(invoice);
 		} else {
 			fileName = Env.parseVariable(fileNamePattern, invoice, invoice.get_TrxName(), true);
 		}
 		return fileName + ".pdf";
+	}
+	
+	private static String getDefaultName(MInvoice invoice) {
+		//Default BPValue_BPName_DocumentNo
+		MBPartner bpartner = MBPartner.get(invoice.getCtx(), invoice.getC_BPartner_ID());
+		return bpartner.getValue() + "_" + bpartner.getName() + "_" + invoice.getDocumentNo();
 	}
 }
