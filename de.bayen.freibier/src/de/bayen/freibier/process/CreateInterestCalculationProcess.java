@@ -6,6 +6,8 @@ import java.sql.ResultSet;
 import java.sql.Timestamp;
 
 import org.adempiere.exceptions.AdempiereException;
+import org.compiere.model.MAccount;
+import org.compiere.model.MElementValue;
 import org.compiere.model.Query;
 import org.compiere.model.X_C_Charge_Acct;
 import org.compiere.process.DocAction;
@@ -59,7 +61,9 @@ public class CreateInterestCalculationProcess extends
 		X_C_Charge_Acct accounting = new Query(getCtx(), X_C_Charge_Acct.Table_Name,
 				X_C_Charge_Acct.COLUMNNAME_C_Charge_ID + "=?", get_TrxName()).setParameters(chargeID).first();
 		// TODO man muss nicht value nehmen, ID wäre effektiver
-		String interestAccount = accounting.getCh_Expense_A().getAccount().getValue();
+		MAccount account = MAccount.get(accounting.getCh_Expense_Acct());
+		MElementValue elementValue = new MElementValue(getCtx(), account.getAccount_ID(), get_TrxName());
+		String interestAccount = elementValue.getValue();
 		//
 		MBAYInterestCalculation ic = new MBAYInterestCalculation(getCtx(), 0,
 				get_TrxName());
@@ -70,7 +74,7 @@ public class CreateInterestCalculationProcess extends
 		ic.setDateDoc(params.getDateDocTo());
 		ic.setDateAcct(params.getDateDocTo());
 		String currencyID = getCtx().getProperty("$C_Currency_ID");
-		ic.setC_Currency_ID(new Integer(currencyID));
+		ic.setC_Currency_ID(Integer.valueOf(currencyID));
 		ic.setIsSOTrx(record.isSOTrx());
 		ic.saveEx(get_TrxName());
 		//

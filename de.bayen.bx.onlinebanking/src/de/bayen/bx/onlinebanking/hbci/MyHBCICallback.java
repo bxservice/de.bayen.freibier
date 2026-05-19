@@ -18,6 +18,8 @@ import java.util.Date;
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.util.Callback;
 import org.adempiere.util.IProcessUI;
+import org.compiere.model.MBank;
+import org.compiere.model.MBankAccount;
 import org.compiere.model.MBankStatementLoader;
 import org.compiere.util.Util;
 import org.kapott.hbci.GV.HBCIJob;
@@ -193,7 +195,8 @@ public class MyHBCICallback extends AbstractHBCICallback {
 			// "DE" ist bereits vorbelegt
 			break;
 		case HBCICallback.NEED_BLZ:  // 8
-			retData.append(m_loader.getC_BankAccount().getC_Bank().getRoutingNo());
+			MBankAccount bankAccount = MBankAccount.get(m_loader.getC_BankAccount_ID());
+			retData.append(MBank.get(bankAccount.getC_Bank_ID()).getRoutingNo());
 			break;
 		case HBCICallback.NEED_HOST:  // 9
 			String hostAddress = m_loader.getHostAddress();

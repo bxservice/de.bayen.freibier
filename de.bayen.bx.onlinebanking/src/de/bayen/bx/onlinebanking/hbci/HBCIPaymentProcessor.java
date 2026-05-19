@@ -30,15 +30,19 @@ import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.util.Callback;
 import org.adempiere.util.IProcessUI;
 import org.compiere.model.I_C_BankAccount;
-import org.compiere.model.I_C_Invoice;
 import org.compiere.model.I_C_PaySelectionCheck;
 import org.compiere.model.I_C_Payment;
 import org.compiere.model.MBPBankAccount;
+import org.compiere.model.MBPartner;
+import org.compiere.model.MBank;
 import org.compiere.model.MBankAccount;
 import org.compiere.model.MBankStatementLoader;
+import org.compiere.model.MDocType;
+import org.compiere.model.MInvoice;
 import org.compiere.model.MOrg;
 import org.compiere.model.MOrgInfo;
 import org.compiere.model.MPaySelectionLine;
+import org.compiere.model.MPayment;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
@@ -137,8 +141,9 @@ public class HBCIPaymentProcessor {
 			// System.out.println(bpd.toString());
 		}
 
-		Konto meinKonto = new Konto("DE", C_BankAccount.getC_Bank().getRoutingNo(), C_BankAccount.getAccountNo());
-		meinKonto.bic = C_BankAccount.getC_Bank().getSwiftCode();
+		MBank bank = MBank.get(C_BankAccount.getC_Bank_ID());
+		Konto meinKonto = new Konto("DE", bank.getRoutingNo(), C_BankAccount.getAccountNo());
+		meinKonto.bic = bank.getSwiftCode();
 		meinKonto.iban = C_BankAccount.getIBAN().replace(" ", "");
 		if(!IBANUtil.isIBAN(meinKonto.iban))
 			throw new AdempiereException("your own IBAN is not guilty");
@@ -256,7 +261,7 @@ public class HBCIPaymentProcessor {
 		StringBuilder usage = new StringBuilder();
 		StringBuilder e2eid = new StringBuilder();
 		for (MPaySelectionLine line : list) {
-			I_C_Invoice invoice = line.getC_Invoice();
+			MInvoice invoice = MInvoice.get(line.getC_Invoice_ID());
 			if (invoice != null) {
 				if (usage.length() > 0) {
 					usage.append(", ");
@@ -269,11 +274,12 @@ public class HBCIPaymentProcessor {
 			}
 		}
 		if (usage.length() == 0) {
-			usage.append("Zahlung ").append(check.getC_Payment().getDocumentNo());
+			MPayment payment = new MPayment(m_ctx, check.getC_Payment_ID(), m_trxName);
+			usage.append("Zahlung ").append(payment.getDocumentNo());
 			e2eid.append("Check " + check.getDocumentNo());
 		}
 		// Transaktion speichern
-		MBPBankAccount bpAccount = (MBPBankAccount) check.getC_BP_BankAccount();
+		MBPBankAccount bpAccount = new MBPBankAccount(m_ctx, check.getC_BP_BankAccount_ID(), m_trxName);
 		BigDecimal payAmt = check.getPayAmt();
 		if(payAmt.compareTo(BigDecimal.ZERO) <= 0){
 			// entweder falsch oder eine Überweisung als Lastschrift (Überweisung an Kunden)
@@ -310,10 +316,10 @@ public class HBCIPaymentProcessor {
 		query.setParameters(bpartnerID);
 		MBPBankAccount bpAccount = query.first();
 		if (bpAccount == null)
-			throw new AdempiereException("no known account for Business Partner " + payment.getC_BPartner().toString());
+			throw new AdempiereException("no known account for Business Partner " + payment.getC_BPartner_ID());
 		BigDecimal payAmt = payment.getPayAmt();
 		boolean isDebit = false; // Lastschrift oder Überweisung?
-		if (payment.getC_DocType().isSOTrx())
+		if (MDocType.get(payment.getC_DocType_ID()).isSOTrx())
 			isDebit = true;
 		if (BigDecimal.ZERO.compareTo(payAmt) > 0) {
 			isDebit = !isDebit;
@@ -351,11 +357,12 @@ public class HBCIPaymentProcessor {
 
 		// HBCI-Parameter füllen
 		String name = bpAccount.getA_Name();
-		if (Util.isEmpty(name, true))
-			name = bpAccount.getC_BPartner().getName();
+		if (Util.isEmpty(name, true)) {
+			name = MBPartner.get(m_ctx, bpAccount.getC_BPartner_ID()).getName();
+		}
 		name=replaceNotAllowedCharacters(name);
 		job.hbciJob.setParam("dst.name", job.count, name);
-		job.hbciJob.setParam("dst.bic", job.count, bpAccount.getC_Bank().getSwiftCode());
+		job.hbciJob.setParam("dst.bic", job.count, MBank.get(bpAccount.getC_Bank_ID()).getSwiftCode());
 		String iban = ((PO) bpAccount).get_ValueAsString(MBPBankAccountHelper.COLUMNNAME_IBAN);
 		if (Util.isEmpty(iban, true))
 			throw new AdempiereException("Keine IBAN vorhanden: " + bpAccount.toString());

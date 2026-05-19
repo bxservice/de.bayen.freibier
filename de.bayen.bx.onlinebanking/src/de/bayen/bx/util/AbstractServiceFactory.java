@@ -118,7 +118,7 @@ abstract public class AbstractServiceFactory implements IProcessFactory,
 					if(clazz==null)
 						continue;
 					if (iface.isAssignableFrom(clazz)) {
-						return (T) clazz.newInstance();
+						return (T) clazz.getDeclaredConstructor().newInstance();
 					}
 				} catch (Exception e) {
 					throw new AdempiereException(e);

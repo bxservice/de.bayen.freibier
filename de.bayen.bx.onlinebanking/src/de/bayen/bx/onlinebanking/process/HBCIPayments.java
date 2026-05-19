@@ -1,6 +1,7 @@
 package de.bayen.bx.onlinebanking.process;
 
 import org.adempiere.exceptions.AdempiereException;
+import org.compiere.model.MBankAccount;
 import org.compiere.model.MPaySelection;
 import org.compiere.model.MPaySelectionCheck;
 import org.compiere.model.MPaymentBatch;
@@ -51,7 +52,8 @@ public class HBCIPayments extends AbstractSvrProcess {
 //			deposit=!deposit;
 //		}
 		try{
-			boolean ok = processor.init(getCtx(), paySelection.getC_BankAccount(), deposit, processUI, get_TrxName());
+			boolean ok = processor.init(getCtx(), MBankAccount.get(paySelection.getC_BankAccount_ID()), 
+					deposit, processUI, get_TrxName());
 			if (!ok)
 				throw new AdempiereException("Kann Zahlungsprozessor nicht initialisieren.");
 			for (MPaySelectionCheck check : checks) {

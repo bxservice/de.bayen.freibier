@@ -26,7 +26,6 @@ import org.compiere.model.MInvoice;
 import org.compiere.model.MPayment;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
-import org.compiere.model.X_C_Payment;
 import org.compiere.model.X_I_BankStatement;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
@@ -171,7 +170,7 @@ public class AutomaticBankStatementMatcher implements BankStatementMatcherInterf
 		info.setC_BPartner_ID(foundBPartner_ID);
 
 		// can we find an payment for this BPartner?
-		X_C_Payment foundPayment = (X_C_Payment) record.getC_Payment();
+		MPayment foundPayment = new MPayment(Env.getCtx(), record.getC_Payment_ID(), null);   
 		BigDecimal stmtAmt = record.getStmtAmt();
 		return matchAccountNo(info, foundBPartner_ID, foundPayment, stmtAmt);
 	}
@@ -185,13 +184,13 @@ public class AutomaticBankStatementMatcher implements BankStatementMatcherInterf
 		info.setC_BPartner_ID(foundBPartner_ID);
 
 		// can we find an payment for this BPartner?
-		X_C_Payment foundPayment = (X_C_Payment) record.getC_Payment();
+		MPayment foundPayment = new MPayment(Env.getCtx(), record.getC_Payment_ID(), null);   
 		BigDecimal stmtAmt = record.getStmtAmt();
 		return matchAccountNo(info, foundBPartner_ID, foundPayment, stmtAmt);
 	}
 
 	private static BankStatementMatchInfo matchAccountNo(BankStatementMatchInfo2 info, int foundBPartner_ID,
-			X_C_Payment foundPayment, BigDecimal stmtAmt) {
+			MPayment foundPayment, BigDecimal stmtAmt) {
 		if (foundPayment == null || foundPayment.get_ID() == 0) {
 			StringBuilder whereClause = new StringBuilder();
 			whereClause.append("C_BPartner_ID = ?");
@@ -208,9 +207,9 @@ public class AutomaticBankStatementMatcher implements BankStatementMatcherInterf
 					//, record.getEftValutaDate(), record.getEftStatementLineDate()
 				);
 			// @formatter:on
-			List<PO> payments = paymentQuery.list();
+			List<MPayment> payments = paymentQuery.list();
 			if (payments.size() == 1) {
-				foundPayment = (X_C_Payment) payments.get(0);
+				foundPayment = payments.get(0);
 				info.setC_Payment_ID(foundPayment.get_ID());
 			} else
 				foundPayment = null;

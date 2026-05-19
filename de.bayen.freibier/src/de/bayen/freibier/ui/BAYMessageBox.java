@@ -8,6 +8,8 @@ import org.adempiere.webui.adwindow.ADWindowContent;
 import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.ConfirmPanel;
+import org.adempiere.webui.component.FlexHlayout;
+import org.adempiere.webui.component.FlexVlayout;
 import org.adempiere.webui.component.Panel;
 import org.adempiere.webui.component.Window;
 import org.adempiere.webui.factory.ButtonFactory;
@@ -19,9 +21,7 @@ import org.zkoss.zk.ui.Page;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
-import org.zkoss.zul.Hbox;
 import org.zkoss.zul.Image;
-import org.zkoss.zul.Vbox;
 import org.zkoss.zul.Vlayout;
 
 public class BAYMessageBox extends Window implements EventListener<Event>
@@ -84,17 +84,17 @@ public class BAYMessageBox extends Window implements EventListener<Event>
 		pnlMessage.appendChild(lblDiv);
 		ZKUpdateUtil.setHflex(pnlMessage, "min");
 		
-		Vbox pnlText = new Vbox();
+		FlexVlayout pnlText = new FlexVlayout();
 		pnlText.appendChild(pnlMessage);
 
-		Hbox pnlImage = new Hbox();
+		FlexHlayout pnlImage = new FlexHlayout();
 
 		ZKUpdateUtil.setWidth(pnlImage, "72px");
 		pnlImage.setAlign("center");
 		pnlImage.setPack("center");
 		pnlImage.appendChild(img);
 				
-		Hbox north = new Hbox();
+		FlexHlayout north = new FlexHlayout();
 		north.setAlign("center");
 		this.appendChild(north);		
 		north.appendChild(pnlImage);
@@ -102,7 +102,7 @@ public class BAYMessageBox extends Window implements EventListener<Event>
 		north.setSclass("dialog-content");
 		north.setWidth("100%");;
 
-		Hbox pnlButtons = new Hbox();
+		FlexHlayout pnlButtons = new FlexHlayout();
 		pnlButtons.setAlign("center");
 		pnlButtons.setPack("end");
 		pnlButtons.appendChild(btnOk);

@@ -19,7 +19,10 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.List;
 
+import org.adempiere.exceptions.AdempiereException;
 import org.compiere.impexp.BankStatementLoaderInterface;
+import org.compiere.model.MBank;
+import org.compiere.model.MBankAccount;
 import org.compiere.model.MBankStatementLoader;
 import org.compiere.model.Query;
 
@@ -131,7 +134,19 @@ public class HBCIBankStatementLoader implements BankStatementLoaderInterface {
 
 	@Override
 	public String getRoutingNo() {
-		return mt940line.getC_BankAccount().getC_Bank().getRoutingNo();
+		MBankAccount bankAccount = MBankAccount.get(mt940line.getC_BankAccount_ID());
+	    if (bankAccount == null) {
+	        throw new AdempiereException(
+	            "Bank account not found for ID: " + mt940line.getC_BankAccount_ID());
+	    }
+	    
+	    MBank bank = MBank.get(bankAccount.getC_Bank_ID());
+	    if (bank == null) {
+	        throw new AdempiereException(
+	            "Bank not found for ID: " + bankAccount.getC_Bank_ID());
+	    }
+
+	    return bank.getRoutingNo();
 	}
 
 	@Override

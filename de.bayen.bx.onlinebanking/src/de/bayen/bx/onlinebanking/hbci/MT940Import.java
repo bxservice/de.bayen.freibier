@@ -28,6 +28,7 @@ import javax.net.ssl.X509TrustManager;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.I_C_BankAccount;
+import org.compiere.model.MBankAccount;
 import org.compiere.model.MBankStatementLoader;
 import org.compiere.model.MTable;
 import org.compiere.model.Query;
@@ -84,8 +85,7 @@ public class MT940Import extends AbstractSvrProcess {
 		if (endDate == null)
 			endDate = new Date(); // sonst heute
 		m_loader = bean.getC_BankStatementLoader();
-		I_C_BankAccount bankAccount = m_loader.getC_BankAccount();
-
+		MBankAccount bankAccount = MBankAccount.get(m_loader.getC_BankAccount_ID());
 		makeTrust();  // TODO das an eine hübschere Stelle machen
 		
 		return loadBankStatementData(ctx, startDate, endDate, bankAccount);
