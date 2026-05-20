@@ -51,6 +51,7 @@ import org.compiere.util.Util;
  *            class of the record we deal with
  * @author tbayen
  */
+@Deprecated(since = "2.0.0", forRemoval = true)
 public abstract class AbstractRecordProcessor<T extends PO> extends SvrProcess {
 
 	protected CLogger log = CLogger.getCLogger(getClass());

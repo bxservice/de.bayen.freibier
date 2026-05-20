@@ -34,6 +34,7 @@ import de.bayen.bx.util.IBANUtil;
  * 
  * @author tbayen
  */
+@Deprecated(since="2024-06", forRemoval=true)
 public class SaveMatcherInfo extends AbstractRecordProcessor<PO> {
 
 	public SaveMatcherInfo() {

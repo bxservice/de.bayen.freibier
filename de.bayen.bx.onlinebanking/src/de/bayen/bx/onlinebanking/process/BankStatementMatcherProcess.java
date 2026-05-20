@@ -47,6 +47,7 @@ import de.bayen.bx.util.AbstractRecordProcessor;
  * 
  * @author tbayen
  */
+@Deprecated(since="2024-06", forRemoval=true)
 public class BankStatementMatcherProcess extends AbstractRecordProcessor<PO> {
 
 	private MBankStatementMatcher[] m_matchers;
