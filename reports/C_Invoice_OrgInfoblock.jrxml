@@ -15,7 +15,7 @@
 	<property name="ireport.x" value="0"/>
 	<property name="ireport.y" value="0"/>
 	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
-	<template><![CDATA["BayenStyles.jrtx"]]></template>
+	<template><![CDATA[$P{SUBREPORT_DIR}+"BayenStyles.jrtx"]]></template>
 	<parameter name="RECORD_ID" class="java.lang.Integer">
 		<defaultValueExpression><![CDATA[1000001]]></defaultValueExpression>
 	</parameter>

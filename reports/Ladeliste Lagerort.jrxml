@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Created with Jaspersoft Studio version 6.21.2.final using JasperReports Library version 6.21.2-8434a0bd7c3bbc37cbf916f2968d35e4b165821a  -->
-<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Ladeliste_nachLieferscheinen" pageWidth="515" pageHeight="842" columnWidth="515" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" uuid="f28bb44b-b755-4e40-b9a1-f77d334884f8">
+<!-- Created with Jaspersoft Studio version 6.17.0.final using JasperReports Library version 6.17.0-6d93193241dd8cc42629e188b94f9e0bc5722efd  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Ladeliste" pageWidth="595" pageHeight="842" columnWidth="515" leftMargin="55" rightMargin="25" topMargin="25" bottomMargin="25" uuid="c6e2d1b1-90b1-4779-a789-abe1276536da">
 	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
 	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="Controlling.xml"/>
 	<property name="com.jaspersoft.studio.unit." value="pixel"/>
@@ -12,30 +12,22 @@
 	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
 	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
 	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
-	<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w1" value="231"/>
-	<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w2" value="763"/>
+	<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w1" value="270"/>
+	<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w2" value="722"/>
 	<template><![CDATA[$P{SUBREPORT_DIR}+"BayenStyles.jrtx"]]></template>
 	<parameter name="SUBREPORT_DIR" class="java.lang.String" isForPrompting="false">
 		<parameterDescription><![CDATA[]]></parameterDescription>
 		<defaultValueExpression><![CDATA["./"]]></defaultValueExpression>
 	</parameter>
-	<parameter name="DateOrdered" class="java.util.Date">
-		<defaultValueExpression><![CDATA[new GregorianCalendar(2024,6,4).getTime()]]></defaultValueExpression>
-	</parameter>
-	<parameter name="BAY_Route_ID" class="java.lang.Integer">
-		<parameterDescription><![CDATA[Tournummer (Vorgabe ist T8 als Beispiel)]]></parameterDescription>
-		<defaultValueExpression><![CDATA[1000003]]></defaultValueExpression>
-	</parameter>
-	<parameter name="BAY_SubTour" class="java.lang.String"/>
+	<parameter name="M_Locator_ID" class="java.lang.Integer"/>
+	<parameter name="DateOrdered" class="java.util.Date"/>
 	<queryString language="SQL">
 		<![CDATA[with param as(
 select
-  --(select bay_route_id from bay_route where value='T5') as bay_route_id,
-  --cast('2024-07-04' as date) as datum,
-  --null as bay_subtour
-  $P{BAY_Route_ID} as bay_route_id,
-  cast($P{DateOrdered} as date) as datum,
-  $P{BAY_SubTour} as bay_subtour
+--  (select m_locator_id from m_locator where value = 'Faßbierhalle') as m_locator_id,
+--  '2023-07-10'::date as datum
+  $P{M_Locator_ID} as m_locator_id,
+  $P{DateOrdered}::date as datum
 )
 ,
 paymentrule as (
@@ -55,7 +47,6 @@ select
   r.value as r_value,
   r.name as r_name,
   r.description as r_description,
-  r.help as r_reportnames,
   lkw.value as lkw_value,
   lkw.description as lkw_description,
   f1.value as f1_value,
@@ -65,16 +56,13 @@ select
   f2.name as f2_name,
   f3.value as f3_value,
   f3.name as f3_name,
-  sum(p.weight * qtyordered) over (partition by r.bay_route_id, o.bay_subtour) as weightsum,
+  sum(p.weight * qtyordered) over (partition by r.bay_route_id) as weightsum,
   o.documentno,
-  o.bay_subtour,
   o.description as o_description,
   o.dateordered,
   o.weight as o_weight,
   o.paymentrule,
   o.grandtotal,
-  o.prepicking,
-  o.seqno,
   pr.name as pr_name,
   bp.value as bp_value,
   bp.name as bp_name,
@@ -83,7 +71,6 @@ select
   loc.address2,
   loc.postal,
   loc.city,
-  lv.name as bp_loadinghint,
   ol.line,
   ol.description as ol_description,
   ol.qtyordered,
@@ -99,22 +86,21 @@ select
   coalesce(pl.value, (select distinct l.value from m_locator l where l.ad_client_id=1000000 and l.isactive='Y' and l.isdefault='Y')) as loc_value,
   coalesce(pl.x::numeric*1000000+pl.y::numeric*1000+pl.z::numeric, (select distinct l.x::numeric*1000000+l.y::numeric*1000+l.z::numeric from m_locator l where l.ad_client_id=1000000 and l.isactive='Y' and l.isdefault='Y')) as loc_order,
   pl.priorityno as loc_priority,
-  sum (ol.qtyordered) over (partition by uom.c_uom_id) as uom_sum
+  sum (ol.qtyordered) over (partition by pl.priorityno, r.value, p.value) as qty_p_sum
 from bay_route r
-join param using (bay_route_id)
-join c_order o using (bay_route_id)
+cross join param
+join c_order o on o.bay_route_id = r.bay_route_id and o.docstatus = 'IP' and o.issotrx = 'Y'
 join paymentrule pr using(paymentrule)
-left join c_orderline ol on ol.c_order_id = o.c_order_id and ol.qtyentered > 0
+left join c_orderline ol on ol.c_order_id = o.c_order_id and ol.isactive = 'Y'
 left join c_uom uom using(c_uom_id)
 left join c_bpartner bp on (bp.c_bpartner_id = o.c_bpartner_id)
 left join c_bpartner_location bpl on (bpl.c_bpartner_location_id = o.c_bpartner_location_id and bpl.isactive='Y' and bpl.isshipto='Y')
-left join ad_ref_list lv on (bpl.bay_loadinghint = lv.value and lv.ad_reference_id = (select ref.ad_reference_id from ad_reference ref where ref.name='Ladevorgabe' and ref.isactive = 'Y'))
 left join c_location loc using (c_location_id)
 join m_product p using (m_product_id)
 left join bay_tradingunit tu using (bay_tradingunit_id)
-left join m_locator pl using (m_locator_id)
+left join m_locator pl on p.m_locator_id = pl.m_locator_id
 left join c_uom_conversion uc on (uc.m_product_id = p.m_product_id and uc.c_uom_id = p.c_uom_id and uc.c_uom_to_id = ol.c_uom_id)
-left join bay_delivery d on (r.bay_route_id = d.bay_route_id and d.bay_routedate = datum)
+left join bay_delivery d on (d.bay_routedate = datum and d.bay_route_id = r.bay_route_id)
 left join s_resource lkw on (lkw.s_resource_id = d.bay_truck_id)
 left join s_resource f1 on (f1.s_resource_id = d.bay_driver_id)
 left join s_resource f2 on (f2.s_resource_id = d.bay_codriver_id)
@@ -122,22 +108,15 @@ left join s_resource f3 on (f3.s_resource_id = d.bay_codriver2_id)
 where r.ad_client_id=1000000 and r.isactive='Y'
   and o.isactive='Y' and o.issotrx='Y' and o.dateordered = datum
   and o.docstatus='IP' and o.processed='N'
-  -- für Seitenkopf auskommentieren
-  and (o.bay_subtour = param.bay_subtour or param.bay_subtour is null)
-order by r.value, o.bay_subtour, o.seqno, bp.value, o.documentno, loc_priority, loc_order, p_value, uom
+  and ol.qtyentered > 0
+  and pl.m_locator_id = param.m_locator_id
+--order by loc.postal, loc.address1, bp.value, o.documentno, loc_priority, loc_order, p_value, uom
+order by pl.priorityno, r.value, p.value, bp.value, o.documentno, ol.line 
 )
 -------------- Ladeliste nach Lieferscheinen
-select * from ladeliste where bay_masterorderline_id is null order by r_value, bay_subtour, seqno, bp_value, documentno, loc_priority, loc_order, p_value, uom
--------------- Infos zur Tour (für den Seitenkopf)
--- alte Version, ohne Subtouren benutzt, konnte Subreport-Name als Parameter übergeben
-----select distinct r_value, r_name, r_description, bay_subtour, lkw_value, lkw_description,f1_value,f1_name,f1_description,f2_value,f2_name,f3_value,f3_name, weightsum, sr.reportname from ladeliste cross join (select regexp_split_to_table('Inkasso, nachArtikeln, nachLieferscheinen',', *') as reportname ) as sr
---select distinct r_value, r_name, r_description, bay_subtour, lkw_value, lkw_description,f1_value,f1_name,f1_description,f2_value,f2_name,f3_value,f3_name, weightsum, r_reportnames from ladeliste as sr order by r_value, bay_subtour
--------------- Summen je UOM (Summe Fässer, Summe Kästen, etc.)
---select distinct uom, uom_sum, weightsum from ladeliste where bay_masterorderline_id is null
--------------- Ladeliste nach Artikeln
---select p_value, p_name, p_description, tu_name, uom, loc_value, sum(qtyordered) as qtyordered from ladeliste where bay_masterorderline_id is null group by p_value, p_name, p_description, tu_name, uom, loc_value, loc_order order by loc_order, p_value, uom
--------------- Inkassoliste
---select distinct r_value, bay_subtour, seqno, documentno, paymentrule, grandtotal, pr_name, bp_value, bp_name, bp_name2, address1, address2, postal, city from ladeliste order by r_value, bay_subtour, seqno, bp_value, documentno]]>
+select * from ladeliste
+where bay_masterorderline_id is null
+and not r_value like 'A%']]>
 	</queryString>
 	<field name="r_value" class="java.lang.String">
 		<property name="com.jaspersoft.studio.field.name" value="r_value"/>
@@ -152,11 +131,6 @@ select * from ladeliste where bay_masterorderline_id is null order by r_value, b
 	<field name="r_description" class="java.lang.String">
 		<property name="com.jaspersoft.studio.field.name" value="r_description"/>
 		<property name="com.jaspersoft.studio.field.label" value="r_description"/>
-		<property name="com.jaspersoft.studio.field.tree.path" value="bay_route"/>
-	</field>
-	<field name="r_reportnames" class="java.lang.String">
-		<property name="com.jaspersoft.studio.field.name" value="r_reportnames"/>
-		<property name="com.jaspersoft.studio.field.label" value="r_reportnames"/>
 		<property name="com.jaspersoft.studio.field.tree.path" value="bay_route"/>
 	</field>
 	<field name="lkw_value" class="java.lang.String">
@@ -213,11 +187,6 @@ select * from ladeliste where bay_masterorderline_id is null order by r_value, b
 		<property name="com.jaspersoft.studio.field.label" value="documentno"/>
 		<property name="com.jaspersoft.studio.field.tree.path" value="c_order"/>
 	</field>
-	<field name="bay_subtour" class="java.lang.String">
-		<property name="com.jaspersoft.studio.field.name" value="bay_subtour"/>
-		<property name="com.jaspersoft.studio.field.label" value="bay_subtour"/>
-		<property name="com.jaspersoft.studio.field.tree.path" value="c_order"/>
-	</field>
 	<field name="o_description" class="java.lang.String">
 		<property name="com.jaspersoft.studio.field.name" value="o_description"/>
 		<property name="com.jaspersoft.studio.field.label" value="o_description"/>
@@ -241,16 +210,6 @@ select * from ladeliste where bay_masterorderline_id is null order by r_value, b
 	<field name="grandtotal" class="java.math.BigDecimal">
 		<property name="com.jaspersoft.studio.field.name" value="grandtotal"/>
 		<property name="com.jaspersoft.studio.field.label" value="grandtotal"/>
-		<property name="com.jaspersoft.studio.field.tree.path" value="c_order"/>
-	</field>
-	<field name="prepicking" class="java.lang.String">
-		<property name="com.jaspersoft.studio.field.name" value="prepicking"/>
-		<property name="com.jaspersoft.studio.field.label" value="prepicking"/>
-		<property name="com.jaspersoft.studio.field.tree.path" value="c_order"/>
-	</field>
-	<field name="seqno" class="java.math.BigDecimal">
-		<property name="com.jaspersoft.studio.field.name" value="seqno"/>
-		<property name="com.jaspersoft.studio.field.label" value="seqno"/>
 		<property name="com.jaspersoft.studio.field.tree.path" value="c_order"/>
 	</field>
 	<field name="pr_name" class="java.lang.String">
@@ -292,11 +251,6 @@ select * from ladeliste where bay_masterorderline_id is null order by r_value, b
 		<property name="com.jaspersoft.studio.field.name" value="city"/>
 		<property name="com.jaspersoft.studio.field.label" value="city"/>
 		<property name="com.jaspersoft.studio.field.tree.path" value="c_location"/>
-	</field>
-	<field name="bp_loadinghint" class="java.lang.String">
-		<property name="com.jaspersoft.studio.field.name" value="bp_loadinghint"/>
-		<property name="com.jaspersoft.studio.field.label" value="bp_loadinghint"/>
-		<property name="com.jaspersoft.studio.field.tree.path" value="ad_ref_list"/>
 	</field>
 	<field name="line" class="java.math.BigDecimal">
 		<property name="com.jaspersoft.studio.field.name" value="line"/>
@@ -369,278 +323,211 @@ select * from ladeliste where bay_masterorderline_id is null order by r_value, b
 		<property name="com.jaspersoft.studio.field.label" value="loc_priority"/>
 		<property name="com.jaspersoft.studio.field.tree.path" value="m_locator"/>
 	</field>
-	<field name="uom_sum" class="java.math.BigDecimal">
-		<property name="com.jaspersoft.studio.field.name" value="uom_sum"/>
-		<property name="com.jaspersoft.studio.field.label" value="uom_sum"/>
+	<field name="qty_p_sum" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.name" value="qty_p_sum"/>
+		<property name="com.jaspersoft.studio.field.label" value="qty_p_sum"/>
 	</field>
-	<group name="Lieferschein" keepTogether="true">
-		<groupExpression><![CDATA[$F{documentno}]]></groupExpression>
+	<variable name="qtyordered1" class="java.math.BigDecimal" resetType="Group" resetGroup="Artikel" calculation="Sum">
+		<variableExpression><![CDATA[$F{qtyordered}]]></variableExpression>
+	</variable>
+	<group name="Tour">
+		<groupExpression><![CDATA[$F{r_value}]]></groupExpression>
 		<groupHeader>
-			<band height="32">
+			<band height="30">
 				<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				<textField>
-					<reportElement style="Report Standard Font" x="0" y="0" width="50" height="15" uuid="99de7d45-0bbf-44a3-901a-6aebb120aaf4">
-						<property name="com.jaspersoft.studio.unit.height" value="px"/>
-					</reportElement>
-					<textElement>
-						<font isBold="true"/>
-					</textElement>
-					<textFieldExpression><![CDATA[$F{documentno}]]></textFieldExpression>
-				</textField>
-				<textField>
-					<reportElement style="Report Standard Font" x="50" y="0" width="50" height="15" uuid="5efe2518-e783-464b-aa8a-12673686aa24">
-						<property name="com.jaspersoft.studio.unit.width" value="px"/>
-						<property name="com.jaspersoft.studio.unit.height" value="px"/>
-					</reportElement>
-					<textElement>
-						<font isBold="true"/>
-					</textElement>
-					<textFieldExpression><![CDATA[$F{bp_value}]]></textFieldExpression>
-				</textField>
-				<textField isBlankWhenNull="true">
-					<reportElement style="Report Standard Font" x="100" y="0" width="150" height="15" uuid="65fc0916-3f4a-483c-862c-bf62dfa2a839">
-						<property name="com.jaspersoft.studio.unit.width" value="px"/>
-						<property name="com.jaspersoft.studio.unit.height" value="px"/>
-					</reportElement>
-					<textElement>
-						<font isBold="true"/>
-					</textElement>
-					<textFieldExpression><![CDATA[$F{bp_name}]]></textFieldExpression>
-				</textField>
-				<textField isBlankWhenNull="true">
-					<reportElement style="Report Standard Font" x="250" y="0" width="190" height="15" uuid="fc8436b3-0c66-4161-9fe4-d78488d9d2fe">
-						<property name="com.jaspersoft.studio.unit.width" value="px"/>
-						<property name="com.jaspersoft.studio.unit.height" value="px"/>
-					</reportElement>
-					<textElement>
-						<font isBold="true"/>
-					</textElement>
-					<textFieldExpression><![CDATA[$F{bp_name2}]]></textFieldExpression>
-				</textField>
-				<textField isBlankWhenNull="true">
-					<reportElement style="Report Standard Font" x="100" y="15" width="340" height="15" uuid="c83fa135-8b13-44e2-8105-4aa4b9c80115">
-						<property name="com.jaspersoft.studio.unit.width" value="px"/>
-						<property name="com.jaspersoft.studio.unit.height" value="px"/>
-					</reportElement>
-					<textElement>
-						<font isBold="true"/>
-					</textElement>
-					<textFieldExpression><![CDATA[($F{address1}==null?"":$F{address1})+($F{address2}==null?"":", "+$F{address2})+
-($F{postal}==null?"":", "+$F{postal})+($F{city}==null?"":" "+$F{city})]]></textFieldExpression>
-				</textField>
-				<line>
-					<reportElement x="0" y="30" width="515" height="1" uuid="e8b7d2fd-1a5a-4048-9591-9f50a2dd415f">
-						<property name="com.jaspersoft.studio.unit.x" value="px"/>
-						<property name="com.jaspersoft.studio.unit.y" value="px"/>
-						<property name="com.jaspersoft.studio.unit.width" value="px"/>
-						<property name="com.jaspersoft.studio.unit.height" value="px"/>
-					</reportElement>
-				</line>
-				<staticText>
-					<reportElement style="Report Monospace Font" x="380" y="0" width="135" height="15" uuid="2e51e9e8-a8ab-4a9b-8ad0-304534513d90">
+					<reportElement style="Header" x="0" y="0" width="300" height="25" uuid="d9de67ff-ca38-470c-99f6-a1cf1b90feb0">
 						<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="ac5cfd43-567e-4ba7-b143-70f7387eeba4"/>
 						<property name="com.jaspersoft.studio.unit.height" value="px"/>
 						<property name="com.jaspersoft.studio.unit.x" value="px"/>
-						<property name="com.jaspersoft.studio.unit.width" value="px"/>
-						<printWhenExpression><![CDATA["1".equals($F{prepicking})]]></printWhenExpression>
-					</reportElement>
-					<box>
-						<pen lineWidth="1.0"/>
-						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
-						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
-						<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
-						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
-					</box>
-					<textElement textAlignment="Right">
-						<font isBold="true" isUnderline="true"/>
-					</textElement>
-					<text><![CDATA[vorgeladen Halle]]></text>
-				</staticText>
-				<staticText>
-					<reportElement style="Report Monospace Font" x="380" y="0" width="134" height="15" uuid="f4c32141-4889-4721-bfec-27c955280fc7">
-						<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="ac5cfd43-567e-4ba7-b143-70f7387eeba4"/>
-						<property name="com.jaspersoft.studio.unit.height" value="px"/>
 						<property name="com.jaspersoft.studio.unit.y" value="px"/>
-						<property name="com.jaspersoft.studio.unit.x" value="px"/>
-						<property name="com.jaspersoft.studio.unit.width" value="px"/>
-						<printWhenExpression><![CDATA["2".equals($F{prepicking}) || "A".equals($F{prepicking}) || "B".equals($F{prepicking}) || "C".equals($F{prepicking}) || "D".equals($F{prepicking}) || "E".equals($F{prepicking}) || "F".equals($F{prepicking})]]></printWhenExpression>
 					</reportElement>
-					<box>
-						<pen lineWidth="1.0"/>
-						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
-						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
-						<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
-						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
-					</box>
-					<textElement textAlignment="Right">
-						<font isBold="true" isUnderline="true"/>
+					<textElement>
+						<font isUnderline="true"/>
 					</textElement>
-					<text><![CDATA[vorgeladen LKW]]></text>
-				</staticText>
-				<textField>
-					<reportElement x="380" y="15" width="134" height="15" uuid="c47a8b80-6824-4656-b744-86bc30731606">
-						<property name="com.jaspersoft.studio.unit.x" value="px"/>
-						<property name="com.jaspersoft.studio.unit.height" value="px"/>
-						<property name="com.jaspersoft.studio.unit.y" value="px"/>
-						<property name="com.jaspersoft.studio.unit.width" value="px"/>
-					</reportElement>
-					<textElement textAlignment="Right"/>
-					<textFieldExpression><![CDATA[($F{bp_loadinghint}==null?"":$F{bp_loadinghint})]]></textFieldExpression>
+					<textFieldExpression><![CDATA[$F{r_value} + ($F{lkw_value}==null ? "" : " - " + $F{lkw_value})]]></textFieldExpression>
 				</textField>
 			</band>
 		</groupHeader>
 		<groupFooter>
-			<band height="15">
-				<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<band height="31">
 				<line>
-					<reportElement x="0" y="0" width="515" height="1" uuid="48942a98-1602-4a04-8561-593643837182">
+					<reportElement positionType="Float" x="0" y="5" width="515" height="1" uuid="b89cb07f-e84e-4522-a8ad-252477097483">
 						<property name="com.jaspersoft.studio.unit.x" value="px"/>
-						<property name="com.jaspersoft.studio.unit.y" value="px"/>
 						<property name="com.jaspersoft.studio.unit.width" value="px"/>
 						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+						<property name="com.jaspersoft.studio.unit.y" value="px"/>
 					</reportElement>
+					<graphicElement>
+						<pen lineWidth="3.0"/>
+					</graphicElement>
 				</line>
 			</band>
 		</groupFooter>
 	</group>
-	<columnHeader>
-		<band height="20" splitType="Stretch">
-			<staticText>
-				<reportElement style="Report Monospace Font" x="0" y="0" width="50" height="15" uuid="9c250720-b1af-4ff6-9bf1-80b96e5f9a65">
-					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="b0513e61-4d9c-4a53-8077-d230e7728e1b"/>
-					<property name="com.jaspersoft.studio.unit.height" value="px"/>
-				</reportElement>
-				<box>
-					<bottomPen lineWidth="1.0"/>
-				</box>
-				<textElement>
-					<font isBold="true"/>
-				</textElement>
-				<text><![CDATA[ArtNr]]></text>
-			</staticText>
-			<staticText>
-				<reportElement style="Report Monospace Font" x="50" y="0" width="280" height="15" uuid="01d2b857-258d-4daa-acc4-1fa8a9536c2a">
-					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="97e9d9d1-c647-4644-8dbf-a26737870719"/>
-					<property name="com.jaspersoft.studio.unit.height" value="px"/>
-				</reportElement>
-				<box>
-					<bottomPen lineWidth="1.0"/>
-				</box>
-				<textElement>
-					<font isBold="true"/>
-				</textElement>
-				<text><![CDATA[Bezeichnung]]></text>
-			</staticText>
-			<staticText>
-				<reportElement style="Report Monospace Font" x="330" y="0" width="50" height="15" uuid="bdcdc676-f38c-4701-89c6-a0fd75bac80c">
-					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="d1170f7e-6ae0-40da-b42a-f36a709eb513"/>
-					<property name="com.jaspersoft.studio.unit.height" value="px"/>
-				</reportElement>
-				<box>
-					<bottomPen lineWidth="1.0"/>
-				</box>
-				<textElement>
-					<font isBold="true"/>
-				</textElement>
-				<text><![CDATA[Einheit]]></text>
-			</staticText>
-			<staticText>
-				<reportElement style="Report Monospace Font" x="380" y="0" width="35" height="15" uuid="2090d135-2d4f-4327-ba7b-6906233ce81d">
-					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="ac5cfd43-567e-4ba7-b143-70f7387eeba4"/>
-					<property name="com.jaspersoft.studio.unit.height" value="px"/>
-				</reportElement>
-				<box>
-					<bottomPen lineWidth="1.0"/>
-				</box>
-				<textElement textAlignment="Right">
-					<font isBold="true"/>
-				</textElement>
-				<text><![CDATA[Menge]]></text>
-			</staticText>
-			<staticText>
-				<reportElement style="Report Monospace Font" x="390" y="0" width="125" height="15" uuid="1b8d2027-1b60-47e3-ac41-5ba368b53cc1">
-					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="ac5cfd43-567e-4ba7-b143-70f7387eeba4"/>
-					<property name="com.jaspersoft.studio.unit.height" value="px"/>
-				</reportElement>
-				<box>
-					<bottomPen lineWidth="1.0"/>
-				</box>
-				<textElement>
-					<font isBold="true"/>
-				</textElement>
-				<text><![CDATA[]]></text>
-			</staticText>
-		</band>
-	</columnHeader>
-	<detail>
-		<band height="30" splitType="Stretch">
+	<group name="Artikel">
+		<groupExpression><![CDATA[$F{p_value}]]></groupExpression>
+		<groupHeader>
+			<band height="12">
+				<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				<textField>
+					<reportElement style="Report Monospace Font" x="0" y="0" width="40" height="12" uuid="d90ae032-6a04-46a0-9be6-c8dd27887d69">
+						<property name="com.jaspersoft.studio.unit.y" value="px"/>
+						<property name="com.jaspersoft.studio.unit.x" value="px"/>
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+						<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					</reportElement>
+					<textElement>
+						<font isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{p_value}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement style="Report Monospace Font" x="40" y="0" width="190" height="12" uuid="2be0d197-069e-402b-a378-7ece58c0bf1e">
+						<property name="com.jaspersoft.studio.unit.y" value="px"/>
+						<property name="com.jaspersoft.studio.unit.width" value="px"/>
+						<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					</reportElement>
+					<textElement>
+						<font isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{p_name}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement style="Report Monospace Font" x="230" y="0" width="85" height="12" uuid="345eb64e-7a33-4d6d-b011-a428a0a41a94">
+						<property name="com.jaspersoft.studio.unit.y" value="px"/>
+						<property name="com.jaspersoft.studio.unit.width" value="px"/>
+						<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					</reportElement>
+					<textElement>
+						<font isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{tu_name}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement style="Report Monospace Font" x="315" y="0" width="50" height="12" uuid="1650c585-1a51-458b-9789-a61614fe03ef">
+						<property name="com.jaspersoft.studio.unit.y" value="px"/>
+						<property name="com.jaspersoft.studio.unit.width" value="px"/>
+						<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					</reportElement>
+					<textElement>
+						<font isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{uom}]]></textFieldExpression>
+				</textField>
+				<textField pattern="#,##0.###;(#,##0.###-)">
+					<reportElement style="Report Monospace Font" x="365" y="0" width="35" height="12" uuid="7985413a-acf0-479e-870c-d85f5bb8cae8">
+						<property name="com.jaspersoft.studio.unit.y" value="px"/>
+						<property name="com.jaspersoft.studio.unit.width" value="px"/>
+						<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					</reportElement>
+					<textElement textAlignment="Right">
+						<font isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{qty_p_sum}]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupHeader>
+		<groupFooter>
+			<band height="5">
+				<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			</band>
+		</groupFooter>
+	</group>
+	<pageHeader>
+		<band height="31" splitType="Stretch">
 			<property name="com.jaspersoft.studio.unit.height" value="px"/>
 			<staticText>
-				<reportElement style="grauer Zeilenhintergrund" stretchType="ElementGroupHeight" mode="Opaque" x="0" y="0" width="515" height="15" uuid="1f9ce981-ac49-4175-93a4-0c8b5a5bf922">
-					<printWhenExpression><![CDATA[$V{REPORT_COUNT}%2!=0]]></printWhenExpression>
+				<reportElement stretchType="ContainerBottom" mode="Opaque" x="0" y="0" width="515" height="30" backcolor="#EDEBEB" uuid="fa89ed25-9925-4625-9608-afce3bb74c38">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
 				<text><![CDATA[]]></text>
 			</staticText>
 			<textField>
-				<reportElement style="Report Monospace Font" x="0" y="0" width="50" height="15" uuid="8d3b9b82-5bc2-4e03-a05a-6357074e96b8">
-					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="b0513e61-4d9c-4a53-8077-d230e7728e1b"/>
-					<property name="com.jaspersoft.studio.unit.height" value="px"/>
-				</reportElement>
-				<textFieldExpression><![CDATA[$F{p_value}]]></textFieldExpression>
+				<reportElement style="Header" x="0" y="0" width="420" height="30" uuid="2a3c838d-d320-428a-b8bc-276ed450ceea"/>
+				<textFieldExpression><![CDATA[$F{loc_value}]]></textFieldExpression>
 			</textField>
-			<textField textAdjust="StretchHeight">
-				<reportElement style="Report Monospace Font" x="50" y="0" width="250" height="15" uuid="f191aa9f-2174-46ed-8ee2-8542aa181cec">
-					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="97e9d9d1-c647-4644-8dbf-a26737870719"/>
+			<line>
+				<reportElement positionType="Float" x="0" y="30" width="515" height="1" uuid="202c4971-49f4-4dfe-b077-62de988934cf">
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
-					<printWhenExpression><![CDATA[$F{tu_name}==null]]></printWhenExpression>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
 				</reportElement>
-				<textFieldExpression><![CDATA[$F{p_name}]]></textFieldExpression>
-			</textField>
-			<textField>
-				<reportElement style="Report Monospace Font" x="330" y="0" width="50" height="15" uuid="621ac746-b5a8-4574-b450-efedd7fc967d">
-					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="d1170f7e-6ae0-40da-b42a-f36a709eb513"/>
-					<property name="com.jaspersoft.studio.unit.height" value="px"/>
-				</reportElement>
-				<textFieldExpression><![CDATA[$F{uom}]]></textFieldExpression>
-			</textField>
-			<textField pattern="#,##0.###;(#,##0.###-)">
-				<reportElement style="Report Monospace Font" x="380" y="0" width="35" height="15" uuid="3802c408-d974-415a-838c-38fbe1bd4021">
-					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="6c2826a3-8e1e-4118-a7b2-6a816ad682a4"/>
-					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			</line>
+			<textField pattern="dd.MM.yy" isBlankWhenNull="true">
+				<reportElement style="Header" x="420" y="0" width="94" height="30" uuid="fdae99c1-fd4b-4edc-a614-8dcc8d87cb09">
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
 				</reportElement>
 				<textElement textAlignment="Right"/>
-				<textFieldExpression><![CDATA[$F{qtyordered}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{dateordered}]]></textFieldExpression>
 			</textField>
-			<textField textAdjust="StretchHeight">
-				<reportElement style="Report Monospace Font" x="50" y="0" width="190" height="15" uuid="aa46b262-8ae2-4090-a8c5-0b09407a1c4e">
-					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="97e9d9d1-c647-4644-8dbf-a26737870719"/>
-					<property name="com.jaspersoft.studio.unit.height" value="px"/>
-					<printWhenExpression><![CDATA[$F{tu_name}!=null]]></printWhenExpression>
-				</reportElement>
-				<textFieldExpression><![CDATA[$F{p_description}]]></textFieldExpression>
-			</textField>
+		</band>
+	</pageHeader>
+	<detail>
+		<band height="12" splitType="Stretch">
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<printWhenExpression><![CDATA[1==0]]></printWhenExpression>
 			<textField>
-				<reportElement style="Report Monospace Font" x="240" y="0" width="84" height="15" uuid="3b14ff1a-ae7a-436f-bfcb-f854102959b8">
-					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="97e9d9d1-c647-4644-8dbf-a26737870719"/>
+				<reportElement style="Report Monospace Font" x="40" y="0" width="40" height="12" uuid="a197c64f-0ee7-427e-94d1-c716cbc7e6dc">
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 					<property name="com.jaspersoft.studio.unit.width" value="px"/>
-					<printWhenExpression><![CDATA[$F{tu_name}!=null]]></printWhenExpression>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
 				</reportElement>
-				<textFieldExpression><![CDATA[$F{tu_name}]]></textFieldExpression>
+				<textElement>
+					<font isItalic="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{bp_value}]]></textFieldExpression>
 			</textField>
-			<staticText>
-				<reportElement style="grauer Zeilenhintergrund" positionType="Float" stretchType="ContainerBottom" mode="Opaque" x="0" y="15" width="515" height="15" uuid="5185ca5e-0662-4f3f-9fcf-7c9aebf5287f">
-					<printWhenExpression><![CDATA[$V{REPORT_COUNT}%2!=0 && $F{ol_description}!=null]]></printWhenExpression>
-				</reportElement>
-				<text><![CDATA[]]></text>
-			</staticText>
-			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
-				<reportElement style="Report Monospace Font" positionType="Float" x="50" y="15" width="250" height="15" isRemoveLineWhenBlank="true" uuid="1adb2b7a-1591-4de9-90b8-bac4f81eb6fb">
-					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="97e9d9d1-c647-4644-8dbf-a26737870719"/>
+			<textField textAdjust="ScaleFont">
+				<reportElement style="Report Monospace Font" x="80" y="0" width="150" height="12" uuid="f55dc165-eb90-4825-a1fd-65d6ed8ccc75">
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
 				</reportElement>
-				<textFieldExpression><![CDATA[$F{ol_description}]]></textFieldExpression>
+				<textElement>
+					<font isItalic="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{bp_name}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Report Monospace Font" x="230" y="0" width="35" height="12" uuid="d0cbc9bd-115f-4955-8abf-3093d77d50e5">
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font isItalic="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{qtyordered}]]></textFieldExpression>
 			</textField>
 		</band>
 	</detail>
+	<pageFooter>
+		<band height="15" splitType="Stretch">
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<textField>
+				<reportElement style="Report Standard Font" x="370" y="0" width="100" height="15" uuid="79859b10-4a43-4ad3-86ec-9ed85429b1bd">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Seite " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report">
+				<reportElement style="Report Standard Font" x="470" y="0" width="45" height="15" uuid="d4579058-24e9-474c-8e78-548dc3a765e5">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Left">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[" von " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageFooter>
 </jasperReport>

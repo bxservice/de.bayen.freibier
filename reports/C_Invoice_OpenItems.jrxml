@@ -4,7 +4,11 @@
 	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
 	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="Controlling.xml"/>
 	<property name="com.jaspersoft.studio.unit." value="pixel"/>
-	<template><![CDATA["BayenStyles.jrtx"]]></template>
+	<template><![CDATA[$P{SUBREPORT_DIR}+"BayenStyles.jrtx"]]></template>
+	<parameter name="SUBREPORT_DIR" class="java.lang.String" isForPrompting="false">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+		<defaultValueExpression><![CDATA["./"]]></defaultValueExpression>
+	</parameter>
 	<parameter name="RECORD_ID" class="java.lang.Integer">
 		<defaultValueExpression><![CDATA[1040375]]></defaultValueExpression>
 	</parameter>

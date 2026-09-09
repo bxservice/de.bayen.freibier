@@ -71,7 +71,7 @@ select
   o.weight as o_weight,
   o.paymentrule,
   o.grandtotal,
-  o.isprepicking,
+  o.prepicking,
   o.seqno,
   pr.name as pr_name,
   bp.value as bp_value,
@@ -81,6 +81,7 @@ select
   loc.address2,
   loc.postal,
   loc.city,
+  lv.name as bp_loadinghint,
   ol.line,
   ol.description as ol_description,
   ol.qtyordered,
@@ -105,6 +106,7 @@ left join c_orderline ol on ol.c_order_id = o.c_order_id and ol.qtyentered > 0
 left join c_uom uom using(c_uom_id)
 left join c_bpartner bp on (bp.c_bpartner_id = o.c_bpartner_id)
 left join c_bpartner_location bpl on (bpl.c_bpartner_location_id = o.c_bpartner_location_id and bpl.isactive='Y' and bpl.isshipto='Y')
+left join ad_ref_list lv on (bpl.bay_loadinghint = lv.value and lv.ad_reference_id = (select ref.ad_reference_id from ad_reference ref where ref.name='Ladevorgabe' and ref.isactive = 'Y'))
 left join c_location loc using (c_location_id)
 join m_product p using (m_product_id)
 left join bay_tradingunit tu using (bay_tradingunit_id)
@@ -133,8 +135,7 @@ select distinct r_value, r_name, r_description, bay_subtour, lkw_value, lkw_desc
 -------------- Ladeliste nach Artikeln
 --select p_value, p_name, p_description, tu_name, uom, loc_value, sum(qtyordered) as qtyordered from ladeliste where bay_masterorderline_id is null group by p_value, p_name, p_description, tu_name, uom, loc_value, loc_order order by loc_order, p_value, uom
 -------------- Inkassoliste
---select distinct r_value, bay_subtour, seqno, documentno, paymentrule, grandtotal, pr_name, bp_value, bp_name, bp_name2, address1, address2, postal, city from ladeliste order by r_value, bay_subtour, seqno
-]]>
+--select distinct r_value, bay_subtour, seqno, documentno, paymentrule, grandtotal, pr_name, bp_value, bp_name, bp_name2, address1, address2, postal, city from ladeliste order by r_value, bay_subtour, seqno]]>
 	</queryString>
 	<field name="r_value" class="java.lang.String">
 		<property name="com.jaspersoft.studio.field.name" value="r_value"/>

@@ -1,0 +1,343 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.5.0.final using JasperReports Library version 6.5.0  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Liste abgemeldeter Kunden" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="05bb8f30-205a-4d34-a1a1-f7dd51bc4b84">
+	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="Controlling"/>
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.topMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.bottomMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.leftMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
+	<template><![CDATA[$P{SUBREPORT_DIR}+"BayenStyles.jrtx"]]></template>
+	<parameter name="SUBREPORT_DIR" class="java.lang.String" isForPrompting="false">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+		<defaultValueExpression><![CDATA["./"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="AD_User_ID" class="java.lang.Integer">
+		<parameterDescription><![CDATA[Außendienstler]]></parameterDescription>
+	</parameter>
+	<queryString language="SQL">
+		<![CDATA[with q as (
+select
+   $P{AD_User_ID}::integer as ad
+),
+lak as (
+select
+  c_bpartner_id,
+  coalesce(substring(laktext, '^(?:(\d+)/(?:\d+))$')::integer, 300) as umsatzschwelle,
+  coalesce(substring(laktext, '^(?:(?:\d+)/(\d+))$')::integer, 2) as wochen,
+  case when laktext like 'abgemeldet%' then 'Y' else 'N' end as abgemeldet,
+  laktext
+from (
+  -- ein subselect, um den regex hier nur einmal auszuführen, obwohl ich dessen Ergebnis oben öfters nutze
+  select 
+    bp.c_bpartner_id,
+    bp.value, bp.name,
+    substring(coalesce(bp.description, '') || ' ' || coalesce(bpg.description, ''), '(?:^|\n| )LAK: ([^ ]+)') as laktext
+  from c_bpartner bp
+  left join c_bp_group bpg using (c_bp_group_id)
+  where bp.ad_client_id=1000000 and bp.isactive='Y'
+) laktext
+),
+letztermonat as (
+select
+  o.c_bpartner_id,
+  sum (o.totallines) as total,
+  max(o.dateordered) as lastdate
+from
+c_order o
+join lak using (c_bpartner_id)
+where o.ad_client_id =1000000 and o.issotrx='Y'
+  and o.dateordered between now() - interval '1 week' * lak.wochen and now()
+group by
+  c_bpartner_id
+),
+letztesjahr as (
+select
+  o.c_bpartner_id,
+  sum (o.totallines) as total,
+  max(o.dateordered) as lastdate
+from
+c_order o
+join c_bpartner bp using (c_bpartner_id)
+where o.ad_client_id =1000000 and o.issotrx='Y'
+  and o.dateordered between now() - interval '1 year' and now()
+group by
+  c_bpartner_id
+)
+select
+  ad.name as ad_name,
+  bpg.name as bpg_name,
+  bp.value as bp_value,
+  bp.name as bp_name,
+  bp.name2 as bp_name2,
+  bp.totalopenbalance,
+  lj.total,
+  lj.lastdate,
+  bp.description,
+  lak.*
+from letztesjahr lj
+full outer join letztermonat lm using (c_bpartner_id)
+cross join q
+join c_bpartner bp using (c_bpartner_id)
+join lak using (c_bpartner_id)
+left join c_bp_group bpg using (c_bp_group_id)
+left join ad_user ad on (ad.ad_user_id = bp.salesrep_id)
+where lm.c_bpartner_id is null
+  and lj.total > lak.umsatzschwelle
+  and lak.abgemeldet = 'N'
+  -- and bp.iscustomer='Y'  -- bleiben als Mahnung und Anregung
+--  and ad.value='mmarino'
+  and (ad.ad_user_id = q.ad or q.ad is null or q.ad = 0)
+order by ad.value, bpg.value, bp.value]]>
+	</queryString>
+	<field name="ad_name" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="ad_name"/>
+	</field>
+	<field name="bpg_name" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="bpg_name"/>
+	</field>
+	<field name="bp_value" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="bp_value"/>
+	</field>
+	<field name="bp_name" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="bp_name"/>
+	</field>
+	<field name="bp_name2" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="bp_name2"/>
+	</field>
+	<field name="totalopenbalance" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.label" value="totalopenbalance"/>
+	</field>
+	<field name="total" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.label" value="total"/>
+	</field>
+	<field name="lastdate" class="java.sql.Timestamp">
+		<property name="com.jaspersoft.studio.field.label" value="lastdate"/>
+	</field>
+	<field name="description" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="description"/>
+	</field>
+	<field name="c_bpartner_id" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.label" value="c_bpartner_id"/>
+	</field>
+	<field name="umsatzschwelle" class="java.lang.Integer">
+		<property name="com.jaspersoft.studio.field.label" value="umsatzschwelle"/>
+	</field>
+	<field name="wochen" class="java.lang.Integer">
+		<property name="com.jaspersoft.studio.field.label" value="wochen"/>
+	</field>
+	<field name="abgemeldet" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="abgemeldet"/>
+	</field>
+	<field name="laktext" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="laktext"/>
+	</field>
+	<variable name="bp_value1" class="java.lang.Integer" resetType="Group" resetGroup="ad_name" calculation="Count">
+		<variableExpression><![CDATA[$F{bp_value}]]></variableExpression>
+	</variable>
+	<group name="ad_name" isStartNewPage="true">
+		<groupExpression><![CDATA[$F{ad_name}]]></groupExpression>
+		<groupHeader>
+			<band height="1">
+				<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			</band>
+		</groupHeader>
+		<groupFooter>
+			<band height="22">
+				<textField>
+					<reportElement x="0" y="0" width="180" height="20" uuid="dce60271-7b20-43a3-87fb-90501ee71311">
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					</reportElement>
+					<textElement verticalAlignment="Bottom"/>
+					<textFieldExpression><![CDATA["insgesamt "+$V{bp_value1}+ " Kunden"]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupFooter>
+	</group>
+	<group name="bpg_name">
+		<groupExpression><![CDATA[$F{bpg_name}]]></groupExpression>
+		<groupHeader>
+			<band height="30">
+				<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				<textField>
+					<reportElement x="0" y="0" width="550" height="30" uuid="c031b7cc-3a1d-49b7-9713-a7021717c729"/>
+					<textElement verticalAlignment="Bottom">
+						<font size="15" isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{bpg_name}]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupHeader>
+	</group>
+	<pageHeader>
+		<band height="90" splitType="Stretch">
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<staticText>
+				<reportElement x="0" y="0" width="550" height="30" uuid="a5c4008d-9c3e-4dd1-8e24-d7e0a9fb3861"/>
+				<textElement>
+					<font size="25"/>
+				</textElement>
+				<text><![CDATA[Liste abgehender Kunden]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="40" y="60" width="150" height="30" uuid="46a6b107-367f-47b5-b652-8bbf7b9e594c">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+				</reportElement>
+				<textElement verticalAlignment="Bottom">
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[Kunde]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="270" y="60" width="60" height="30" uuid="3cc5dddf-9b96-4362-a180-ecfd23a7cdf8">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Bottom">
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[letzter Bezug]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="340" y="60" width="210" height="30" uuid="e3764424-07a5-4fb7-96e3-b74b2ab1d9e3">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+				</reportElement>
+				<textElement verticalAlignment="Bottom">
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[Beschreibung]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="0" y="60" width="39" height="30" uuid="ee5f08d8-54e2-4f0b-9a53-49da9c395aa8">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+				</reportElement>
+				<textElement verticalAlignment="Bottom">
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[KdNr]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="190" y="60" width="70" height="30" uuid="1e72bd66-edea-4347-969f-3d877c47f389">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Bottom">
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[Ums 12 Mon
+akt. OP]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="0" y="30" width="550" height="30" uuid="2828f3ca-925e-41c4-841a-94a74f00b785">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<box>
+					<bottomPen lineWidth="1.0"/>
+				</box>
+				<textElement textAlignment="Right">
+					<font size="20" isBold="true" isUnderline="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{ad_name}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="30" width="330" height="30" uuid="54e74895-49cd-44df-9189-06c2d05b4822"/>
+				<textElement markup="html"/>
+				<text><![CDATA[(Kunden, die im letzten Jahr über z.B. 500,- € bezogen haben, aber nicht in den letzten 2 Wochen).]]></text>
+			</staticText>
+		</band>
+	</pageHeader>
+	<detail>
+		<band height="26" splitType="Stretch">
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<textField>
+				<reportElement x="0" y="0" width="40" height="13" uuid="ec0ba813-b44d-4722-8e40-467cb18d4653">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement>
+					<font isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{bp_value}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="40" y="0" width="150" height="13" uuid="f3d0857e-bde3-4a4b-b686-38af71faabf8">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement>
+					<font isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{bp_name}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00¤;-#,##0.00 ¤">
+				<reportElement x="190" y="0" width="70" height="13" uuid="a7d1a3a5-7a9b-436c-86db-1e602042af5c">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression><![CDATA[$F{total}]]></textFieldExpression>
+			</textField>
+			<textField pattern="dd.MM.yy">
+				<reportElement x="270" y="0" width="60" height="13" uuid="e7773784-8639-403c-8bc2-966e5eff8601">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{lastdate}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="330" y="0" width="220" height="26" uuid="d6738432-bdc5-4c72-999d-ee904afc99ea">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{description}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="40" y="13" width="150" height="13" forecolor="#808080" uuid="1115b1cb-90e4-4f81-88f4-2006a0b5713f">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{bp_name2}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00¤;-#,##0.00 ¤">
+				<reportElement x="190" y="13" width="70" height="13" forecolor="#808080" uuid="0261f9f0-5a54-4094-a99c-6f756f58767e">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<printWhenExpression><![CDATA[$F{totalopenbalance}.intValue() > 0]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression><![CDATA[$F{totalopenbalance}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="30">
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<textField>
+				<reportElement x="430" y="15" width="69" height="15" uuid="0ee0d2dc-5189-49a7-981c-e1aaab92adc3">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression><![CDATA["Seite " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report">
+				<reportElement x="500" y="15" width="44" height="15" uuid="88b97c47-5661-406a-b56e-2580f74c807c">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Left"/>
+				<textFieldExpression><![CDATA[" von " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="0" width="560" height="29" forecolor="#808080" uuid="d7cdc0ef-1907-468a-8de6-cbf654ed91d6">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement>
+					<font size="8" isItalic="true"/>
+				</textElement>
+				<text><![CDATA[Abmelden mit "LAK: abgemeldet", konfigurieren ab 300 € Jahresumsatz und 6 Wochen Nichtbezug mit "LAK: 300/6" in GP oder GP-Gruppe.]]></text>
+			</staticText>
+		</band>
+	</pageFooter>
+</jasperReport>

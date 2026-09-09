@@ -499,6 +499,9 @@ WHERE
 					<subreportParameter name="AD_TABLE_ID">
 						<subreportParameterExpression><![CDATA[$P{AD_TABLE_ID}]]></subreportParameterExpression>
 					</subreportParameter>
+					<subreportParameter name="SUBREPORT_DIR">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_DIR}]]></subreportParameterExpression>
+					</subreportParameter>
 					<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
 					<subreportExpression><![CDATA[$P{SUBREPORT_DIR}+"C_Invoice_DepositLines.jasper"]]></subreportExpression>
 				</subreport>
@@ -606,7 +609,7 @@ WHERE
 				<reportElement x="-55" y="-20" width="595" height="115" uuid="7b5d61e2-f336-4f50-bba9-fadd2a93f2b2">
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
-				<imageExpression><![CDATA["Bayen_Briefbogen_oben.png"]]></imageExpression>
+				<imageExpression><![CDATA[$P{SUBREPORT_DIR}+"Bayen_Briefbogen_oben.png"]]></imageExpression>
 			</image>
 		</band>
 	</pageHeader>
@@ -775,6 +778,9 @@ WHERE
 				<subreportParameter name="AD_TABLE_ID">
 					<subreportParameterExpression><![CDATA[$P{AD_TABLE_ID}]]></subreportParameterExpression>
 				</subreportParameter>
+				<subreportParameter name="SUBREPORT_DIR">
+					<subreportParameterExpression><![CDATA[$P{SUBREPORT_DIR}]]></subreportParameterExpression>
+				</subreportParameter>
 				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
 				<subreportExpression><![CDATA[$P{SUBREPORT_DIR}+"C_Invoice_Address.jasper"]]></subreportExpression>
 			</subreport>
@@ -811,6 +817,9 @@ WHERE
 				</subreportParameter>
 				<subreportParameter name="CURRENCY_PATTERN">
 					<subreportParameterExpression><![CDATA[((DecimalFormat)NumberFormat.getCurrencyInstance(new Locale($F{languageiso},$F{languagecc}))).toPattern().replace("¤",$F{cursymbol})]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="SUBREPORT_DIR">
+					<subreportParameterExpression><![CDATA[$P{SUBREPORT_DIR}]]></subreportParameterExpression>
 				</subreportParameter>
 				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
 				<subreportExpression><![CDATA[$P{SUBREPORT_DIR}+"C_Invoice_Lines.jasper"]]></subreportExpression>
@@ -863,6 +872,9 @@ WHERE
 				</subreportParameter>
 				<subreportParameter name="CURRENCY_PATTERN">
 					<subreportParameterExpression><![CDATA[((DecimalFormat)NumberFormat.getCurrencyInstance(new Locale($F{languageiso},$F{languagecc}))).toPattern().replace("¤",$F{cursymbol})]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="SUBREPORT_DIR">
+					<subreportParameterExpression><![CDATA[$P{SUBREPORT_DIR}]]></subreportParameterExpression>
 				</subreportParameter>
 				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
 				<subreportExpression><![CDATA[$P{SUBREPORT_DIR}+"C_Invoice_TaxLines.jasper"]]></subreportExpression>
@@ -1189,8 +1201,11 @@ WHERE
 				<subreportParameter name="DateInvoiced">
 					<subreportParameterExpression><![CDATA[$F{dateinvoiced}]]></subreportParameterExpression>
 				</subreportParameter>
+				<subreportParameter name="SUBREPORT_DIR">
+					<subreportParameterExpression><![CDATA[$P{SUBREPORT_DIR}]]></subreportParameterExpression>
+				</subreportParameter>
 				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
-				<subreportExpression><![CDATA["C_Invoice_OpenItems.jasper"]]></subreportExpression>
+				<subreportExpression><![CDATA[$P{SUBREPORT_DIR}+"C_Invoice_OpenItems.jasper"]]></subreportExpression>
 			</subreport>
 		</band>
 	</detail>
@@ -1202,6 +1217,9 @@ WHERE
 				<reportElement x="0" y="0" width="511" height="23" uuid="5becca61-527c-4fa8-b93d-db361298a169"/>
 				<subreportParameter name="AD_ORG_ID">
 					<subreportParameterExpression><![CDATA[$P{AD_ORG_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="SUBREPORT_DIR">
+					<subreportParameterExpression><![CDATA[$P{SUBREPORT_DIR}]]></subreportParameterExpression>
 				</subreportParameter>
 				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
 				<subreportExpression><![CDATA[$P{SUBREPORT_DIR}+"Letterhead_Footer.jasper"]]></subreportExpression>

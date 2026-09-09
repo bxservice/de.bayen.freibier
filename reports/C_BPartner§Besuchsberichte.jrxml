@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.21.2.final using JasperReports Library version 6.21.2-8434a0bd7c3bbc37cbf916f2968d35e4b165821a  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Anrufliste" pageWidth="550" pageHeight="842" columnWidth="550" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" uuid="dcfe0be8-20e3-4562-8088-89b76d97d362">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="Controlling.xml"/>
+	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+	<template><![CDATA[$P{SUBREPORT_DIR}+"BayenStyles.jrtx"]]></template>
+	<parameter name="SUBREPORT_DIR" class="java.lang.String" isForPrompting="false">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+		<defaultValueExpression><![CDATA["./"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="RECORD_ID" class="java.lang.Integer">
+		<defaultValueExpression><![CDATA[null /*new BigDecimal(1007667)*/]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[-- Besuchsberichte
+-- (Query ist geeignet für JasperReports)
+SELECT
+starttime,
+extract (minutes from endtime - starttime) AS dauer,
+bp.value AS bp_value, 
+bp.name AS bp_name,
+bp.name2 AS bp_name2,
+st.name as status,
+rs.name as kontaktort,
+r.summary
+FROM R_Request r
+LEFT JOIN c_bpartner bp ON r.c_bpartner_id = bp.c_bpartner_id
+LEFT JOIN r_status st ON st.r_status_id = r.r_status_id
+left join r_resolution rs on rs.r_resolution_id = r.r_resolution_id
+where r.ad_client_id = 1000000
+and bp.c_bpartner_id = $P{RECORD_ID} 
+--and bp.value = '13041'
+order by starttime desc]]>
+	</queryString>
+	<field name="starttime" class="java.sql.Timestamp">
+		<property name="com.jaspersoft.studio.field.name" value="starttime"/>
+		<property name="com.jaspersoft.studio.field.label" value="starttime"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="r_request"/>
+	</field>
+	<field name="dauer" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.name" value="dauer"/>
+		<property name="com.jaspersoft.studio.field.label" value="dauer"/>
+	</field>
+	<field name="bp_value" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="bp_value"/>
+		<property name="com.jaspersoft.studio.field.label" value="bp_value"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="c_bpartner"/>
+	</field>
+	<field name="bp_name" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="bp_name"/>
+		<property name="com.jaspersoft.studio.field.label" value="bp_name"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="c_bpartner"/>
+	</field>
+	<field name="bp_name2" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="bp_name2"/>
+		<property name="com.jaspersoft.studio.field.label" value="bp_name2"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="c_bpartner"/>
+	</field>
+	<field name="status" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="status"/>
+		<property name="com.jaspersoft.studio.field.label" value="status"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="r_status"/>
+	</field>
+	<field name="kontaktort" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="kontaktort"/>
+		<property name="com.jaspersoft.studio.field.label" value="kontaktort"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="r_resolution"/>
+	</field>
+	<field name="summary" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="summary"/>
+		<property name="com.jaspersoft.studio.field.label" value="summary"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="r_request"/>
+	</field>
+	<group name="Geschäftspartner" isStartNewPage="true">
+		<groupExpression><![CDATA[$F{bp_value}]]></groupExpression>
+		<groupHeader>
+			<band height="45">
+				<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				<textField isBlankWhenNull="false">
+					<reportElement style="Report Standard Font" mode="Opaque" x="0" y="0" width="184" height="18" backcolor="#E6E6E6" uuid="b68c17cf-21df-4eeb-b8fb-50f5a703dc65">
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					</reportElement>
+					<textElement verticalAlignment="Middle">
+						<font size="14" isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{bp_name}]]></textFieldExpression>
+				</textField>
+				<textField isBlankWhenNull="true">
+					<reportElement style="Report Standard Font" mode="Opaque" x="0" y="23" width="184" height="18" backcolor="#E6E6E6" uuid="b2766364-8f6b-4c56-b6d2-fbe960082b72">
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					</reportElement>
+					<textElement verticalAlignment="Middle"/>
+					<textFieldExpression><![CDATA[$F{bp_name2}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement x="0" y="43" width="550" height="1" uuid="783a7db7-7839-4d0f-ae71-73ead8c2090a">
+						<property name="com.jaspersoft.studio.unit.y" value="px"/>
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					</reportElement>
+					<box>
+						<bottomPen lineWidth="1.0"/>
+					</box>
+					<text><![CDATA[Static Text]]></text>
+				</staticText>
+			</band>
+		</groupHeader>
+	</group>
+	<pageHeader>
+		<band height="31" splitType="Stretch">
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<printWhenExpression><![CDATA[$V{PAGE_NUMBER} % 2 == 1]]></printWhenExpression>
+			<staticText>
+				<reportElement style="Page Header" x="0" y="0" width="550" height="24" uuid="a95ad456-6b3a-42cc-94e8-c367cd8d54c3"/>
+				<box>
+					<bottomPen lineWidth="1.0"/>
+				</box>
+				<textElement textAlignment="Center"/>
+				<text><![CDATA[Besuche und Kontakte]]></text>
+			</staticText>
+			<image>
+				<reportElement x="510" y="0" width="40" height="25" uuid="10f66a22-37ca-49d3-b1de-2a12e61a1306">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<imageExpression><![CDATA[$P{SUBREPORT_DIR}+"AD_Image_1000004.png"]]></imageExpression>
+			</image>
+			<textField>
+				<reportElement style="Report Standard Font" mode="Transparent" x="0" y="0" width="80" height="24" backcolor="#CCCCCC" uuid="971072f1-6e85-4deb-a27d-b22e62623add">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font size="14"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{bp_value}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageHeader>
+	<detail>
+		<band height="22" splitType="Stretch">
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<textField textAdjust="StretchHeight" pattern="dd.MM.yy hh:mm" isBlankWhenNull="true">
+				<reportElement style="Report Standard Font" stretchType="ContainerHeight" x="0" y="0" width="80" height="22" uuid="0bace795-42da-43e0-ad88-09a651d56b9e">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="aa4c1317-8545-4cb3-b7e0-11645f47981e"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.leftIndent" value="px"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<box>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Middle" markup="html">
+					<font size="10"/>
+					<paragraph leftIndent="5"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{starttime}]]></textFieldExpression>
+			</textField>
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
+				<reportElement style="Report Standard Font" stretchType="ContainerHeight" x="80" y="0" width="40" height="22" uuid="3b50c63b-915b-43c6-8f91-2ac2e21ba4d0">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="aa4c1317-8545-4cb3-b7e0-11645f47981e"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.leftIndent" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+				</reportElement>
+				<box>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement verticalAlignment="Middle" markup="html">
+					<font size="10"/>
+					<paragraph leftIndent="5"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dauer}]]></textFieldExpression>
+			</textField>
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
+				<reportElement style="Report Standard Font" stretchType="ContainerHeight" x="120" y="0" width="60" height="22" uuid="48bfb699-f55a-439b-ad15-c2145cc08c9b">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="aa4c1317-8545-4cb3-b7e0-11645f47981e"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.leftIndent" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<box>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Middle" markup="html">
+					<font size="10"/>
+					<paragraph leftIndent="5"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{kontaktort}]]></textFieldExpression>
+			</textField>
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
+				<reportElement style="Report Standard Font" stretchType="ContainerHeight" x="180" y="0" width="300" height="22" uuid="23b470de-a6a8-48de-a3e2-727db8f4d6c0">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="aa4c1317-8545-4cb3-b7e0-11645f47981e"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.leftIndent" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<box>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Middle" markup="html">
+					<font size="10"/>
+					<paragraph leftIndent="5"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{summary}]]></textFieldExpression>
+			</textField>
+			<textField textAdjust="StretchHeight" pattern="dd.MM.yy">
+				<reportElement style="Report Standard Font" stretchType="ContainerHeight" x="480" y="0" width="70" height="22" uuid="25d72c1b-df04-4438-8f11-7f45279d9893">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="aa4c1317-8545-4cb3-b7e0-11645f47981e"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.leftIndent" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+				</reportElement>
+				<box>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Middle" markup="html">
+					<font size="10"/>
+					<paragraph leftIndent="5"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{status}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

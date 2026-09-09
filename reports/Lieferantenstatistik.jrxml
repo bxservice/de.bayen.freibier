@@ -1,0 +1,653 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.5.0.final using JasperReports Library version 6.5.0  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Lieferantenstatistik" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" isSummaryNewPage="true" isSummaryWithPageHeaderAndFooter="true" uuid="c9b180ac-67e2-4eb1-b58f-9828c7917dcc">
+	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="Adempiere"/>
+	<template><![CDATA[$P{SUBREPORT_DIR}+"BayenStyles.jrtx"]]></template>
+	<parameter name="SUBREPORT_DIR" class="java.lang.String" isForPrompting="false">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+		<defaultValueExpression><![CDATA["./"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="kumuliert" class="java.lang.String">
+		<defaultValueExpression><![CDATA["N"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="Period" class="java.lang.String">
+		<defaultValueExpression><![CDATA["gj2019"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="C_BPartner_ID" class="java.lang.Integer">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+		<defaultValueExpression><![CDATA[null]]></defaultValueExpression>
+	</parameter>
+	<parameter name="C_BP_Group_ID" class="java.lang.Integer">
+		<defaultValueExpression><![CDATA[1000001]]></defaultValueExpression>
+	</parameter>
+	<parameter name="Manufacturer_ID" class="java.lang.Integer">
+		<parameterDescription><![CDATA[z.B. 1006771 für Bitburger Gruppe]]></parameterDescription>
+		<defaultValueExpression><![CDATA[null]]></defaultValueExpression>
+	</parameter>
+	<queryString language="SQL">
+		<![CDATA[with params as (
+select
+  $P{Period}::text periode1,
+  null::text periode2,
+  $P{C_BPartner_ID}::numeric c_bpartner_id,
+  $P{C_BP_Group_ID}::numeric c_bp_group_id,
+  $P{Manufacturer_ID}::numeric manufacturer_id
+),
+bpartner_filter as (
+select bp.c_bpartner_id
+from c_bpartner bp
+cross join params
+where ad_client_id=1000000
+  and (bp.c_bpartner_id=params.c_bpartner_id or params.c_bpartner_id is null or params.c_bpartner_id=0)
+  and (bp.c_bp_group_id=params.c_bp_group_id or params.c_bp_group_id is null or params.c_bp_group_id=0)
+)
+,
+per as(
+select * 
+from bay_statperiod_v per
+cross join params
+where per.value = periode1
+),
+per2 as(
+select * 
+from params
+left join bay_statperiod_v per on (
+  per.value = coalesce(periode2,
+  	case when left (periode1,2)='st' 
+  	     then 'st' || to_char(substring(periode1 from 3 for 2)::numeric -1,'FM00') || substring(periode1 from 5 for 2)
+  	     when left (periode1,2)='gj' 
+  	     then 'gj' || to_char(substring(periode1 from 3 for 4)::numeric -1,'FM0000')
+  	     else null
+  	     end
+  ))
+),
+stat as (
+select stat.*
+from per
+left join bay_umsatzstat_v stat using(bay_statistikperiode_id)
+join m_product p using (m_product_id)
+join bpartner_filter bp_f on (bp_f.c_bpartner_id=stat.c_bpartner_id)
+where p.c_uom_id = stat.c_uom_id  -- nur Zeilen mit der Haupt-UOM zählen
+  -- man könnte das auch umrechnen, addieren, und dann kürzen. Das kommt bisher praktisch aber aufs gleiche raus und würde wohl Performance kosten
+)
+-- Debugging wg. Kosakowski und Knobelbecher mit Würfeln
+--select stat.*, c_bpartner.value, c_bpartner.name from stat join c_bpartner using (c_bpartner_id) where m_product_id = (select m_product_id from m_product where m_product.value='90085')
+,
+stat2 as (
+select stat2.* 
+from per2
+left join bay_umsatzstat_v stat2 using(bay_statistikperiode_id)
+join m_product p using (m_product_id)
+join bpartner_filter bp_f on (bp_f.c_bpartner_id=stat2.c_bpartner_id)
+where p.c_uom_id = stat2.c_uom_id  -- nur Zeilen mit der Haupt-UOM zählen
+  -- man könnte das auch umrechnen, addieren, und dann kürzen. Das kommt bisher praktisch aber aufs gleiche raus und würde wohl Performance kosten
+)
+select
+manu.value as manu_value,
+manu.name as manu_name,
+art.cat_value as akat_nr,
+art.cat_name as akat_name,
+p.classification,
+case 
+  when first_value(p.classification) over (partition by manu.value, art.cat_value order by p.classification)
+       is not null
+  then 'Y' else 'N' end 
+  as classification_used,
+art.value as art_nr,
+art.name_base as art_name,
+art.name_tu as art_tu,
+art.isactive as art_isactive,
+bp.value as kd_nr,
+bp.name as kd_name,
+bp.name2 as kd_name2,
+adm.name as adm,
+sum(stat.stueck) as stueck,
+sum(stat.umsatz) as umsatz,
+sum(stat.umsatzek) as umsatzek,
+sum(art.volume * stat.stueck / 100) as hl,
+sum(stat2.stueck) as stueck2,
+sum(art.volume * stat2.stueck / 100) as hl2,
+param_bpg.name as bpg_name
+from stat 
+full outer join stat2 using (m_product_id, c_bpartner_id)
+left join c_bpartner bp on(coalesce(stat.c_bpartner_id, stat2.c_bpartner_id) = bp.c_bpartner_id)
+left join ad_user adm on(adm.ad_user_id = bp.salesrep_id)
+left join bay_product_v art on(coalesce(stat.m_product_id, stat2.m_product_id) = art.m_product_id)
+left join m_product p on (p.m_product_id = art.m_product_id)
+left join c_bpartner_product bpp on(bpp.m_product_id = art.m_product_id and bpp.ismanufacturer = 'Y' and bpp.isactive = 'Y')
+left join c_bpartner manu on (manu.c_bpartner_id = bpp.c_bpartner_id)
+cross join per
+cross join per2
+cross join bay_company_v company
+left join c_bp_group param_bpg on per.c_bp_group_id = param_bpg.c_bp_group_id
+where manu.c_bpartner_id = per.manufacturer_id or per.manufacturer_ID is null or per.manufacturer_id = 0
+group by 
+manu.value,
+manu.name,
+art.cat_value,
+art.cat_name,
+p.classification,
+art.value,
+art.name_base,
+art.name_tu,
+art.isactive,
+bp.value,
+bp.name,
+bp.name2,
+adm.name,
+param_bpg.name
+having
+  (
+    -- filtert Zeilen ohne Hektoliter, damit auch Gläser, Werbematerial, etc.
+    sum(art.volume * coalesce(stat.stueck,0) / 100) > 0
+    or
+    sum(art.volume * coalesce(stat2.stueck,0) / 100) > 0
+  )
+order by
+manu.value,
+art.cat_value,
+p.classification,
+art.value,
+bp.value]]>
+	</queryString>
+	<field name="manu_value" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="manu_value"/>
+	</field>
+	<field name="manu_name" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="manu_name"/>
+	</field>
+	<field name="akat_nr" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="akat_nr"/>
+	</field>
+	<field name="akat_name" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="akat_name"/>
+	</field>
+	<field name="classification" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="classification"/>
+	</field>
+	<field name="classification_used" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="classification_used"/>
+	</field>
+	<field name="art_nr" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="art_nr"/>
+	</field>
+	<field name="art_name" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="art_name"/>
+	</field>
+	<field name="art_tu" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="art_tu"/>
+	</field>
+	<field name="art_isactive" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="art_isactive"/>
+	</field>
+	<field name="kd_nr" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="kd_nr"/>
+	</field>
+	<field name="kd_name" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="kd_name"/>
+	</field>
+	<field name="kd_name2" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="kd_name2"/>
+	</field>
+	<field name="adm" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="adm"/>
+	</field>
+	<field name="stueck" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.label" value="stueck"/>
+	</field>
+	<field name="umsatz" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.label" value="umsatz"/>
+	</field>
+	<field name="umsatzek" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.label" value="umsatzek"/>
+	</field>
+	<field name="hl" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.label" value="hl"/>
+	</field>
+	<field name="stueck2" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.label" value="stueck2"/>
+	</field>
+	<field name="hl2" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.label" value="hl2"/>
+	</field>
+	<field name="bpg_name" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="bpg_name"/>
+	</field>
+	<variable name="hl1" class="java.math.BigDecimal" resetType="Group" resetGroup="art_nr" calculation="Sum">
+		<variableExpression><![CDATA[$F{hl}]]></variableExpression>
+	</variable>
+	<variable name="hl21" class="java.math.BigDecimal" resetType="Group" resetGroup="art_nr" calculation="Sum">
+		<variableExpression><![CDATA[$F{hl2}]]></variableExpression>
+	</variable>
+	<variable name="kd_nr1" class="java.lang.Integer" resetType="Group" resetGroup="art_nr" calculation="Count">
+		<variableExpression><![CDATA[$F{kd_nr}]]></variableExpression>
+	</variable>
+	<variable name="hl2" class="java.math.BigDecimal" resetType="Group" resetGroup="akat_nr" calculation="Sum">
+		<variableExpression><![CDATA[$F{hl}]]></variableExpression>
+	</variable>
+	<variable name="hl22" class="java.math.BigDecimal" resetType="Group" resetGroup="akat_nr" calculation="Sum">
+		<variableExpression><![CDATA[$F{hl2}]]></variableExpression>
+	</variable>
+	<variable name="hl3" class="java.math.BigDecimal" resetType="Group" resetGroup="manu_value" calculation="Sum">
+		<variableExpression><![CDATA[$F{hl}]]></variableExpression>
+	</variable>
+	<variable name="hl23" class="java.math.BigDecimal" resetType="Group" resetGroup="manu_value" calculation="Sum">
+		<variableExpression><![CDATA[$F{hl2}]]></variableExpression>
+	</variable>
+	<variable name="hl4" class="java.math.BigDecimal" resetType="Group" resetGroup="classification" calculation="Sum">
+		<variableExpression><![CDATA[$F{hl}]]></variableExpression>
+	</variable>
+	<variable name="hl24" class="java.math.BigDecimal" resetType="Group" resetGroup="classification" calculation="Sum">
+		<variableExpression><![CDATA[$F{hl2}]]></variableExpression>
+	</variable>
+	<variable name="hl5" class="java.math.BigDecimal" calculation="Sum">
+		<variableExpression><![CDATA[$F{hl}]]></variableExpression>
+	</variable>
+	<variable name="hl25" class="java.math.BigDecimal" calculation="Sum">
+		<variableExpression><![CDATA[$F{hl2}]]></variableExpression>
+	</variable>
+	<group name="manu_value" isStartNewPage="true">
+		<groupExpression><![CDATA[$F{manu_value}]]></groupExpression>
+		<groupHeader>
+			<band height="30">
+				<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				<textField isBlankWhenNull="true">
+					<reportElement style="Header" x="0" y="0" width="60" height="30" uuid="f411a462-a46d-4f7a-ad68-2fe4339b4ea9">
+						<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					</reportElement>
+					<textFieldExpression><![CDATA[$F{manu_value}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement style="Header" x="60" y="0" width="485" height="30" uuid="829f51d9-f117-4061-853d-f3fef631e5da">
+						<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					</reportElement>
+					<textFieldExpression><![CDATA[$F{manu_name}!=null ? $F{manu_name} : "kein Hersteller angegeben"]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupHeader>
+		<groupFooter>
+			<band height="30">
+				<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				<textField pattern="#,##0.00" isBlankWhenNull="true">
+					<reportElement style="Narrow Lists" stretchType="RelativeToBandHeight" x="380" y="0" width="60" height="15" uuid="9e5a617e-b645-4a14-a355-fddefd862b7d">
+						<property name="com.jaspersoft.studio.unit.y" value="px"/>
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+						<property name="com.jaspersoft.studio.unit.width" value="px"/>
+						<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					</reportElement>
+					<textElement textAlignment="Right">
+						<font isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$V{hl3}]]></textFieldExpression>
+				</textField>
+				<textField pattern="#,##0.00" isBlankWhenNull="true">
+					<reportElement style="Narrow Lists" stretchType="RelativeToBandHeight" x="440" y="0" width="60" height="15" uuid="505e8cbe-80ed-430b-bb55-c3114e2cc2c6">
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+						<property name="com.jaspersoft.studio.unit.y" value="px"/>
+						<property name="com.jaspersoft.studio.unit.x" value="px"/>
+						<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					</reportElement>
+					<textElement textAlignment="Right">
+						<font isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$V{hl23}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement style="Report Standard Font" x="30" y="0" width="320" height="15" uuid="2d5c4e73-9e9a-4b3d-a7c7-685ea76f1ffc">
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+						<property name="com.jaspersoft.studio.unit.y" value="px"/>
+						<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					</reportElement>
+					<textElement verticalAlignment="Middle"/>
+					<textFieldExpression><![CDATA[($F{manu_name}!=null ? "Summen von " + $F{manu_name} : "Summen ohne angegebenen Hersteller")]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupFooter>
+	</group>
+	<group name="akat_nr">
+		<groupExpression><![CDATA[$F{akat_nr}]]></groupExpression>
+		<groupHeader>
+			<band height="35">
+				<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				<textField>
+					<reportElement style="Header" x="30" y="0" width="40" height="30" uuid="ab1f410d-09b5-4ecd-9e0e-d9e2c2082fbf">
+						<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					</reportElement>
+					<textFieldExpression><![CDATA[$F{akat_nr}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement style="Header" x="70" y="0" width="475" height="30" uuid="fbadc53a-2cd3-42aa-a620-3815d3c1d0e0">
+						<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					</reportElement>
+					<textFieldExpression><![CDATA[$F{akat_name}]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupHeader>
+		<groupFooter>
+			<band height="30">
+				<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				<textField pattern="#,##0.00" isBlankWhenNull="true">
+					<reportElement style="Narrow Lists" stretchType="RelativeToBandHeight" x="380" y="0" width="60" height="15" uuid="50884fe8-0e28-4457-b1ee-15d5ca7d022b">
+						<property name="com.jaspersoft.studio.unit.y" value="px"/>
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+						<property name="com.jaspersoft.studio.unit.width" value="px"/>
+						<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					</reportElement>
+					<textElement textAlignment="Right">
+						<font isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$V{hl2}]]></textFieldExpression>
+				</textField>
+				<textField pattern="#,##0.00" isBlankWhenNull="true">
+					<reportElement style="Narrow Lists" stretchType="RelativeToBandHeight" x="440" y="0" width="60" height="15" uuid="9cfce480-556d-4f29-a2a0-7e9bd20ee0d5">
+						<property name="com.jaspersoft.studio.unit.y" value="px"/>
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+						<property name="com.jaspersoft.studio.unit.x" value="px"/>
+						<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					</reportElement>
+					<textElement textAlignment="Right">
+						<font isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$V{hl22}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement style="Report Standard Font" x="60" y="0" width="290" height="15" uuid="4d1c36cd-4be4-4480-b6c7-f1d686d9aab2">
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+						<property name="com.jaspersoft.studio.unit.y" value="px"/>
+						<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					</reportElement>
+					<textElement verticalAlignment="Middle"/>
+					<textFieldExpression><![CDATA["Summen von " + $F{akat_name}]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupFooter>
+	</group>
+	<group name="classification">
+		<groupExpression><![CDATA[$F{classification}]]></groupExpression>
+		<groupHeader>
+			<band height="15">
+				<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				<printWhenExpression><![CDATA["Y".equals($F{classification_used})]]></printWhenExpression>
+				<textField>
+					<reportElement style="Narrow Lists Header" x="60" y="0" width="484" height="15" uuid="2bc3af46-42b0-4b6f-bff0-3cdbc34ea2d8">
+						<property name="com.jaspersoft.studio.unit.y" value="px"/>
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					</reportElement>
+					<textElement>
+						<font isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA["Klassifikation: "+($F{classification}!=null ? $F{classification} : "keine")]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupHeader>
+		<groupFooter>
+			<band height="30">
+				<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				<printWhenExpression><![CDATA["Y".equals($F{classification_used})]]></printWhenExpression>
+				<textField pattern="#,##0.00" isBlankWhenNull="true">
+					<reportElement style="Narrow Lists" stretchType="RelativeToBandHeight" x="380" y="0" width="60" height="15" uuid="7d4ca852-38cf-49a6-bfb9-f9ba8d2e3502">
+						<property name="com.jaspersoft.studio.unit.y" value="px"/>
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+						<property name="com.jaspersoft.studio.unit.width" value="px"/>
+						<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					</reportElement>
+					<textElement textAlignment="Right">
+						<font isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$V{hl4}]]></textFieldExpression>
+				</textField>
+				<textField pattern="#,##0.00" isBlankWhenNull="true">
+					<reportElement style="Narrow Lists" stretchType="RelativeToBandHeight" x="440" y="0" width="60" height="15" uuid="c30de5ea-01dc-46a6-8050-d4c937803799">
+						<property name="com.jaspersoft.studio.unit.y" value="px"/>
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+						<property name="com.jaspersoft.studio.unit.x" value="px"/>
+						<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					</reportElement>
+					<textElement textAlignment="Right">
+						<font isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$V{hl24}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement style="Report Standard Font" x="100" y="0" width="250" height="15" uuid="3709073b-b55e-4d96-91f9-ab7aca568eca">
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+						<property name="com.jaspersoft.studio.unit.y" value="px"/>
+						<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					</reportElement>
+					<textElement verticalAlignment="Middle"/>
+					<textFieldExpression><![CDATA["Summen von " + ($F{classification}!=null ? $F{classification} : "ohne Klassifikation")]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupFooter>
+	</group>
+	<group name="art_nr">
+		<groupExpression><![CDATA[$F{art_nr}]]></groupExpression>
+		<groupFooter>
+			<band height="20">
+				<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				<textField pattern="#,##0.00" isBlankWhenNull="true">
+					<reportElement style="Narrow Lists" stretchType="RelativeToBandHeight" x="380" y="0" width="60" height="15" uuid="05eb6664-28f5-44e5-a8ee-716d0db2128b">
+						<property name="com.jaspersoft.studio.unit.y" value="px"/>
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+						<property name="com.jaspersoft.studio.unit.width" value="px"/>
+						<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					</reportElement>
+					<textElement textAlignment="Right">
+						<font isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$V{hl1}]]></textFieldExpression>
+				</textField>
+				<textField pattern="#,##0.00" isBlankWhenNull="true">
+					<reportElement style="Narrow Lists" stretchType="RelativeToBandHeight" x="440" y="0" width="60" height="15" uuid="53d48c82-bb32-45a4-a629-5265a5134ad2">
+						<property name="com.jaspersoft.studio.unit.y" value="px"/>
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+						<property name="com.jaspersoft.studio.unit.x" value="px"/>
+						<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					</reportElement>
+					<textElement textAlignment="Right">
+						<font isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$V{hl21}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement style="Narrow Lists" stretchType="RelativeToBandHeight" x="350" y="0" width="30" height="15" uuid="83ff94f1-5bab-4b73-b221-875605cc6222">
+						<property name="com.jaspersoft.studio.unit.y" value="px"/>
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					</reportElement>
+					<textElement textAlignment="Right"/>
+					<textFieldExpression><![CDATA[$V{kd_nr1}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement style="Report Standard Font" x="100" y="0" width="250" height="15" uuid="1d920fe8-e612-4595-9eb9-3ccce0268a81">
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+						<property name="com.jaspersoft.studio.unit.y" value="px"/>
+						<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					</reportElement>
+					<textElement verticalAlignment="Middle"/>
+					<textFieldExpression><![CDATA["Summen von " + $F{art_nr} + " " + $F{art_name} + " " + $F{art_tu}]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupFooter>
+	</group>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<pageHeader>
+		<band height="73">
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<staticText>
+				<reportElement x="0" y="0" width="550" height="20" uuid="100b520f-976a-4ec9-92fa-28346ce7772c">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<box>
+					<bottomPen lineWidth="1.0"/>
+				</box>
+				<textElement>
+					<font size="16"/>
+				</textElement>
+				<text><![CDATA[Lieferanten-Statistik]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Narrow Lists Header" x="340" y="55" width="40" height="15" uuid="61803d95-429d-492f-8574-c9655d9e88ec">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right"/>
+				<text><![CDATA[Anzahl]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Narrow Lists Header" x="440" y="55" width="60" height="15" uuid="451b0103-701d-454f-89a4-859ae87f6723">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right"/>
+				<text><![CDATA[VJ]]></text>
+			</staticText>
+			<textField>
+				<reportElement style="Narrow Lists Header" x="380" y="55" width="60" height="15" uuid="7a41a950-5164-46b7-9c8c-35fd04e8dc6a">
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression><![CDATA[$P{Period}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="0" y="20" width="550" height="15" isRemoveLineWhenBlank="true" uuid="84c57a29-f4ed-4420-8fdd-640a33abbfb1">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<printWhenExpression><![CDATA[$F{bpg_name}!=null]]></printWhenExpression>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{bpg_name}!=null ? "Daten für Kundengruppe "+ $F{bpg_name} : "alle Kundengruppen"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="0" y="40" width="550" height="15" isRemoveLineWhenBlank="true" uuid="d129d1d8-4dea-447f-a89a-2dae911ec5f1">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<printWhenExpression><![CDATA[$P{C_BPartner_ID}!=null]]></printWhenExpression>
+				</reportElement>
+				<textFieldExpression><![CDATA["Daten für Kunde "+ $F{kd_nr} + " " + $F{kd_name}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageHeader>
+	<detail>
+		<band height="15" splitType="Stretch">
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<printWhenExpression><![CDATA["N".equals($P{kumuliert})]]></printWhenExpression>
+			<textField>
+				<reportElement style="Narrow Lists" stretchType="RelativeToBandHeight" x="0" y="0" width="40" height="15" uuid="23b017f2-b56a-4ad1-9837-818292de9b4f">
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{art_nr}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Narrow Lists" stretchType="RelativeToBandHeight" x="40" y="0" width="110" height="15" uuid="981faae0-d0b8-429c-ad58-6f5d0775f238">
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{art_name}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Narrow Lists" stretchType="RelativeToBandHeight" x="160" y="0" width="60" height="15" uuid="046dec68-810d-4b3f-b288-76b3916b7072">
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{art_tu}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Narrow Lists" stretchType="RelativeToBandHeight" x="220" y="0" width="40" height="15" uuid="30ba6dac-a5b4-4a85-998a-0e5192a6e2bb">
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{kd_nr}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Narrow Lists" stretchType="RelativeToBandHeight" x="260" y="0" width="120" height="15" uuid="fb0561e0-04c7-4895-a7f3-d031c5e808ac">
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{kd_name}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00" isBlankWhenNull="true">
+				<reportElement style="Narrow Lists" stretchType="RelativeToBandHeight" x="380" y="0" width="60" height="15" uuid="de8b25e4-511c-4841-b0eb-5401f704b604">
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{hl}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00" isBlankWhenNull="true">
+				<reportElement style="Narrow Lists" stretchType="RelativeToBandHeight" x="440" y="0" width="60" height="15" uuid="ab308321-d2c4-4e76-aa16-209bbc3b93ab">
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{hl2}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="20" splitType="Stretch">
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<textField>
+				<reportElement style="Report Standard Font" x="450" y="0" width="100" height="20" uuid="1bc99d88-7611-4ff7-be2b-324fb9b164f7">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression><![CDATA[$V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageFooter>
+	<summary>
+		<band height="15">
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<printWhenExpression><![CDATA[$P{Manufacturer_ID}==null || $P{Manufacturer_ID}==0]]></printWhenExpression>
+			<textField pattern="#,##0.00" isBlankWhenNull="true">
+				<reportElement style="Narrow Lists" stretchType="RelativeToBandHeight" x="380" y="0" width="60" height="15" uuid="35cb0e20-59d5-49af-99b9-846cb3a225e9">
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$V{hl5}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00" isBlankWhenNull="true">
+				<reportElement style="Narrow Lists" stretchType="RelativeToBandHeight" x="440" y="0" width="60" height="15" uuid="d8f5f1a4-54ee-4e5d-9b71-e9c4a954a9d3">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$V{hl25}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Report Standard Font" x="100" y="0" width="250" height="15" uuid="68729832-9a5f-4cd4-9931-b226f5c15044">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+				</reportElement>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA["Summe aller Hersteller"]]></textFieldExpression>
+			</textField>
+		</band>
+	</summary>
+</jasperReport>

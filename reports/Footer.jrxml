@@ -4,14 +4,18 @@
 	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
 	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="Controlling"/>
 	<property name="com.jaspersoft.studio.unit." value="pixel"/>
-	<template><![CDATA["BayenStyles.jrtx"]]></template>
+	<template><![CDATA[$P{SUBREPORT_DIR}+"BayenStyles.jrtx"]]></template>
+	<parameter name="SUBREPORT_DIR" class="java.lang.String" isForPrompting="false">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+		<defaultValueExpression><![CDATA["./"]]></defaultValueExpression>
+	</parameter>
 	<parameter name="LoggedInUserFullName" class="java.lang.String">
 		<defaultValueExpression><![CDATA["JasperReports Benutzer"]]></defaultValueExpression>
 	</parameter>
 	<queryString language="SQL">
 		<![CDATA[select
 *
-from controlling.bay_company_v]]>
+from bay_company_v]]>
 	</queryString>
 	<field name="ad_client_id" class="java.math.BigDecimal"/>
 	<field name="client_name" class="java.lang.String"/>

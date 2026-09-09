@@ -6,7 +6,11 @@
 	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
 	<property name="net.sf.jasperreports.export.xls.exclude.origin.band.1" value="pageHeader"/>
 	<property name="net.sf.jasperreports.export.xls.exclude.origin.band.2" value="pageFooter"/>
-	<template><![CDATA["BayenStyles.jrtx"]]></template>
+	<template><![CDATA[$P{SUBREPORT_DIR}+"BayenStyles.jrtx"]]></template>
+	<parameter name="SUBREPORT_DIR" class="java.lang.String" isForPrompting="false">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+		<defaultValueExpression><![CDATA["./"]]></defaultValueExpression>
+	</parameter>
 	<parameter name="LoggedInUserFullName" class="java.lang.String" isForPrompting="false">
 		<defaultValueExpression><![CDATA["Benutzer nicht zugänglich"]]></defaultValueExpression>
 	</parameter>
@@ -34,7 +38,7 @@
     when $P{CumulativeLevel} = 'N' then 'Kassenbuchblatt'
     end as reportname,
    $P{Date}::date as date
-from controlling.bay_company_v]]>
+from bay_company_v]]>
 	</queryString>
 	<field name="ad_client_id" class="java.math.BigDecimal"/>
 	<field name="client_name" class="java.lang.String"/>
@@ -62,8 +66,11 @@ from controlling.bay_company_v]]>
 				<subreportParameter name="REPORT_NAME">
 					<subreportParameterExpression><![CDATA[$F{reportname}]]></subreportParameterExpression>
 				</subreportParameter>
+				<subreportParameter name="SUBREPORT_DIR">
+					<subreportParameterExpression><![CDATA[$P{SUBREPORT_DIR}]]></subreportParameterExpression>
+				</subreportParameter>
 				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
-				<subreportExpression><![CDATA["Header.jasper"]]></subreportExpression>
+				<subreportExpression><![CDATA[$P{SUBREPORT_DIR}+"Header.jasper"]]></subreportExpression>
 			</subreport>
 		</band>
 	</pageHeader>
@@ -87,8 +94,11 @@ from controlling.bay_company_v]]>
 				<subreportParameter name="Date">
 					<subreportParameterExpression><![CDATA[$F{date}]]></subreportParameterExpression>
 				</subreportParameter>
+				<subreportParameter name="SUBREPORT_DIR">
+					<subreportParameterExpression><![CDATA[$P{SUBREPORT_DIR}]]></subreportParameterExpression>
+				</subreportParameter>
 				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
-				<subreportExpression><![CDATA[$F{reportname}.replaceAll(" ","_")+"_basic.jasper"]]></subreportExpression>
+				<subreportExpression><![CDATA[$P{SUBREPORT_DIR}+$F{reportname}.replaceAll(" ","_")+"_basic.jasper"]]></subreportExpression>
 			</subreport>
 		</band>
 	</detail>
@@ -107,8 +117,11 @@ from controlling.bay_company_v]]>
 				<subreportParameter name="LoggedInUserFullName">
 					<subreportParameterExpression><![CDATA[$F{fullusername}]]></subreportParameterExpression>
 				</subreportParameter>
+				<subreportParameter name="SUBREPORT_DIR">
+					<subreportParameterExpression><![CDATA[$P{SUBREPORT_DIR}]]></subreportParameterExpression>
+				</subreportParameter>
 				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
-				<subreportExpression><![CDATA["Footer.jasper"]]></subreportExpression>
+				<subreportExpression><![CDATA[$P{SUBREPORT_DIR}+"Footer.jasper"]]></subreportExpression>
 			</subreport>
 			<textField>
 				<reportElement style="Page Footer" x="0" y="17" width="475" height="13" uuid="e127b25f-e2b1-46d4-8142-cc89bd8f888f">
@@ -134,13 +147,19 @@ from controlling.bay_company_v]]>
 			<printWhenExpression><![CDATA[false]]></printWhenExpression>
 			<subreport>
 				<reportElement x="10" y="8" width="30" height="41" uuid="caa25db3-29b6-4add-81b4-f11ad3373e26"/>
+				<subreportParameter name="SUBREPORT_DIR">
+					<subreportParameterExpression><![CDATA[$P{SUBREPORT_DIR}]]></subreportParameterExpression>
+				</subreportParameter>
 				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
-				<subreportExpression><![CDATA["Kassenbuchblatt_basic.jasper"]]></subreportExpression>
+				<subreportExpression><![CDATA[$P{SUBREPORT_DIR}+"Kassenbuchblatt_basic.jasper"]]></subreportExpression>
 			</subreport>
 			<subreport>
 				<reportElement x="50" y="10" width="30" height="39" uuid="408945c2-40d0-4a0b-b4f0-af0b97edbd8d"/>
+				<subreportParameter name="SUBREPORT_DIR">
+					<subreportParameterExpression><![CDATA[$P{SUBREPORT_DIR}]]></subreportParameterExpression>
+				</subreportParameter>
 				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
-				<subreportExpression><![CDATA["Kassenbuch_nach_Kategorie_basic.jasper"]]></subreportExpression>
+				<subreportExpression><![CDATA[$P{SUBREPORT_DIR}+"Kassenbuch_nach_Kategorie_basic.jasper"]]></subreportExpression>
 			</subreport>
 		</band>
 	</noData>

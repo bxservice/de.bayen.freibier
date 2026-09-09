@@ -7,7 +7,11 @@
 	<property name="ireport.jasperserver.url" value="http://jasperserver.bayen.loc:8080/jasperserver/"/>
 	<property name="ireport.jasperserver.user" value="tbayen"/>
 	<property name="ireport.jasperserver.reportUnit" value="/Ausdrucke/Mitarbeiter_Einsatzplan"/>
-	<template><![CDATA["BayenStyles.jrtx"]]></template>
+	<template><![CDATA[$P{SUBREPORT_DIR}+"BayenStyles.jrtx"]]></template>
+	<parameter name="SUBREPORT_DIR" class="java.lang.String" isForPrompting="false">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+		<defaultValueExpression><![CDATA["./"]]></defaultValueExpression>
+	</parameter>
 	<parameter name="DateOrdered" class="java.util.Date">
 		<defaultValueExpression><![CDATA[new Date()]]></defaultValueExpression>
 	</parameter>
@@ -43,8 +47,11 @@ limit 1]]>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 				</reportElement>
+				<subreportParameter name="SUBREPORT_DIR">
+					<subreportParameterExpression><![CDATA[$P{SUBREPORT_DIR}]]></subreportParameterExpression>
+				</subreportParameter>
 				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
-				<subreportExpression><![CDATA["Mitarbeiter_Einsatzplan_Touren.jasper"]]></subreportExpression>
+				<subreportExpression><![CDATA[$P{SUBREPORT_DIR}+"Mitarbeiter_Einsatzplan_Touren.jasper"]]></subreportExpression>
 			</subreport>
 		</band>
 	</detail>

@@ -12,7 +12,11 @@
 	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
 	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
 	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
-	<template><![CDATA["BayenStyles.jrtx"]]></template>
+	<template><![CDATA[$P{SUBREPORT_DIR}+"BayenStyles.jrtx"]]></template>
+	<parameter name="SUBREPORT_DIR" class="java.lang.String" isForPrompting="false">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+		<defaultValueExpression><![CDATA["./"]]></defaultValueExpression>
+	</parameter>
 	<parameter name="C_BPartner_ID" class="java.lang.Integer">
 		<defaultValueExpression><![CDATA[null /*new BigDecimal(1007667)*/]]></defaultValueExpression>
 	</parameter>
@@ -53,6 +57,7 @@ left join c_bpartner_location bpl on (bpl.c_bpartner_location_id =
 left join c_location loc on (loc.c_location_id = bpl.c_location_id)
 where bp.ad_client_id=1000000
 and iarea.value='call'
+and ci.isActive='Y' and bp.isActive='Y'
 and (bp.c_bpartner_id =  $P{C_BPartner_ID} or $P{C_BPartner_ID} is null or $P{C_BPartner_ID} = 0)
 order by coalesce(ci.bay_callday,'0'), coalesce(ci.bay_calltime,to_timestamp(0)), bp.value]]>
 	</queryString>
@@ -131,7 +136,7 @@ order by coalesce(ci.bay_callday,'0'), coalesce(ci.bay_calltime,to_timestamp(0))
 				<reportElement x="510" y="0" width="40" height="25" uuid="10f66a22-37ca-49d3-b1de-2a12e61a1306">
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
-				<imageExpression><![CDATA["AD_Image_1000004.png"]]></imageExpression>
+				<imageExpression><![CDATA[$P{SUBREPORT_DIR}+"AD_Image_1000004.png"]]></imageExpression>
 			</image>
 			<textField>
 				<reportElement style="Report Standard Font" mode="Transparent" x="0" y="0" width="80" height="24" backcolor="#CCCCCC" uuid="971072f1-6e85-4deb-a27d-b22e62623add">
@@ -249,8 +254,11 @@ order by coalesce(ci.bay_callday,'0'), coalesce(ci.bay_calltime,to_timestamp(0))
 Calendar.getInstance().get(Calendar.WEEK_OF_YEAR)
  : $P{week}.intValue())]]></subreportParameterExpression>
 				</subreportParameter>
+				<subreportParameter name="SUBREPORT_DIR">
+					<subreportParameterExpression><![CDATA[$P{SUBREPORT_DIR}]]></subreportParameterExpression>
+				</subreportParameter>
 				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
-				<subreportExpression><![CDATA["Anrufliste_Artikelliste.jasper"]]></subreportExpression>
+				<subreportExpression><![CDATA[$P{SUBREPORT_DIR}+"Anrufliste_Artikelliste.jasper"]]></subreportExpression>
 			</subreport>
 			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
 				<reportElement style="Report Standard Font" mode="Opaque" x="80" y="92" width="470" height="18" isRemoveLineWhenBlank="true" backcolor="#E6E6E6" uuid="e277e08f-9d1a-42e2-a24c-a03db7694eff">

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Created with Jaspersoft Studio version 6.20.1.final using JasperReports Library version 6.20.1-7584acb244139816654f64e2fd57a00d3e31921e  -->
+<!-- Created with Jaspersoft Studio version 6.21.2.final using JasperReports Library version 6.21.2-8434a0bd7c3bbc37cbf916f2968d35e4b165821a  -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Ladeliste_nachArtikeln" pageWidth="515" pageHeight="842" columnWidth="515" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" uuid="f8ba7212-7028-4a59-8bfd-a5a2b2f70e8d">
 	<property name="com.jaspersoft.studio.unit." value="pixel"/>
 	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
@@ -19,23 +19,23 @@
 		<parameterDescription><![CDATA[]]></parameterDescription>
 		<defaultValueExpression><![CDATA["./"]]></defaultValueExpression>
 	</parameter>
-	<parameter name="DateOrdered" class="java.util.Date">
-		<defaultValueExpression><![CDATA[new GregorianCalendar(2018,0,2).getTime()]]></defaultValueExpression>
+	<parameter name="RECORD_ID" class="java.lang.Integer">
+		<defaultValueExpression><![CDATA[1130187]]></defaultValueExpression>
 	</parameter>
-	<parameter name="BAY_Route_ID" class="java.lang.Integer">
-		<parameterDescription><![CDATA[Tournummer (Vorgabe ist T8 als Beispiel)]]></parameterDescription>
-		<defaultValueExpression><![CDATA[1000007]]></defaultValueExpression>
-	</parameter>
-	<parameter name="BAY_SubTour" class="java.lang.String"/>
 	<queryString>
 		<![CDATA[with param as(
 select
---  (select bay_route_id from bay_route where value='P2') as bay_route_id,
---  '2023-07-14'::date as datum,
---  '1' as bay_subtour
-  $P{BAY_Route_ID} as bay_route_id,
-  $P{DateOrdered}::date as datum,
-  $P{BAY_SubTour} as bay_subtour
+  --(select bay_route_id from bay_route where value='T5') as bay_route_id,
+  --cast('2024-07-11' as date) as datum,
+  --null as bay_subtour,
+  --null::integer as record_id
+  --$P {BAY_Route_ID} as bay_route_id,
+  --cast($P {DateOrdered} as date) as datum,
+  --$P {BAY_SubTour} as bay_subtour,
+  (select bay_route_id from c_order where c_order_id=$P{RECORD_ID}) as bay_route_id,
+  (select dateordered from c_order where c_order_id=$P{RECORD_ID}) as datum,
+  null as bay_subtour,
+  $P{RECORD_ID}::integer as record_id
 )
 ,
 paymentrule as (
@@ -55,6 +55,7 @@ select
   r.value as r_value,
   r.name as r_name,
   r.description as r_description,
+  r.help as r_reportnames,
   lkw.value as lkw_value,
   lkw.description as lkw_description,
   f1.value as f1_value,
@@ -64,7 +65,7 @@ select
   f2.name as f2_name,
   f3.value as f3_value,
   f3.name as f3_name,
-  sum(p.weight * qtyordered) over (partition by r.bay_route_id) as weightsum,
+  sum(p.weight * qtyordered) over (partition by r.bay_route_id, o.bay_subtour) as weightsum,
   o.documentno,
   o.bay_subtour,
   o.description as o_description,
@@ -72,6 +73,8 @@ select
   o.weight as o_weight,
   o.paymentrule,
   o.grandtotal,
+  o.prepicking,
+  o.seqno,
   pr.name as pr_name,
   bp.value as bp_value,
   bp.name as bp_name,
@@ -80,6 +83,7 @@ select
   loc.address2,
   loc.postal,
   loc.city,
+  lv.name as bp_loadinghint,
   ol.line,
   ol.description as ol_description,
   ol.qtyordered,
@@ -104,21 +108,23 @@ left join c_orderline ol on ol.c_order_id = o.c_order_id and ol.qtyentered > 0
 left join c_uom uom using(c_uom_id)
 left join c_bpartner bp on (bp.c_bpartner_id = o.c_bpartner_id)
 left join c_bpartner_location bpl on (bpl.c_bpartner_location_id = o.c_bpartner_location_id and bpl.isactive='Y' and bpl.isshipto='Y')
+left join ad_ref_list lv on (bpl.bay_loadinghint = lv.value and lv.ad_reference_id = (select ref.ad_reference_id from ad_reference ref where ref.name='Ladevorgabe' and ref.isactive = 'Y'))
 left join c_location loc using (c_location_id)
 join m_product p using (m_product_id)
 left join bay_tradingunit tu using (bay_tradingunit_id)
 left join m_locator pl using (m_locator_id)
 left join c_uom_conversion uc on (uc.m_product_id = p.m_product_id and uc.c_uom_id = p.c_uom_id and uc.c_uom_to_id = ol.c_uom_id)
-left join bay_delivery d on (r.bay_route_id = d.bay_route_id and d.bay_routedate = datum)
+left join bay_delivery d on (r.bay_route_id = d.bay_route_id and (d.bay_routedate = datum))
 left join s_resource lkw on (lkw.s_resource_id = d.bay_truck_id)
 left join s_resource f1 on (f1.s_resource_id = d.bay_driver_id)
 left join s_resource f2 on (f2.s_resource_id = d.bay_codriver_id)
 left join s_resource f3 on (f3.s_resource_id = d.bay_codriver2_id)
 where r.ad_client_id=1000000 and r.isactive='Y'
-  and o.isactive='Y' and o.issotrx='Y' and o.dateordered = datum
+  and o.isactive='Y' and o.issotrx='Y' and (o.dateordered = datum)
   and o.docstatus='IP' and o.processed='N'
   -- für Seitenkopf auskommentieren
-  and o.bay_subtour = param.bay_subtour
+  and (o.bay_subtour = param.bay_subtour or param.bay_subtour is null)
+  and (record_id is null or o.c_order_id = record_id)
 order by r.value, o.bay_subtour, o.seqno, bp.value, o.documentno, loc_priority, loc_order, p_value, uom
 )
 -------------- Ladeliste nach Lieferscheinen
@@ -132,8 +138,7 @@ order by r.value, o.bay_subtour, o.seqno, bp.value, o.documentno, loc_priority, 
 -------------- Ladeliste nach Artikeln
 select p_value, p_name, p_description, tu_name, uom, loc_value, sum(qtyordered) as qtyordered from ladeliste where bay_masterorderline_id is null group by p_value, p_name, p_description, tu_name, uom, loc_value, loc_order order by loc_order, p_value, uom
 -------------- Inkassoliste
---select distinct documentno, paymentrule, grandtotal, pr_name, bp_value, bp_name, bp_name2, address1, address2, postal, city from ladeliste
-]]>
+--select distinct documentno, paymentrule, grandtotal, pr_name, bp_value, bp_name, bp_name2, address1, address2, postal, city from ladeliste]]>
 	</queryString>
 	<field name="p_value" class="java.lang.String">
 		<property name="com.jaspersoft.studio.field.name" value="p_value"/>

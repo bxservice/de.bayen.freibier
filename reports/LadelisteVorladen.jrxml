@@ -17,12 +17,8 @@
 		<parameterDescription><![CDATA[]]></parameterDescription>
 		<defaultValueExpression><![CDATA["./"]]></defaultValueExpression>
 	</parameter>
-	<parameter name="DateOrdered" class="java.util.Date">
-		<defaultValueExpression><![CDATA[new GregorianCalendar(2024,6,4).getTime()]]></defaultValueExpression>
-	</parameter>
-	<parameter name="BAY_Route_ID" class="java.lang.Integer">
-		<parameterDescription><![CDATA[Tournummer (Vorgabe ist T8 als Beispiel)]]></parameterDescription>
-		<defaultValueExpression><![CDATA[1000003 /* 3: Tour 5, 0: Tour 4, 10: P2 */]]></defaultValueExpression>
+	<parameter name="RECORD_ID" class="java.lang.Integer">
+		<defaultValueExpression><![CDATA[1130187]]></defaultValueExpression>
 	</parameter>
 	<queryString language="SQL">
 		<![CDATA[with param as(
@@ -30,10 +26,14 @@ select
   --(select bay_route_id from bay_route where value='T5') as bay_route_id,
   --cast('2024-07-04' as date) as datum,
   -- null as bay_subtour
-  $P{BAY_Route_ID} as bay_route_id,
-  cast($P{DateOrdered} as date) as datum,
+  -- null as record_id
+  --$P {BAY_Route_ID} as bay_route_id,
+  --cast($P {DateOrdered} as date) as datum,
   --$P {BAY_SubTour} as bay_subtour
-    null as bay_subtour
+  (select bay_route_id from c_order where c_order_id=$P{RECORD_ID}) as bay_route_id,
+  (select dateordered from c_order where c_order_id=$P{RECORD_ID}) as datum,
+  null as bay_subtour,
+  cast ($P{RECORD_ID} as numeric(10,0)) as record_id
 )
 ,
 paymentrule as (
@@ -71,7 +71,7 @@ select
   o.weight as o_weight,
   o.paymentrule,
   o.grandtotal,
-  o.isprepicking,
+  o.prepicking,
   o.seqno,
   pr.name as pr_name,
   bp.value as bp_value,
@@ -81,6 +81,7 @@ select
   loc.address2,
   loc.postal,
   loc.city,
+  lv.name as bp_loadinghint,
   ol.line,
   ol.description as ol_description,
   ol.qtyordered,
@@ -105,6 +106,7 @@ left join c_orderline ol on ol.c_order_id = o.c_order_id and ol.qtyentered > 0
 left join c_uom uom using(c_uom_id)
 left join c_bpartner bp on (bp.c_bpartner_id = o.c_bpartner_id)
 left join c_bpartner_location bpl on (bpl.c_bpartner_location_id = o.c_bpartner_location_id and bpl.isactive='Y' and bpl.isshipto='Y')
+left join ad_ref_list lv on (bpl.bay_loadinghint = lv.value and lv.ad_reference_id = (select ref.ad_reference_id from ad_reference ref where ref.name='Ladevorgabe' and ref.isactive = 'Y'))
 left join c_location loc using (c_location_id)
 join m_product p using (m_product_id)
 left join bay_tradingunit tu using (bay_tradingunit_id)
@@ -120,6 +122,7 @@ where r.ad_client_id=1000000 and r.isactive='Y'
   and o.docstatus='IP' and o.processed='N'
   -- für Seitenkopf auskommentieren
   and (o.bay_subtour = param.bay_subtour or param.bay_subtour is null)
+  and (record_id is null or o.c_order_id = record_id)
 order by r.value, o.bay_subtour, o.seqno, bp.value, o.documentno, loc_priority, loc_order, p_value, uom
 )
 -------------- Ladeliste nach Lieferscheinen
@@ -127,15 +130,19 @@ order by r.value, o.bay_subtour, o.seqno, bp.value, o.documentno, loc_priority, 
 -------------- Infos zur Tour (für den Seitenkopf)
 -- alte Version, ohne Subtouren benutzt, konnte Subreport-Name als Parameter übergeben
 --select distinct r_value, r_name, r_description, bay_subtour, lkw_value, lkw_description,f1_value,f1_name,f1_description,f2_value,f2_name,f3_value,f3_name, weightsum, sr.reportname from ladeliste cross join (select regexp_split_to_table('Inkasso, nachArtikeln, nachLieferscheinen',', *') as reportname ) as sr
-select distinct r_value, r_name, r_description, bay_subtour, lkw_value, lkw_description,f1_value,f1_name,f1_description,f2_value,f2_name,f3_value,f3_name, weightsum, r_reportnames from ladeliste as sr order by r_value, bay_subtour
+select distinct dateordered, r_value, r_name, r_description, bay_subtour, lkw_value, lkw_description,f1_value,f1_name,f1_description,f2_value,f2_name,f3_value,f3_name, weightsum, r_reportnames, prepicking from ladeliste as sr order by r_value, bay_subtour
 -------------- Summen je UOM (Summe Fässer, Summe Kästen, etc.)
 --select distinct uom, uom_sum, weightsum from ladeliste where bay_masterorderline_id is null
 -------------- Ladeliste nach Artikeln
 --select p_value, p_name, p_description, tu_name, uom, loc_value, sum(qtyordered) as qtyordered from ladeliste where bay_masterorderline_id is null group by p_value, p_name, p_description, tu_name, uom, loc_value, loc_order order by loc_order, p_value, uom
 -------------- Inkassoliste
---select distinct r_value, bay_subtour, seqno, documentno, paymentrule, grandtotal, pr_name, bp_value, bp_name, bp_name2, address1, address2, postal, city from ladeliste order by r_value, bay_subtour, seqno
-]]>
+--select distinct r_value, bay_subtour, seqno, documentno, paymentrule, grandtotal, pr_name, bp_value, bp_name, bp_name2, address1, address2, postal, city from ladeliste order by r_value, bay_subtour, seqno]]>
 	</queryString>
+	<field name="dateordered" class="java.sql.Timestamp">
+		<property name="com.jaspersoft.studio.field.name" value="dateordered"/>
+		<property name="com.jaspersoft.studio.field.label" value="dateordered"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="c_order"/>
+	</field>
 	<field name="r_value" class="java.lang.String">
 		<property name="com.jaspersoft.studio.field.name" value="r_value"/>
 		<property name="com.jaspersoft.studio.field.label" value="r_value"/>
@@ -210,6 +217,11 @@ select distinct r_value, r_name, r_description, bay_subtour, lkw_value, lkw_desc
 		<property name="com.jaspersoft.studio.field.label" value="r_reportnames"/>
 		<property name="com.jaspersoft.studio.field.tree.path" value="bay_route"/>
 	</field>
+	<field name="prepicking" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="prepicking"/>
+		<property name="com.jaspersoft.studio.field.label" value="prepicking"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="c_order"/>
+	</field>
 	<group name="Group1" isStartNewPage="true">
 		<groupExpression><![CDATA[$F{bay_subtour}]]></groupExpression>
 		<groupHeader>
@@ -219,178 +231,228 @@ select distinct r_value, r_name, r_description, bay_subtour, lkw_value, lkw_desc
 		</groupHeader>
 	</group>
 	<pageHeader>
-		<band height="121" splitType="Stretch">
+		<band height="115" splitType="Stretch">
 			<property name="com.jaspersoft.studio.unit.height" value="px"/>
 			<staticText>
-				<reportElement stretchType="ContainerBottom" mode="Opaque" x="0" y="0" width="515" height="80" backcolor="#EDEBEB" uuid="fa89ed25-9925-4625-9608-afce3bb74c38">
+				<reportElement stretchType="ContainerBottom" mode="Opaque" x="0" y="0" width="515" height="115" backcolor="#EDEBEB" uuid="fa89ed25-9925-4625-9608-afce3bb74c38">
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
 				<text><![CDATA[]]></text>
 			</staticText>
+			<staticText>
+				<reportElement x="1" y="0" width="513" height="35" uuid="1e996025-a1dc-4754-906d-ddff3576cee4">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Center">
+					<font size="26" isBold="true" isUnderline="true"/>
+				</textElement>
+				<text><![CDATA[Vorladeschein]]></text>
+			</staticText>
 			<textField>
-				<reportElement style="Header" x="0" y="0" width="50" height="30" uuid="3731c66e-07ce-4d20-bfaf-2c691d870542"/>
+				<reportElement style="Header" x="0" y="35" width="130" height="60" uuid="3731c66e-07ce-4d20-bfaf-2c691d870542">
+					<printWhenExpression><![CDATA["2".equals($F{prepicking}) || "A".equals($F{prepicking}) || "B".equals($F{prepicking}) || "C".equals($F{prepicking}) || "D".equals($F{prepicking}) || "E".equals($F{prepicking}) || "F".equals($F{prepicking})]]></printWhenExpression>
+				</reportElement>
+				<textElement>
+					<font size="50"/>
+				</textElement>
 				<textFieldExpression><![CDATA[$F{r_value}+("0".equals($F{bay_subtour}) ? "" : "/"+$F{bay_subtour})]]></textFieldExpression>
 			</textField>
-			<textField>
-				<reportElement style="Header" x="50" y="0" width="200" height="30" uuid="2a3c838d-d320-428a-b8bc-276ed450ceea"/>
-				<textFieldExpression><![CDATA[$F{r_name}]]></textFieldExpression>
-			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement style="Header" x="265" y="0" width="155" height="30" uuid="7f51f85f-20a5-42d3-8279-9ac0dd1c33ad">
+				<reportElement style="Header" x="140" y="35" width="280" height="60" uuid="7f51f85f-20a5-42d3-8279-9ac0dd1c33ad">
 					<property name="com.jaspersoft.studio.unit.width" value="px"/>
 					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<printWhenExpression><![CDATA["2".equals($F{prepicking}) || "A".equals($F{prepicking}) || "B".equals($F{prepicking}) || "C".equals($F{prepicking}) || "D".equals($F{prepicking}) || "E".equals($F{prepicking}) || "F".equals($F{prepicking})]]></printWhenExpression>
 				</reportElement>
+				<textElement>
+					<font size="50"/>
+				</textElement>
 				<textFieldExpression><![CDATA[$F{lkw_value}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement style="Header" x="-2" y="50" width="72" height="30" uuid="4d9d9170-65b8-4fbf-bca6-6340cf158988"/>
-				<textFieldExpression><![CDATA[$F{f1_value}]]></textFieldExpression>
-			</textField>
-			<textField isBlankWhenNull="true">
-				<reportElement style="Header" x="80" y="50" width="250" height="30" uuid="fea7cee6-62ca-44fe-a394-7280b3b8fae3"/>
-				<textFieldExpression><![CDATA[$F{f1_name}]]></textFieldExpression>
-			</textField>
-			<textField isBlankWhenNull="true">
-				<reportElement style="Report Standard Font" x="330" y="50" width="185" height="30" uuid="169fba6d-feea-45f1-b1cd-1b006b2c494b"/>
-				<textElement verticalAlignment="Bottom"/>
-				<textFieldExpression><![CDATA[$F{f1_description}]]></textFieldExpression>
-			</textField>
-			<textField isBlankWhenNull="true">
-				<reportElement style="Report Standard Font" x="265" y="30" width="155" height="20" uuid="2af7c06b-3369-427b-bb18-c82259a8303b">
+				<reportElement style="Report Standard Font" x="140" y="95" width="280" height="20" uuid="2af7c06b-3369-427b-bb18-c82259a8303b">
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<printWhenExpression><![CDATA["2".equals($F{prepicking}) || "A".equals($F{prepicking}) || "B".equals($F{prepicking}) || "C".equals($F{prepicking}) || "D".equals($F{prepicking}) || "E".equals($F{prepicking}) || "F".equals($F{prepicking})]]></printWhenExpression>
 				</reportElement>
 				<textFieldExpression><![CDATA[$F{lkw_description}]]></textFieldExpression>
 			</textField>
-			<textField isBlankWhenNull="true">
-				<reportElement style="Report Standard Font" x="-2" y="30" width="252" height="20" uuid="538d7d4e-e44e-47ff-878d-0c4fec222305">
-					<property name="com.jaspersoft.studio.unit.height" value="px"/>
-				</reportElement>
-				<textFieldExpression><![CDATA[$F{r_description}]]></textFieldExpression>
-			</textField>
-			<textField isBlankWhenNull="true">
-				<reportElement mode="Opaque" x="80" y="80" width="434" height="20" isRemoveLineWhenBlank="true" backcolor="#EDEDED" uuid="e00b0162-2a09-44b7-8bfd-2deeb760b3f0"/>
-				<textFieldExpression><![CDATA[$F{f2_name}]]></textFieldExpression>
-			</textField>
-			<textField isBlankWhenNull="true">
-				<reportElement mode="Opaque" x="80" y="100" width="434" height="20" isRemoveLineWhenBlank="true" backcolor="#EDEDED" uuid="90480894-8eef-409e-81c7-ec62779607a6"/>
-				<textFieldExpression><![CDATA[$F{f3_name}]]></textFieldExpression>
-			</textField>
 			<line>
-				<reportElement positionType="Float" x="0" y="120" width="515" height="1" uuid="202c4971-49f4-4dfe-b077-62de988934cf">
+				<reportElement positionType="Float" x="0" y="114" width="515" height="1" uuid="202c4971-49f4-4dfe-b077-62de988934cf">
 					<property name="com.jaspersoft.studio.unit.x" value="px"/>
-					<property name="com.jaspersoft.studio.unit.y" value="px"/>
 					<property name="com.jaspersoft.studio.unit.width" value="px"/>
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
 				</reportElement>
 			</line>
-			<textField pattern="#,##0.####;(#,##0.####-)">
-				<reportElement style="Report Standard Font" x="420" y="30" width="95" height="20" uuid="9ed55fbb-6f3c-47dd-8817-77b64b50fd4a"/>
-				<textElement textAlignment="Right" verticalAlignment="Bottom">
-					<font isItalic="true"/>
-				</textElement>
-				<textFieldExpression><![CDATA["Gewicht:" + $F{weightsum}.toBigInteger().toString() + "kg"]]></textFieldExpression>
-			</textField>
-			<staticText>
-				<reportElement mode="Opaque" x="0" y="80" width="80" height="20" backcolor="#EDEDED" uuid="fb19d907-6d20-4df5-af22-6a4fbd3a32d7">
-					<printWhenExpression><![CDATA[$F{f2_name}!=null]]></printWhenExpression>
-				</reportElement>
-				<text><![CDATA[]]></text>
-			</staticText>
-			<staticText>
-				<reportElement mode="Opaque" x="0" y="100" width="80" height="20" backcolor="#EDEDED" uuid="d77cd346-a85b-4421-bd51-ed954e6537a7">
-					<printWhenExpression><![CDATA[$F{f3_name}!=null]]></printWhenExpression>
-				</reportElement>
-				<text><![CDATA[]]></text>
-			</staticText>
 			<textField pattern="dd.MM.yy" isBlankWhenNull="true">
-				<reportElement style="Header" x="420" y="0" width="94" height="30" uuid="fdae99c1-fd4b-4edc-a614-8dcc8d87cb09">
+				<reportElement style="Header" x="420" y="35" width="94" height="30" uuid="fdae99c1-fd4b-4edc-a614-8dcc8d87cb09">
 					<property name="com.jaspersoft.studio.unit.width" value="px"/>
 					<property name="com.jaspersoft.studio.unit.x" value="px"/>
 				</reportElement>
 				<textElement textAlignment="Right"/>
-				<textFieldExpression><![CDATA[$P{DateOrdered}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{dateordered}]]></textFieldExpression>
 			</textField>
 		</band>
 	</pageHeader>
 	<detail>
-		<band height="33" splitType="Stretch">
+		<band height="94" splitType="Stretch">
 			<property name="com.jaspersoft.studio.unit.height" value="px"/>
 			<subreport>
-				<reportElement mode="Transparent" x="0" y="0" width="515" height="9" isRemoveLineWhenBlank="true" uuid="9ec0cd7d-3baa-4ff5-bda8-30802e3f68ad">
-					<property name="com.jaspersoft.studio.unit.width" value="px"/>
-					<property name="com.jaspersoft.studio.unit.height" value="px"/>
-				</reportElement>
-				<subreportParameter name="DateOrdered">
-					<subreportParameterExpression><![CDATA[$P{DateOrdered}]]></subreportParameterExpression>
-				</subreportParameter>
-				<subreportParameter name="BAY_Route_ID">
-					<subreportParameterExpression><![CDATA[$P{BAY_Route_ID}]]></subreportParameterExpression>
-				</subreportParameter>
-				<subreportParameter name="BAY_SubTour">
-					<subreportParameterExpression><![CDATA[$F{bay_subtour}]]></subreportParameterExpression>
-				</subreportParameter>
-				<subreportParameter name="SUBREPORT_DIR">
-					<subreportParameterExpression><![CDATA[$P{SUBREPORT_DIR}]]></subreportParameterExpression>
-				</subreportParameter>
-				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
-				<subreportExpression><![CDATA[$P{SUBREPORT_DIR}+"Ladeliste_Inkasso.jasper"]]></subreportExpression>
-			</subreport>
-			<break>
-				<reportElement positionType="Float" x="0" y="10" width="100" height="1" uuid="c20a2f89-de46-4133-9025-89f09e37d572">
-					<property name="com.jaspersoft.studio.unit.y" value="px"/>
-				</reportElement>
-			</break>
-			<subreport>
-				<reportElement positionType="Float" x="0" y="11" width="515" height="9" uuid="1d703e10-ef2f-49b4-88f0-4c55d0f58d64">
-					<property name="com.jaspersoft.studio.unit.width" value="px"/>
-					<property name="com.jaspersoft.studio.unit.x" value="px"/>
-					<property name="com.jaspersoft.studio.unit.y" value="px"/>
-					<property name="com.jaspersoft.studio.unit.height" value="px"/>
-					<printWhenExpression><![CDATA[$F{r_value}.startsWith("P") && false]]></printWhenExpression>
-				</reportElement>
-				<subreportParameter name="DateOrdered">
-					<subreportParameterExpression><![CDATA[$P{DateOrdered}]]></subreportParameterExpression>
-				</subreportParameter>
-				<subreportParameter name="BAY_Route_ID">
-					<subreportParameterExpression><![CDATA[$P{BAY_Route_ID}]]></subreportParameterExpression>
-				</subreportParameter>
-				<subreportParameter name="BAY_SubTour">
-					<subreportParameterExpression><![CDATA[$F{bay_subtour}]]></subreportParameterExpression>
-				</subreportParameter>
-				<subreportParameter name="SUBREPORT_DIR">
-					<subreportParameterExpression><![CDATA[$P{SUBREPORT_DIR}]]></subreportParameterExpression>
-				</subreportParameter>
-				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
-				<subreportExpression><![CDATA[$P{SUBREPORT_DIR}+"Ladeliste_nachArtikeln.jasper"]]></subreportExpression>
-			</subreport>
-			<break>
-				<reportElement positionType="Float" x="0" y="20" width="100" height="1" uuid="3e9346f7-13fe-4181-a96a-eaa28ef0167a">
-					<property name="com.jaspersoft.studio.unit.y" value="px"/>
-					<printWhenExpression><![CDATA[$F{r_value}.startsWith("P")]]></printWhenExpression>
-				</reportElement>
-			</break>
-			<subreport>
-				<reportElement positionType="Float" x="0" y="21" width="515" height="9" uuid="6d4f4f41-4687-483d-81f0-161c8bdba389">
+				<reportElement positionType="Float" x="0" y="0" width="515" height="9" uuid="1d703e10-ef2f-49b4-88f0-4c55d0f58d64">
 					<property name="com.jaspersoft.studio.unit.width" value="px"/>
 					<property name="com.jaspersoft.studio.unit.x" value="px"/>
 					<property name="com.jaspersoft.studio.unit.y" value="px"/>
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
-				<subreportParameter name="DateOrdered">
-					<subreportParameterExpression><![CDATA[$P{DateOrdered}]]></subreportParameterExpression>
-				</subreportParameter>
-				<subreportParameter name="BAY_Route_ID">
-					<subreportParameterExpression><![CDATA[$P{BAY_Route_ID}]]></subreportParameterExpression>
-				</subreportParameter>
-				<subreportParameter name="BAY_SubTour">
-					<subreportParameterExpression><![CDATA[$F{bay_subtour}]]></subreportParameterExpression>
+				<subreportParameter name="RECORD_ID">
+					<subreportParameterExpression><![CDATA[$P{RECORD_ID}]]></subreportParameterExpression>
 				</subreportParameter>
 				<subreportParameter name="SUBREPORT_DIR">
 					<subreportParameterExpression><![CDATA[$P{SUBREPORT_DIR}]]></subreportParameterExpression>
 				</subreportParameter>
 				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
-				<subreportExpression><![CDATA[$P{SUBREPORT_DIR}+"Ladeliste_nachLieferscheinen.jasper"]]></subreportExpression>
+				<subreportExpression><![CDATA[$P{SUBREPORT_DIR}+"LadelisteVorladen_NachLieferscheinen.jasper"]]></subreportExpression>
 			</subreport>
+			<frame>
+				<reportElement positionType="Float" x="0" y="20" width="160" height="74" uuid="c03240b9-1a12-4181-8755-177f51c8aa9a">
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<subreport>
+					<reportElement x="1" y="14" width="159" height="29" uuid="2b6b47ec-419c-46ac-9912-aebda68a3fc3"/>
+					<subreportParameter name="SUBREPORT_DIR">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_DIR}]]></subreportParameterExpression>
+					</subreportParameter>
+					<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					<subreportExpression><![CDATA[$P{SUBREPORT_DIR}+"LadelisteVorladen_Mitarbeiterliste.jasper"]]></subreportExpression>
+				</subreport>
+				<staticText>
+					<reportElement x="1" y="1" width="159" height="12" uuid="d42fdb15-9b1b-42df-b752-068deccf9bb5">
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					</reportElement>
+					<textElement textAlignment="Center">
+						<font isBold="true" isItalic="true"/>
+					</textElement>
+					<text><![CDATA[gepackt von]]></text>
+				</staticText>
+				<staticText>
+					<reportElement positionType="Float" x="0" y="44" width="160" height="30" uuid="3494c3d9-085b-45a9-8668-29d225855ce5">
+						<property name="com.jaspersoft.studio.unit.x" value="px"/>
+						<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					</reportElement>
+					<box>
+						<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+					<textElement verticalAlignment="Middle"/>
+					<text><![CDATA[Uhrzeit]]></text>
+				</staticText>
+			</frame>
+			<frame>
+				<reportElement positionType="Float" x="170" y="20" width="160" height="74" uuid="c65c16f4-140a-4c99-9e33-c6ac2d15f14b">
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<subreport>
+					<reportElement x="1" y="14" width="159" height="29" uuid="2cd54e24-c078-4809-8da5-d8af98f7b3f2"/>
+					<subreportParameter name="SUBREPORT_DIR">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_DIR}]]></subreportParameterExpression>
+					</subreportParameter>
+					<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					<subreportExpression><![CDATA[$P{SUBREPORT_DIR}+"LadelisteVorladen_Mitarbeiterliste.jasper"]]></subreportExpression>
+				</subreport>
+				<staticText>
+					<reportElement x="1" y="1" width="159" height="12" uuid="c08dd485-0f27-4538-ae80-25e79a04189a">
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					</reportElement>
+					<textElement textAlignment="Center">
+						<font isBold="true" isItalic="true"/>
+					</textElement>
+					<text><![CDATA[gecheckt von]]></text>
+				</staticText>
+				<staticText>
+					<reportElement positionType="Float" x="0" y="44" width="160" height="30" uuid="c89d68f3-92b9-46a9-a8f7-40a5a2f4c304">
+						<property name="com.jaspersoft.studio.unit.x" value="px"/>
+						<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					</reportElement>
+					<box>
+						<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+					<textElement verticalAlignment="Middle"/>
+					<text><![CDATA[Uhrzeit]]></text>
+				</staticText>
+			</frame>
+			<frame>
+				<reportElement positionType="Float" x="340" y="20" width="160" height="74" uuid="9a3e9c43-041f-415c-8bce-0a3b37743ff9">
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<subreport>
+					<reportElement x="1" y="14" width="159" height="29" uuid="8f001a33-f022-4fea-bb7f-ecb62faff5e6"/>
+					<subreportParameter name="SUBREPORT_DIR">
+						<subreportParameterExpression><![CDATA[$P{SUBREPORT_DIR}]]></subreportParameterExpression>
+					</subreportParameter>
+					<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					<subreportExpression><![CDATA[$P{SUBREPORT_DIR}+"LadelisteVorladen_Mitarbeiterliste.jasper"]]></subreportExpression>
+				</subreport>
+				<staticText>
+					<reportElement x="1" y="1" width="159" height="12" uuid="cdff806a-4a55-45ce-bcc1-94c4921dda84">
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					</reportElement>
+					<textElement textAlignment="Center">
+						<font isBold="true" isItalic="true"/>
+					</textElement>
+					<text><![CDATA[beim Aufladen gezählt von]]></text>
+				</staticText>
+				<staticText>
+					<reportElement positionType="Float" x="0" y="44" width="160" height="30" uuid="5c18b132-bf6f-4a06-b53f-e9954d60a500">
+						<property name="com.jaspersoft.studio.unit.x" value="px"/>
+						<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					</reportElement>
+					<box>
+						<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+					<textElement verticalAlignment="Middle"/>
+					<text><![CDATA[Uhrzeit]]></text>
+				</staticText>
+				<staticText>
+					<reportElement positionType="Float" x="120" y="43" width="40" height="30" uuid="6d8c3870-9f11-46e8-8cd1-88a88941fe20"/>
+					<box topPadding="2" leftPadding="0" bottomPadding="0" rightPadding="0">
+						<leftPen lineWidth="1.0" lineStyle="Solid"/>
+					</box>
+					<textElement textAlignment="Center">
+						<font size="6"/>
+					</textElement>
+					<text><![CDATA[kontrolliert?]]></text>
+				</staticText>
+			</frame>
 		</band>
 	</detail>
 	<pageFooter>

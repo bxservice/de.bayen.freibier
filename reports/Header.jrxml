@@ -12,7 +12,11 @@
 	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
 	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
 	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
-	<template><![CDATA["BayenStyles.jrtx"]]></template>
+	<template><![CDATA[$P{SUBREPORT_DIR}+"BayenStyles.jrtx"]]></template>
+	<parameter name="SUBREPORT_DIR" class="java.lang.String" isForPrompting="false">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+		<defaultValueExpression><![CDATA["./"]]></defaultValueExpression>
+	</parameter>
 	<parameter name="REPORT_NAME" class="java.lang.String">
 		<parameterDescription><![CDATA[Name für die Überschrift]]></parameterDescription>
 		<defaultValueExpression><![CDATA["Bericht"]]></defaultValueExpression>
@@ -20,7 +24,7 @@
 	<queryString language="SQL">
 		<![CDATA[select
 *
-from controlling.bay_company_v]]>
+from bay_company_v]]>
 	</queryString>
 	<field name="client_name" class="java.lang.String"/>
 	<field name="org_name" class="java.lang.String"/>

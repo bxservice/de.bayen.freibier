@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.5.0.final using JasperReports Library version 6.5.0  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Offene Posten_Warenkredite" pageWidth="510" pageHeight="50" whenNoDataType="NoPages" columnWidth="510" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" uuid="dc055cf4-6602-4eaf-ae90-e1d8b35a7d38">
+	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="Controlling.xml"/>
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.topMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.bottomMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.leftMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
+	<template><![CDATA[$P{SUBREPORT_DIR}+"BayenStyles.jrtx"]]></template>
+	<parameter name="SUBREPORT_DIR" class="java.lang.String" isForPrompting="false">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+		<defaultValueExpression><![CDATA["./"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="C_BPartner_ID" class="java.lang.Integer">
+		<defaultValueExpression><![CDATA[null]]></defaultValueExpression>
+	</parameter>
+	<parameter name="DateReport" class="java.util.Date">
+		<defaultValueExpression><![CDATA[null]]></defaultValueExpression>
+	</parameter>
+	<queryString language="SQL">
+		<![CDATA[with param as (
+select
+  coalesce(
+    $P{DateReport} 
+  ,now())::date as qdate,
+  --date '2018-11-09' as qdate,
+  $P{C_BPartner_ID} as c_bpartner_id
+  --(select c_bpartner_id from c_bpartner where value = '35784') as c_bpartner_id  -- Wolff/Jazzkeller
+  --(select c_bpartner_id from c_bpartner where value = '12503') as c_bpartner_id  -- Brockers, Effertzhof
+  --(select c_bpartner_id from c_bpartner where value = '15798') as c_bpartner_id   -- Enger, Mikado
+)
+select
+  c.value,
+  c."name",
+  c.description,
+  c.c_bpartner_id,
+  c.datedoc::date,
+  c.amount,
+  c.datefrom,
+  c.payamt,
+  c.bay_paymentfrequency,
+  case when datefrom > pa.qdate
+    then amount
+    else case c.bay_paymentfrequency 
+           when 'W' then greatest(c.amount - (1+floor(greatest(extract(days from pa.qdate-c.datefrom)-1,0)/7))*c.payamt, 0)
+           when 'M' then greatest(c.amount - (1+extract(year from age(pa.qdate, c.datefrom+(interval '1 day')))*12+extract(month from age(pa.qdate, c.datefrom+(interval '1 day'))))*c.payamt, 0)
+           else 0
+         end
+  end::numeric(10,2) as actualamt
+from bay_contract c
+left join c_bpartner bp using (c_bpartner_id)
+left join c_paymentterm pt using (c_paymentterm_id)
+cross join param pa
+where c.bay_contracttype='WKR' and c.isActive='Y'
+  and c.c_bpartner_id = pa.c_bpartner_id]]>
+	</queryString>
+	<field name="value" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="value"/>
+	</field>
+	<field name="name" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="name"/>
+	</field>
+	<field name="description" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="description"/>
+	</field>
+	<field name="c_bpartner_id" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.label" value="c_bpartner_id"/>
+	</field>
+	<field name="datedoc" class="java.sql.Date">
+		<property name="com.jaspersoft.studio.field.label" value="datedoc"/>
+	</field>
+	<field name="amount" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.label" value="amount"/>
+	</field>
+	<field name="datefrom" class="java.sql.Timestamp">
+		<property name="com.jaspersoft.studio.field.label" value="datefrom"/>
+	</field>
+	<field name="payamt" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.label" value="payamt"/>
+	</field>
+	<field name="bay_paymentfrequency" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="bay_paymentfrequency"/>
+	</field>
+	<field name="actualamt" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.label" value="actualamt"/>
+	</field>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="15" splitType="Stretch">
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<staticText>
+				<reportElement style="Report Standard Font" x="0" y="0" width="510" height="15" uuid="5a1a8694-1b44-4ce4-ae5c-974bca886941">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<textElement>
+					<font isBold="true" isUnderline="true"/>
+				</textElement>
+				<text><![CDATA[Warenkredit vereinbart]]></text>
+			</staticText>
+		</band>
+	</title>
+	<detail>
+		<band height="35" splitType="Stretch">
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="false">
+				<reportElement style="Report Standard Font" x="0" y="0" width="510" height="15" uuid="feeab430-7686-4908-aa03-ae2fb6ded05c">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textFieldExpression><![CDATA["Warenkreditvereinbarung vom "
++ new SimpleDateFormat("dd.MM.yy").format($F{datedoc})
++ " über " +  new DecimalFormat("#,##0.00", new DecimalFormatSymbols(Locale.GERMAN)).format($F{amount})  + " €. "
++ "Vereinbarte Rückzahlung " + ("1".equals($F{bay_paymentfrequency}) ? "am " : " ab dem ")
++ new SimpleDateFormat("dd.MM.yy").format($F{datefrom})
++ " in Höhe von " + new DecimalFormat("#,##0.00", new DecimalFormatSymbols(Locale.GERMAN)).format($F{payamt})  + " € "
++ ("W".equals($F{bay_paymentfrequency}) ? "pro Woche" : 
+  ("W2".equals($F{bay_paymentfrequency}) ? "alle zwei Wochen" : 
+    ("M".equals($F{bay_paymentfrequency}) ? "monatlich" : 
+	""
+    )
+  )
+)
++ ". "
++ ("1".equals($F{bay_paymentfrequency}) ? "" : 
+  " Aktueller (berechneter) Stand "
+  + ($P{DateReport}==null ? "zu heute" : "zum " + new SimpleDateFormat("dd.MM.yy").format($P{DateReport}))
+  + " ist "
+  + new DecimalFormat("#,##0.00", new DecimalFormatSymbols(Locale.GERMAN)).format($F{actualamt})  + " €. ")
+]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="Report Standard Font" positionType="Float" x="0" y="15" width="510" height="20" isRemoveLineWhenBlank="true" uuid="3742bf87-0ad3-4f92-8d6c-2b7748abb4be">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="3bd4aca6-024c-42f1-a765-fc1509314bf8"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<box topPadding="5"/>
+				<textElement>
+					<font isItalic="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{description}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>
