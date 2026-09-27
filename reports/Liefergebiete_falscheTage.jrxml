@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.17.0.final using JasperReports Library version 6.17.0-6d93193241dd8cc42629e188b94f9e0bc5722efd  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Liefergebiete_falscheTage" pageWidth="595" pageHeight="842" whenNoDataType="AllSectionsNoDetail" columnWidth="515" leftMargin="40" rightMargin="40" topMargin="40" bottomMargin="40" uuid="a32d0a96-d744-407f-9796-eab2d1de8725">
+	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="Controlling"/>
+	<parameter name="CalendarYear" class="java.lang.String">
+		<parameterDescription><![CDATA[Kalenderjahr für die Analyse oder null für die Übersicht]]></parameterDescription>
+	</parameter>
+	<parameter name="cwfrom" class="java.math.BigDecimal">
+		<parameterDescription><![CDATA[Kalenderwoche von (oder null für die Übersicht)]]></parameterDescription>
+	</parameter>
+	<parameter name="cwto" class="java.math.BigDecimal">
+		<parameterDescription><![CDATA[Kalenderwoche bis (oder null für die Übersicht)]]></parameterDescription>
+	</parameter>
+	<queryString language="SQL">
+		<![CDATA[with params as(
+select
+$P{CalendarYear}::integer as jahr,
+$P{cwfrom}::integer as kwstart,
+$P{cwto}::integer as kwend
+)
+select
+params.jahr, params.kwstart, params.kwend,
+sr.value as sr_value, sr.name as sr_name,
+da.value as da_value, da.name as da_name,
+bp.value as bp_value, bp.name as bp_name,
+o.documentno, o.dateordered,
+geliefertertag, liefertagetext
+from params
+cross join bay_delivery_orderlist(jahr,kwstart,kwend) ol
+--from bay_delivery_orderlist(2022,52,52) ol
+join c_order o using (c_order_id)
+join c_bpartner bp using (c_bpartner_id)
+left join ad_user sr on bp.salesrep_id = sr.ad_user_id 
+join bay_deliveryarea da using (bay_deliveryarea_id)
+where tourcheck = '-'
+order by sr.value, da.value, bp.value, o.dateordered, o.documentno 
+;
+]]>
+	</queryString>
+	<field name="jahr" class="java.lang.Integer">
+		<property name="com.jaspersoft.studio.field.name" value="jahr"/>
+		<property name="com.jaspersoft.studio.field.label" value="jahr"/>
+	</field>
+	<field name="kwstart" class="java.lang.Integer">
+		<property name="com.jaspersoft.studio.field.name" value="kwstart"/>
+		<property name="com.jaspersoft.studio.field.label" value="kwstart"/>
+	</field>
+	<field name="kwend" class="java.lang.Integer">
+		<property name="com.jaspersoft.studio.field.name" value="kwend"/>
+		<property name="com.jaspersoft.studio.field.label" value="kwend"/>
+	</field>
+	<field name="sr_value" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="sr_value"/>
+		<property name="com.jaspersoft.studio.field.label" value="sr_value"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="ad_user"/>
+	</field>
+	<field name="sr_name" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="sr_name"/>
+		<property name="com.jaspersoft.studio.field.label" value="sr_name"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="ad_user"/>
+	</field>
+	<field name="da_value" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="da_value"/>
+		<property name="com.jaspersoft.studio.field.label" value="da_value"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="bay_deliveryarea"/>
+	</field>
+	<field name="da_name" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="da_name"/>
+		<property name="com.jaspersoft.studio.field.label" value="da_name"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="bay_deliveryarea"/>
+	</field>
+	<field name="bp_value" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="bp_value"/>
+		<property name="com.jaspersoft.studio.field.label" value="bp_value"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="c_bpartner"/>
+	</field>
+	<field name="bp_name" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="bp_name"/>
+		<property name="com.jaspersoft.studio.field.label" value="bp_name"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="c_bpartner"/>
+	</field>
+	<field name="documentno" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="documentno"/>
+		<property name="com.jaspersoft.studio.field.label" value="documentno"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="c_order"/>
+	</field>
+	<field name="dateordered" class="java.sql.Timestamp">
+		<property name="com.jaspersoft.studio.field.name" value="dateordered"/>
+		<property name="com.jaspersoft.studio.field.label" value="dateordered"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="c_order"/>
+	</field>
+	<field name="geliefertertag" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="geliefertertag"/>
+		<property name="com.jaspersoft.studio.field.label" value="geliefertertag"/>
+	</field>
+	<field name="liefertagetext" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="liefertagetext"/>
+		<property name="com.jaspersoft.studio.field.label" value="liefertagetext"/>
+	</field>
+	<group name="Kundenbetreuer">
+		<groupExpression><![CDATA[$F{sr_value}]]></groupExpression>
+		<groupHeader>
+			<band height="45">
+				<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				<textField>
+					<reportElement x="0" y="20" width="300" height="25" uuid="a173d115-0eab-42c3-91ae-5418ec408a95">
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+						<property name="com.jaspersoft.studio.unit.x" value="px"/>
+						<property name="com.jaspersoft.studio.unit.width" value="px"/>
+						<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					</reportElement>
+					<textElement>
+						<font size="18" isBold="true" isUnderline="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{sr_name}]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupHeader>
+	</group>
+	<group name="Kunde">
+		<groupExpression><![CDATA[$F{bp_value}]]></groupExpression>
+		<groupHeader>
+			<band height="20">
+				<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				<textField>
+					<reportElement x="0" y="0" width="30" height="16" uuid="97a1ad15-3457-4dd8-986d-9b9a346d25f7">
+						<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="208d63ca-a811-496d-8a15-221e4f7fa871"/>
+						<property name="com.jaspersoft.studio.unit.width" value="px"/>
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+						<property name="com.jaspersoft.studio.unit.x" value="px"/>
+						<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					</reportElement>
+					<textElement textAlignment="Right">
+						<font size="12" isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{da_value}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement x="35" y="0" width="100" height="16" uuid="ab257e00-1fa3-430b-92bc-2cc2f807ddae">
+						<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="696a0b0d-0ded-4d5b-8b9b-5b0ced3333cc"/>
+						<property name="com.jaspersoft.studio.unit.y" value="px"/>
+						<property name="com.jaspersoft.studio.unit.x" value="px"/>
+						<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					</reportElement>
+					<textElement>
+						<font size="12" isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{da_name}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement x="180" y="0" width="150" height="16" uuid="ae9ac898-614d-4849-84f2-058abcc53cd4">
+						<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="5d4f7ff0-c45f-4f4c-993b-59a19d242c19"/>
+						<property name="com.jaspersoft.studio.unit.x" value="px"/>
+						<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					</reportElement>
+					<textElement>
+						<font size="12"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{bp_name}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement x="135" y="0" width="40" height="16" uuid="52f64391-ced1-4c17-b15a-1cdbec8fa9a7">
+						<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="29729a25-bdb5-403a-9d81-b594c38999e6"/>
+						<property name="com.jaspersoft.studio.unit.x" value="px"/>
+						<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					</reportElement>
+					<textElement>
+						<font size="12"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{bp_value}]]></textFieldExpression>
+				</textField>
+				<textField textAdjust="StretchHeight">
+					<reportElement x="330" y="0" width="185" height="16" uuid="969ae1be-e0b3-48fc-9072-8df4faac2937">
+						<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="de02e3b3-ddb0-40db-9fac-59102d8d7404"/>
+						<property name="com.jaspersoft.studio.unit.y" value="px"/>
+						<property name="com.jaspersoft.studio.unit.x" value="px"/>
+						<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					</reportElement>
+					<textElement>
+						<font size="12" isBold="true" isItalic="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA["(" + $F{liefertagetext} + ")"]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupHeader>
+	</group>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<pageHeader>
+		<band height="45" splitType="Stretch">
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<textField>
+				<reportElement x="0" y="0" width="515" height="45" uuid="47248bbb-6547-48bb-a5bd-e8886d48dded">
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<box>
+					<bottomPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Center">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["falsche Liefertage" + "\nfür "+$F{jahr}+ ", KW "+$F{kwstart}+($F{kwstart}.equals($F{kwend})?"":" bis "+$F{kwend})+"."]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageHeader>
+	<detail>
+		<band height="18" splitType="Stretch">
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<textField>
+				<reportElement x="180" y="0" width="55" height="16" uuid="9c7e1916-424e-481b-bb3a-801a33a44ffc">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="152214fa-55c8-4389-8a59-6f687ebf421e"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<textElement>
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{documentno}]]></textFieldExpression>
+			</textField>
+			<textField pattern="dd.MM.yy">
+				<reportElement x="235" y="0" width="70" height="16" uuid="6f8947a2-ce41-4d36-a95b-33fedc22ae2a">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="0388a407-749d-45c8-93ca-8444a6cb3ef5"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<textElement>
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dateordered}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="305" y="0" width="100" height="16" uuid="87d399c5-19ab-4e76-a1c7-dd6b89337208">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="1ad3e097-2534-4099-92e0-c0c9083c95cc"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<textElement>
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{geliefertertag}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="44" splitType="Stretch">
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<textField>
+				<reportElement x="417" y="0" width="58" height="20" uuid="b1af9239-fc16-4291-bd1a-99f62720f690">
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Bottom"/>
+				<textFieldExpression><![CDATA["Seite " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report">
+				<reportElement x="475" y="0" width="40" height="20" uuid="589bc70c-6542-4f32-956a-f7949f03e4d3">
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Left" verticalAlignment="Bottom"/>
+				<textFieldExpression><![CDATA[" von " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageFooter>
+</jasperReport>

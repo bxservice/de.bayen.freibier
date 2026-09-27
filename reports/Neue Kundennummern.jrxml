@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.17.0.final using JasperReports Library version 6.17.0-6d93193241dd8cc42629e188b94f9e0bc5722efd  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Neue Kundennummern" columnCount="3" pageWidth="595" pageHeight="842" columnWidth="185" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="5c42d32f-9d74-4f98-a41d-fde494a1d4d5">
+	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="Controlling"/>
+	<queryString language="SQL">
+		<![CDATA[(
+with buchstaben as (
+select generate_series(1,28) as code
+)
+, sortalphabet as (
+select 
+code, 
+case when code <= 19 then chr(ascii('A')-1+code)
+     when code = 20 then 'SCH'
+     when code = 21 then 'ST'
+     when code >= 22 then chr(ascii('A')-1+code-2) 
+     end as zeichen
+from buchstaben
+)
+,
+allewerte as (
+select 
+sa.*, 
+(st1.num*10000+st2.num*1000+code*100+st45.num)::text as value
+from sortalphabet sa
+cross join (select generate_series(1,99) num) as st45
+cross join (values (0),(3),(6)) as st2(num)
+cross join (values (6),(7))as st1(num)
+)
+select
+'6/7 Privatkunden' as gruppe, zeichen,code,
+min(aw.value)
+from allewerte aw
+left join c_bpartner bp on aw.value = bp.value
+where bp.value is null
+group by zeichen, code
+order by gruppe, zeichen, code
+)
+--
+union
+--
+(
+with buchstaben as (
+select generate_series(1,28) as code
+)
+, sortalphabet as (
+select 
+code, 
+case when code <= 19 then chr(ascii('A')-1+code)
+     when code = 20 then 'SCH'
+     when code = 21 then 'ST'
+     when code >= 22 then chr(ascii('A')-1+code-2)
+     end as zeichen
+from buchstaben
+)
+,
+allewerte as (
+select 
+sa.*, 
+(st1.num*10000+st2.num*1000+code*100+st45.num)::text as value
+from sortalphabet sa
+cross join (select generate_series(1,99) num) as st45
+cross join (values (0),(3),(6)) as st2(num)
+cross join (values (5))as st1(num)
+)
+select
+'5 Gewerbe' as gruppe,
+zeichen,code,
+min(aw.value)
+from allewerte aw
+left join c_bpartner bp on aw.value = bp.value
+where bp.value is null
+group by zeichen, code
+order by gruppe, zeichen, code
+)
+--
+union
+--
+(
+with buchstaben as (
+select generate_series(1,28) as code
+)
+, sortalphabet as (
+select 
+code, 
+case when code <= 19 then chr(ascii('A')-1+code)
+     when code = 20 then 'SCH'
+     when code = 21 then 'ST'
+     when code >= 22 then chr(ascii('A')-1+code-2)
+     end as zeichen
+from buchstaben
+)
+,
+allewerte as (
+select 
+sa.*, 
+(st1.num*10000+st2.num*1000+code*100+st45.num)::text as value
+from sortalphabet sa
+cross join (select generate_series(1,99) num) as st45
+cross join (values (0),(3),(6)) as st2(num)
+cross join (values (4))as st1(num)
+)
+select
+'4 Grossabnehmer' as gruppe,
+zeichen,code,
+min(aw.value)
+from allewerte aw
+left join c_bpartner bp on aw.value = bp.value
+where bp.value is null
+group by zeichen, code
+order by gruppe, zeichen, code
+)
+order by gruppe, zeichen, code
+]]>
+	</queryString>
+	<field name="gruppe" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="gruppe"/>
+		<property name="com.jaspersoft.studio.field.label" value="gruppe"/>
+	</field>
+	<field name="zeichen" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="zeichen"/>
+		<property name="com.jaspersoft.studio.field.label" value="zeichen"/>
+	</field>
+	<field name="code" class="java.lang.Integer">
+		<property name="com.jaspersoft.studio.field.name" value="code"/>
+		<property name="com.jaspersoft.studio.field.label" value="code"/>
+	</field>
+	<field name="min" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="min"/>
+		<property name="com.jaspersoft.studio.field.label" value="min"/>
+	</field>
+	<group name="gruppe" isStartNewColumn="true">
+		<groupExpression><![CDATA[$F{gruppe}]]></groupExpression>
+		<groupHeader>
+			<band height="22">
+				<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				<textField>
+					<reportElement x="0" y="0" width="100" height="16" uuid="311b7f50-cfa5-4391-aa00-6479639c7457">
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					</reportElement>
+					<textElement>
+						<font isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{gruppe}]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupHeader>
+	</group>
+	<pageHeader>
+		<band height="268" splitType="Stretch">
+			<staticText>
+				<reportElement x="0" y="0" width="550" height="268" uuid="65e60590-5dad-41bb-ad3a-f04c20315f98"/>
+				<text><![CDATA[Die Kundennummern bei Bayen werden nach einem System vergeben. Für Privatkunden beginnt die Nummer mit 6, dann zwei Ziffern für das Alphabet (01 für A, 02 für B, etc. bis 28 für Z - Das Alphabet enthält übrigens S, SCH, ST getrennt), dann zwei Stellen, die im Laufe der Zeit hochgezählt werden. Da hiermit nur 100 Kunden pro Anfangsbuchstaben beliefert werden können, wird danach in den Nummernbereich 31,32,...58 und danach in 61,62,...88 ausgewichen. Sind diese 300 Kunden belegt, wird an der ersten Stelle mit 7 weitergemacht (701xx, 702xx, ... 728xx) bis 788xx. Dadurch können für jeden Buchstaben 600 Kunden eingepflegt werden.
+
+Für Geschäftskunden gilt das gleiche System mit der Startziffer 5. Für Großabnehmer mit der Startziffer 4.
+
+Andere Ziffernbereiche sind:
+
+0 - Sonderkunden, Hauseigentümer, Abrechnugskonten, etc.
+1 - GastroKunden A-J (11xxx-19xxx)
+2 - Gastro-Kunden K-S (21xxx-29xxx)
+3 - Gastro-Kunden St-Z (31xxx-38xxx)
+4 - Großabnehmer/Großhändler (401xx - 428xx)
+5 - Kleingewerbe (501xx - 528xx)
+6 - Privatkunden erster Block (Erklärung siehe oben)
+7 - Privatkunden zweiter Block (Erklärung siehe oben)
+8 - Lieferanten (Nur die, die bei uns auch ein Kundenkonto brauchen)
+9 - Spezialkonten: Abholmarkt, diverse Konten, etc.]]></text>
+			</staticText>
+		</band>
+	</pageHeader>
+	<detail>
+		<band height="16" splitType="Stretch">
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<textField>
+				<reportElement x="0" y="0" width="30" height="16" uuid="2f36c824-602f-45db-9816-e94ff6788ec2">
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{zeichen}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="30" y="0" width="40" height="16" uuid="604f6813-ac33-47c3-bb1f-5ff0407b4973">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{code}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="70" y="0" width="70" height="16" uuid="5c2d2c3a-df7f-4b18-bb21-2968d38cd79e">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{min}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

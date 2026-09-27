@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.21.2.final using JasperReports Library version 6.21.2-8434a0bd7c3bbc37cbf916f2968d35e4b165821a  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Stundenkarte" columnCount="2" pageWidth="595" pageHeight="842" columnWidth="259" columnSpacing="10" leftMargin="42" rightMargin="14" topMargin="56" bottomMargin="56" uuid="8918ae86-288c-4872-8bae-8ef19db33de5">
+	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="Adempiere"/>
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
+	<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w1" value="359"/>
+	<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w2" value="630"/>
+	<property name="ireport.jasperserver.url" value="http://jasperserver.bayen.loc:8080/jasperserver/"/>
+	<property name="ireport.jasperserver.user" value="tbayen"/>
+	<property name="ireport.jasperserver.report.resource" value="/Ausdrucke/Zeitkarte_Mitarbeiter_files/main_jrxml"/>
+	<property name="ireport.jasperserver.reportUnit" value="/Ausdrucke/Zeitkarte_Mitarbeiter"/>
+	<property name="com.jaspersoft.studio.report.description" value=""/>
+	<parameter name="MONAT" class="java.sql.Date">
+		<parameterDescription><![CDATA[Datum des ausgewerteten Monats]]></parameterDescription>
+		<defaultValueExpression><![CDATA[new Date()]]></defaultValueExpression>
+	</parameter>
+	<queryString language="SQL">
+		<![CDATA[with
+myvalues as(
+  select 
+    $P{MONAT}::date as currentday,
+    --current_date + interval '20 days'  as currentday,
+    time '07:15' as workstart
+),
+--
+morevalues  as(
+select
+  date '2000-01-01'
+    + interval '1 year' * (date_part('year', currentday)-2000)
+    + interval '1 month' * (date_part('month', currentday)-1) as firstday,
+  date '2000-01-01'
+    + interval '1 year' * (date_part('year', currentday)-2000)
+    + interval '1 month' * (date_part('month', currentday)) - interval '1 day' as lastday
+from myvalues
+),
+--
+alldays_series as(
+select
+  date (generate_series( firstday, lastday, interval '1 day')) as dom,
+  myvalues.*
+from morevalues cross join myvalues
+),
+alldays as (
+select
+  alldays_series.*,
+  to_char(currentday,'TMMonth') || ' ' ||  to_char(currentday,'YYYY') as monat,
+  dom as workday,
+  date_part('dow', dom) as dow, -- 0=Sonntag
+  to_char(dom, 'TMDy') as dowtext,
+  date_part('dow', dom) in (0,6) as holiday
+from alldays_series
+)
+--
+select * from employee
+cross join alldays
+--where value >= 'M6'
+where rt_name = 'Fahrer' --value >= 'M6'
+order by name, value, dom
+;]]>
+	</queryString>
+	<field name="employee_id" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.name" value="employee_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="employee_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="employee"/>
+	</field>
+	<field name="value" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="value"/>
+		<property name="com.jaspersoft.studio.field.label" value="value"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="employee"/>
+	</field>
+	<field name="name" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="name"/>
+		<property name="com.jaspersoft.studio.field.label" value="name"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="employee"/>
+	</field>
+	<field name="rfidtag" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="rfidtag"/>
+		<property name="com.jaspersoft.studio.field.label" value="rfidtag"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="employee"/>
+	</field>
+	<field name="breaktime" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.name" value="breaktime"/>
+		<property name="com.jaspersoft.studio.field.label" value="breaktime"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="employee"/>
+	</field>
+	<field name="rt_name" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="rt_name"/>
+		<property name="com.jaspersoft.studio.field.label" value="rt_name"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="employee"/>
+	</field>
+	<field name="dom" class="java.sql.Date">
+		<property name="com.jaspersoft.studio.field.name" value="dom"/>
+		<property name="com.jaspersoft.studio.field.label" value="dom"/>
+	</field>
+	<field name="currentday" class="java.sql.Date">
+		<property name="com.jaspersoft.studio.field.name" value="currentday"/>
+		<property name="com.jaspersoft.studio.field.label" value="currentday"/>
+	</field>
+	<field name="workstart" class="java.sql.Time">
+		<property name="com.jaspersoft.studio.field.name" value="workstart"/>
+		<property name="com.jaspersoft.studio.field.label" value="workstart"/>
+	</field>
+	<field name="monat" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="monat"/>
+		<property name="com.jaspersoft.studio.field.label" value="monat"/>
+	</field>
+	<field name="workday" class="java.sql.Date">
+		<property name="com.jaspersoft.studio.field.name" value="workday"/>
+		<property name="com.jaspersoft.studio.field.label" value="workday"/>
+	</field>
+	<field name="dow" class="java.lang.Double">
+		<property name="com.jaspersoft.studio.field.name" value="dow"/>
+		<property name="com.jaspersoft.studio.field.label" value="dow"/>
+	</field>
+	<field name="dowtext" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="dowtext"/>
+		<property name="com.jaspersoft.studio.field.label" value="dowtext"/>
+	</field>
+	<field name="holiday" class="java.lang.Boolean">
+		<property name="com.jaspersoft.studio.field.name" value="holiday"/>
+		<property name="com.jaspersoft.studio.field.label" value="holiday"/>
+	</field>
+	<variable name="monat1" class="java.lang.Integer" resetType="Page" calculation="DistinctCount">
+		<variableExpression><![CDATA[$F{monat}]]></variableExpression>
+	</variable>
+	<group name="value" isStartNewPage="true">
+		<groupExpression><![CDATA[$F{value}]]></groupExpression>
+		<groupHeader>
+			<band>
+				<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			</band>
+		</groupHeader>
+		<groupFooter>
+			<band height="34">
+				<line>
+					<reportElement x="186" y="1" width="75" height="1" uuid="078bd27d-b138-4e22-b623-e6f280357c70">
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					</reportElement>
+				</line>
+				<line>
+					<reportElement x="186" y="28" width="75" height="1" uuid="d6a2da7e-7a62-4229-9a8a-606509a16ab5">
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					</reportElement>
+					<graphicElement>
+						<pen lineStyle="Double"/>
+					</graphicElement>
+				</line>
+			</band>
+		</groupFooter>
+	</group>
+	<group name="dom">
+		<groupExpression><![CDATA[$F{dom}]]></groupExpression>
+		<groupHeader>
+			<band height="1">
+				<line>
+					<reportElement x="0" y="0" width="260" height="1" uuid="272b8e10-940e-4555-b7fc-f95b39b4d7c5">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					</reportElement>
+				</line>
+			</band>
+		</groupHeader>
+	</group>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<pageHeader>
+		<band height="112" splitType="Stretch">
+			<textField>
+				<reportElement x="259" y="61" width="271" height="30" uuid="8203f417-f88e-41c4-a300-df94c956dc7d"/>
+				<textElement textAlignment="Right">
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Personalnr.: " + $F{value}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="0" y="0" width="554" height="25" uuid="fc29409a-a470-46e3-90e1-cc9136b4becf">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Center">
+					<font size="20" isBold="true" isUnderline="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Stundenkarte"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="0" y="35" width="554" height="30" uuid="8cf784e0-8d08-4ed1-aabe-c640f9dfaea7">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Center">
+					<font size="20" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{name}+", "+$F{monat}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageHeader>
+	<columnHeader>
+		<band height="26" splitType="Stretch">
+			<staticText>
+				<reportElement x="0" y="0" width="70" height="20" uuid="a820c40e-8212-4757-a328-adaf96ba712e"/>
+				<textElement>
+					<font size="14" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Datum]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="66" y="0" width="58" height="20" uuid="21c5945d-baa5-4be1-afde-0c8f787ac7d3"/>
+				<textElement textAlignment="Center">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Beginn]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="124" y="0" width="62" height="20" uuid="b7b12d56-b2af-4cfd-a8e7-fb6708b8c2f9"/>
+				<textElement textAlignment="Center">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Ende]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="185" y="0" width="74" height="20" uuid="8d97cb8b-6146-45f9-a3cf-5ce054462f0b"/>
+				<textElement textAlignment="Right">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Stunden]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="25" splitType="Stretch">
+			<textField>
+				<reportElement mode="Opaque" x="0" y="0" width="260" height="25" forecolor="#000000" backcolor="#BFB1AE" uuid="cb8f78b4-8df8-4a98-a5f3-343c4b894d75">
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<printWhenExpression><![CDATA[$F{holiday}]]></printWhenExpression>
+				</reportElement>
+				<textElement verticalAlignment="Bottom"/>
+				<textFieldExpression><![CDATA[""]]></textFieldExpression>
+			</textField>
+			<textField pattern="dd.MM">
+				<reportElement key="" x="0" y="3" width="45" height="17" uuid="127cfb5a-3446-4f68-8055-912ad4a8d2db">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<textElement>
+					<font size="14" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dom}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="65" y="0" width="1" height="25" uuid="7a17566f-0396-4cb4-a8a5-5ca7b02d3dcf">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+			</line>
+			<line>
+				<reportElement x="125" y="0" width="1" height="25" uuid="d7906e0d-5d9a-4f1a-9f29-9f542761c6a4">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+			</line>
+			<line>
+				<reportElement x="185" y="0" width="1" height="25" uuid="ccb45817-187d-46c6-b409-830fd3ad74fa">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+			</line>
+			<textField pattern="dd.MM">
+				<reportElement key="" x="43" y="3" width="25" height="17" uuid="a47b548d-7cf4-49c9-8ba9-024711ccedeb">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<textElement>
+					<font size="14" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dowtext}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

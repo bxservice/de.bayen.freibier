@@ -1,0 +1,411 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.21.2.final using JasperReports Library version 6.21.2-8434a0bd7c3bbc37cbf916f2968d35e4b165821a  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Wein Datenblätter" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="684c2834-989f-4757-bbbe-e33255b6f73e">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="Controlling"/>
+	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.topMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.bottomMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.leftMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
+	<parameter name="RECORD_ID" class="java.lang.Integer">
+		<defaultValueExpression><![CDATA[1003413]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[SELECT
+p.value AS p_no,
+--p.name AS p_name,
+CASE WHEN p.bay_tradingunit_id IS NULL THEN p.name ELSE p.description END AS basisname,
+--p.name,
+--p.description,
+tu.name AS gebindename,
+tu.einheit AS flaschengroesse,
+p.upc AS ean,
+pr.level_min,
+ve.value AS ve_value,
+ve.name AS ve_name,
+po.vendorproductno,
+po.vendorproductname,
+pi.description,
+pi.bay_weinfarbe, pi.bay_weinfarbe2,
+c.name as land,
+pi.bay_gebiet, 
+bay_geschmack,
+bay_aroma,
+bay_alkoholgehalt,
+pi.ad_image_id, i.binarydata as pi_image
+FROM m_product p
+LEFT JOIN bay_tradingunit tu ON (p.bay_tradingunit_id = tu.bay_tradingunit_id)
+left JOIN (SELECT DISTINCT ON (m_product_id) * FROM m_replenish)
+     AS pr ON pr.m_product_id = p.m_product_id
+LEFT JOIN (SELECT DISTINCT ON (m_product_id) * FROM m_product_po po WHERE po.isactive = 'Y' AND iscurrentvendor = 'Y')
+     AS po ON po.m_product_id = p.m_product_id
+LEFT JOIN c_bpartner ve ON ve.c_bpartner_id = po.c_bpartner_id
+LEFT JOIN (SELECT DISTINCT ON (m_product_id) * FROM bay_productinfo pi WHERE pi.isactive = 'Y')
+     AS pi ON pi.m_product_id = p.m_product_id
+left join ad_image i on i.ad_image_id = pi.ad_image_id 
+left join c_country_trl c on c.c_country_id = pi.c_country_id and c.ad_language = 'de_DE'
+WHERE
+p.ad_client_id = 1000000 AND p.isactive = 'Y'
+AND (SELECT pc.value FROM m_product_category pc WHERE pc.m_product_category_id = p.m_product_category_id) IN ('21')
+--and pi.m_product_id is not null
+and p.m_product_id =  $P{RECORD_ID}]]>
+	</queryString>
+	<field name="p_no" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="p_no"/>
+		<property name="com.jaspersoft.studio.field.label" value="p_no"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="m_product"/>
+	</field>
+	<field name="basisname" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="basisname"/>
+		<property name="com.jaspersoft.studio.field.label" value="basisname"/>
+	</field>
+	<field name="gebindename" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="gebindename"/>
+		<property name="com.jaspersoft.studio.field.label" value="gebindename"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="bay_tradingunit"/>
+	</field>
+	<field name="flaschengroesse" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="flaschengroesse"/>
+		<property name="com.jaspersoft.studio.field.label" value="flaschengroesse"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="bay_tradingunit"/>
+	</field>
+	<field name="ean" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="ean"/>
+		<property name="com.jaspersoft.studio.field.label" value="ean"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="m_product"/>
+	</field>
+	<field name="level_min" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.name" value="level_min"/>
+		<property name="com.jaspersoft.studio.field.label" value="level_min"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="m_replenish"/>
+	</field>
+	<field name="ve_value" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="ve_value"/>
+		<property name="com.jaspersoft.studio.field.label" value="ve_value"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="c_bpartner"/>
+	</field>
+	<field name="ve_name" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="ve_name"/>
+		<property name="com.jaspersoft.studio.field.label" value="ve_name"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="c_bpartner"/>
+	</field>
+	<field name="vendorproductno" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="vendorproductno"/>
+		<property name="com.jaspersoft.studio.field.label" value="vendorproductno"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="m_product_po"/>
+	</field>
+	<field name="vendorproductname" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="vendorproductname"/>
+		<property name="com.jaspersoft.studio.field.label" value="vendorproductname"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="m_product_po"/>
+	</field>
+	<field name="description" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="description"/>
+		<property name="com.jaspersoft.studio.field.label" value="description"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="bay_productinfo"/>
+	</field>
+	<field name="bay_weinfarbe" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="bay_weinfarbe"/>
+		<property name="com.jaspersoft.studio.field.label" value="bay_weinfarbe"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="bay_productinfo"/>
+	</field>
+	<field name="bay_weinfarbe2" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="bay_weinfarbe2"/>
+		<property name="com.jaspersoft.studio.field.label" value="bay_weinfarbe2"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="bay_productinfo"/>
+	</field>
+	<field name="land" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="land"/>
+		<property name="com.jaspersoft.studio.field.label" value="land"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="c_country_trl"/>
+	</field>
+	<field name="bay_gebiet" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="bay_gebiet"/>
+		<property name="com.jaspersoft.studio.field.label" value="bay_gebiet"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="bay_productinfo"/>
+	</field>
+	<field name="bay_geschmack" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="bay_geschmack"/>
+		<property name="com.jaspersoft.studio.field.label" value="bay_geschmack"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="bay_productinfo"/>
+	</field>
+	<field name="bay_aroma" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="bay_aroma"/>
+		<property name="com.jaspersoft.studio.field.label" value="bay_aroma"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="bay_productinfo"/>
+	</field>
+	<field name="bay_alkoholgehalt" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="bay_alkoholgehalt"/>
+		<property name="com.jaspersoft.studio.field.label" value="bay_alkoholgehalt"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="bay_productinfo"/>
+	</field>
+	<field name="ad_image_id" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.name" value="ad_image_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="ad_image_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="bay_productinfo"/>
+	</field>
+	<field name="pi_image" class="byte[]">
+		<property name="com.jaspersoft.studio.field.name" value="pi_image"/>
+		<property name="com.jaspersoft.studio.field.label" value="pi_image"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="ad_image"/>
+	</field>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<detail>
+		<band height="680" splitType="Stretch">
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<image hAlign="Center">
+				<reportElement x="20" y="60" width="180" height="560" uuid="a73ddc78-2288-49a8-b1ed-e6db84b6312c">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<imageExpression><![CDATA[$F{pi_image}]]></imageExpression>
+			</image>
+			<textField>
+				<reportElement x="110" y="0" width="439" height="39" uuid="4cfc4f49-296d-4e74-a978-b3d09ab68dd3">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="2a61939d-4891-4a3f-90a5-b01e9088c11e"/>
+				</reportElement>
+				<box>
+					<bottomPen lineWidth="1.0" lineStyle="Solid"/>
+				</box>
+				<textElement>
+					<font size="30" isBold="true" isItalic="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{basisname}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="20" y="630" width="180" height="30" uuid="84bb5b53-35c4-4ec3-9c42-b351c9267605"/>
+				<textElement textAlignment="Center">
+					<font size="18"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{flaschengroesse}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="20" y="660" width="180" height="20" uuid="9ae956ae-8b77-472f-871e-e332b1d897b2"/>
+				<textElement textAlignment="Center">
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{gebindename}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="219" y="560" width="50" height="20" uuid="5b673596-a775-4d33-b780-7ef82fe184c3">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement>
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vendorproductno}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="269" y="560" width="279" height="20" uuid="5e574c11-2dc4-45a6-9a2c-8fdb1ecb049d">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement>
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vendorproductname}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="0" y="0" width="110" height="39" uuid="2ad06af5-6a96-47e6-b56c-c1dcd607d09d"/>
+				<box>
+					<bottomPen lineWidth="1.0" lineStyle="Solid"/>
+				</box>
+				<textElement>
+					<font size="30" isBold="true" isItalic="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{p_no}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="269" y="510" width="279" height="20" uuid="b00ca275-036f-431b-a391-f0e3b2668f51">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement>
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{ve_name}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="219" y="510" width="50" height="20" uuid="f168ec92-77e2-4b53-9ed1-5b94194e3fd2">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+				</reportElement>
+				<textElement>
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{ve_value}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="219" y="490" width="329" height="20" uuid="a4150f7d-266f-45b1-973d-81ff13fbe853">
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+				</reportElement>
+				<textElement verticalAlignment="Bottom">
+					<font size="12" isBold="true" isItalic="true"/>
+				</textElement>
+				<text><![CDATA[Lieferant/Hersteller]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="219" y="540" width="329" height="20" uuid="d42512b2-37b1-4dea-a550-01d742726048">
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+				</reportElement>
+				<textElement verticalAlignment="Bottom">
+					<font size="12" isBold="true" isItalic="true"/>
+				</textElement>
+				<text><![CDATA[Artikelbezeichnung beim Lieferant/Hersteller]]></text>
+			</staticText>
+			<frame>
+				<reportElement x="220" y="60" width="330" height="419" uuid="3c62253a-f8a4-4278-9233-ac88b6e378b0">
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+				</reportElement>
+				<textField>
+					<reportElement x="100" y="70" width="50" height="20" uuid="b8dbbb2d-6083-4fd1-bfda-54f8af4108df">
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+						<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					</reportElement>
+					<textElement>
+						<font size="12"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{bay_weinfarbe}]]></textFieldExpression>
+				</textField>
+				<textField textAdjust="StretchHeight" isBlankWhenNull="true">
+					<reportElement x="150" y="70" width="180" height="20" isRemoveLineWhenBlank="true" uuid="dbab1312-7fb2-47cc-bbe0-0f13382fc4dd">
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+						<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					</reportElement>
+					<textElement>
+						<font size="12"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{bay_weinfarbe2}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement x="0" y="70" width="90" height="20" uuid="1a8ff5d5-df33-4486-9978-02b8ab2f9dd6"/>
+					<textElement>
+						<font size="12" isBold="true" isItalic="true"/>
+					</textElement>
+					<text><![CDATA[Farbe]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="-1" y="10" width="91" height="20" uuid="08fc2f76-4c76-4c5f-963f-149fbbd2d0c6"/>
+					<textElement verticalAlignment="Middle">
+						<font size="12" isBold="true" isItalic="true"/>
+					</textElement>
+					<text><![CDATA[Anbaugebiet]]></text>
+				</staticText>
+				<textField>
+					<reportElement x="100" y="10" width="230" height="25" uuid="0898a604-d537-4929-8db8-583a76bc1890">
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					</reportElement>
+					<textElement>
+						<font size="18" isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{land} + ($F{bay_gebiet} == null ? "" : "/" + $F{bay_gebiet})]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement x="0" y="110" width="105" height="20" uuid="63117787-deea-4d74-88be-dcd004d1dd90">
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+						<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					</reportElement>
+					<textElement>
+						<font size="12" isBold="true" isItalic="true"/>
+					</textElement>
+					<text><![CDATA[Geschmack]]></text>
+				</staticText>
+				<staticText>
+					<reportElement positionType="Float" x="0" y="150" width="105" height="20" uuid="25906100-f540-44c2-aa34-db52ae550277">
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					</reportElement>
+					<textElement>
+						<font size="12" isBold="true" isItalic="true"/>
+					</textElement>
+					<text><![CDATA[Aroma]]></text>
+				</staticText>
+				<textField textAdjust="StretchHeight">
+					<reportElement x="100" y="110" width="230" height="20" uuid="b5868588-c825-49cb-a625-cee18a504d08"/>
+					<textElement>
+						<font size="12"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{bay_geschmack}]]></textFieldExpression>
+				</textField>
+				<textField textAdjust="StretchHeight">
+					<reportElement positionType="Float" x="100" y="150" width="230" height="20" uuid="d926ef41-7f8a-4765-9c8d-dd38e7836efc">
+						<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					</reportElement>
+					<textElement>
+						<font size="12"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{bay_aroma}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement positionType="Float" x="0" y="190" width="105" height="20" uuid="41072629-ab40-4412-891f-9fc713e4bbcb"/>
+					<textElement>
+						<font size="12" isBold="true" isItalic="true"/>
+					</textElement>
+					<text><![CDATA[Alkoholgehalt]]></text>
+				</staticText>
+				<textField>
+					<reportElement positionType="Float" x="100" y="190" width="53" height="20" uuid="fbe666fe-bc58-41d0-b746-138a45fcdbbc"/>
+					<textElement>
+						<font size="12"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{bay_alkoholgehalt}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement positionType="Float" x="0" y="230" width="105" height="20" uuid="a66afe93-8ad0-4876-b8bd-064b4c1be4c7"/>
+					<textElement>
+						<font size="12" isBold="true" isItalic="true"/>
+					</textElement>
+					<text><![CDATA[Beschreibung]]></text>
+				</staticText>
+				<textField textAdjust="StretchHeight">
+					<reportElement positionType="Float" x="100" y="230" width="229" height="20" uuid="4000915d-f120-4d00-900a-1063443e3488"/>
+					<textElement>
+						<font size="12"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{description}]]></textFieldExpression>
+				</textField>
+			</frame>
+			<staticText>
+				<reportElement x="220" y="620" width="80" height="20" uuid="d64d6265-7fa3-4a3b-97ad-a2bdbcb88a49">
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<textElement verticalAlignment="Top">
+					<font size="12" isBold="true" isItalic="true"/>
+				</textElement>
+				<text><![CDATA[Sollbestand]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="320" y="620" width="70" height="20" uuid="333af0fc-fa67-473e-9403-85e79f3479ab">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement>
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{level_min}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="320" y="590" width="228" height="20" uuid="9d4a8218-5f1e-4b78-a535-0ffbee9ea10b">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement>
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{ean}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="220" y="590" width="49" height="20" uuid="63c7cf9e-4b2e-4761-a7ae-b3015b4e3141">
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<textElement verticalAlignment="Top">
+					<font size="12" isBold="true" isItalic="true"/>
+				</textElement>
+				<text><![CDATA[EAN]]></text>
+			</staticText>
+		</band>
+	</detail>
+</jasperReport>
