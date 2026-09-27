@@ -108,7 +108,7 @@ left join c_orderline ol on ol.c_order_id = o.c_order_id and ol.qtyentered > 0
 left join c_uom uom using(c_uom_id)
 left join c_bpartner bp on (bp.c_bpartner_id = o.c_bpartner_id)
 left join c_bpartner_location bpl on (bpl.c_bpartner_location_id = o.c_bpartner_location_id and bpl.isactive='Y' and bpl.isshipto='Y')
-left join ad_ref_list lv on (bpl.bay_loadinghint = lv.value and lv.ad_reference_id = (select ref.ad_reference_id from ad_reference ref where ref.name='Ladevorgabe' and ref.isactive = 'Y'))
+left join ad_ref_list lv on (bpl.bay_loadinghint = lv.value and lv.ad_reference_id = (select ref.ad_reference_id from ad_reference ref where ref.name='BAY Ladevorgabe' and ref.isactive = 'Y'))
 left join c_location loc using (c_location_id)
 join m_product p using (m_product_id)
 left join bay_tradingunit tu using (bay_tradingunit_id)
