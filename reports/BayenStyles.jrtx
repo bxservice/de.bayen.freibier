@@ -13,9 +13,11 @@
 	<style name="Page Header" mode="Opaque" forecolor="#000000" backcolor="#B3F1FF" fontName="Liberation Sans" fontSize="20" isBold="true"/>
 	<style name="Page Footer" mode="Opaque" forecolor="#000000" backcolor="#B3F1FF" fontName="Liberation Sans" fontSize="8"/>
 	<style name="Report Header" style="Page Header" backcolor="#C2FFB3"/>
-	<style name="Report Standard Font" fontName="Liberation Sans"/>
+	<style name="Report Standard Font" fontName="Liberation Sans" fontSize="10"/>
 	<style name="Report Monospace Font" fontName="Liberation Mono"/>
 	<style name="Monospace Form Fill" forecolor="#0000FF" fontName="Liberation Mono" isBold="true"/>
 	<style name="Header" style="Report Standard Font" fontSize="21"/>
 	<style name="grauer Zeilenhintergrund" mode="Opaque" backcolor="#EDEDED" fontName="Liberation Sans"/>
+	<style name="gemerkert" style="Report Standard Font" mode="Opaque" forecolor="#FFFF99" backcolor="#FFFF99"/>
+	<style name="rot gemerkert" style="Report Standard Font" mode="Opaque" forecolor="#FF9999" backcolor="#FF9999"/>
 </jasperTemplate>

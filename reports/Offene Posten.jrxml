@@ -12,11 +12,7 @@
 	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
 	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
 	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
-	<template><![CDATA[$P{SUBREPORT_DIR}+"BayenStyles.jrtx"]]></template>
-	<parameter name="SUBREPORT_DIR" class="java.lang.String" isForPrompting="false">
-		<parameterDescription><![CDATA[]]></parameterDescription>
-		<defaultValueExpression><![CDATA["./"]]></defaultValueExpression>
-	</parameter>
+	<template><![CDATA["BayenStyles.jrtx"]]></template>
 	<parameter name="C_BPartner_ID" class="java.lang.Integer">
 		<parameterDescription><![CDATA[Beispiel: 1002394 ist Wolff/Jazzkeller]]></parameterDescription>
 		<defaultValueExpression><![CDATA[null]]></defaultValueExpression>
@@ -594,11 +590,8 @@ where (pa.minamt is null or oilist.bpsumopenamt >= pa.minamt)]]>
 						<subreportParameter name="DateReport">
 							<subreportParameterExpression><![CDATA[$P{DateReport}]]></subreportParameterExpression>
 						</subreportParameter>
-						<subreportParameter name="SUBREPORT_DIR">
-							<subreportParameterExpression><![CDATA[$P{SUBREPORT_DIR}]]></subreportParameterExpression>
-						</subreportParameter>
 						<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
-						<subreportExpression><![CDATA[$P{SUBREPORT_DIR}+"Offene Posten_Warenkredite.jasper"]]></subreportExpression>
+						<subreportExpression><![CDATA["Offene Posten_Warenkredite.jasper"]]></subreportExpression>
 					</subreport>
 				</elementGroup>
 				<textField>
