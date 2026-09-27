@@ -23,7 +23,7 @@ join c_bpartner_location bpl  on bpl.c_bpartner_location_id = o.c_bpartner_locat
 left join ad_ref_list rl1 on rl1.value = bpl.bay_loadinghint and rl1.ad_reference_id = (select ad_reference_id from ad_reference ref where ref.name='BAY Ladevorgabe')
 left join ad_ref_list rl2 on rl2.value = o.prepicking and rl2.ad_reference_id = (select ad_reference_id from ad_reference ref where ref.name='BAY Vorladen')
 left join bay_route rou on rou.bay_route_id = o.bay_route_id
-left join bay_delivery d on d.bay_route_id = rou.bay_route_id and d.bay_routedate = o.dateordered 
+left join bay_delivery d on d.bay_route_id = rou.bay_route_id and d.bay_routedate = o.dateordered and d.bay_delivery_id = (select min(x.bay_delivery_id) from bay_delivery x where x.bay_route_id = rou.bay_route_id and x.bay_routedate = o.dateordered) 
 left join s_resource res on res.s_resource_id = d.bay_truck_id
 where o.ad_client_id=1000000
 and o.docstatus in ('IP')

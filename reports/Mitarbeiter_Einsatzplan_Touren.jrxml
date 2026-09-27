@@ -92,6 +92,7 @@ left join schluesselkundenpertour schl using(bay_route_id)
 where
   d.ad_client_id=1000000
   and d.bay_routedate=p.datum
+  and d.bay_delivery_id = (select min(x.bay_delivery_id) from bay_delivery x where x.bay_route_id = d.bay_route_id and x.bay_routedate = d.bay_routedate)
 order by r.value]]>
 	</queryString>
 	<field name="bay_routedate" class="java.sql.Timestamp">
