@@ -68,7 +68,6 @@ select
   sum(case when ol.priceentered != 0 or ol.priceentered = ol.pricelist or ol.qtyordered<0 then null else ol.qtyordered end)
     as sum_qty_gratis,
   sum(ol.linenetamt) as sum_netamt,
-  sum(-cp.amount * ol.qtyordered) as sum_cost,
   sum(case when ol.priceentered != 0 or ol.priceentered = ol.priceactual then ol.qtyordered * uf.factor else 0 end)
     as sum_hl
 from c_order o
@@ -81,8 +80,6 @@ left join m_product_po ppo on (ppo.m_product_id = p.m_product_id and ppo.isactiv
 left join c_bpartner vendor on (vendor.c_bpartner_id = ppo.c_bpartner_id)
 join param2 param on (param.c_bpartner_id is null or param.c_bpartner_id = vendor.c_bpartner_id)
 left join m_product_category pc using (m_product_category_id)
-left join bay_conditionprice2(
-  p.m_product_id, null::numeric, vendor.c_bpartner_id, o.dateordered, '10'::text, '15'::text) as cp on (true)
 where o.ad_client_id=1000000 and o.docstatus in ('CO', 'CL')
 and o.issotrx='Y'
 and o.dateordered >= param.datefrom and o.dateordered <= param.dateto
@@ -98,7 +95,6 @@ order by
   p.m_product_id
 )
 select
---  sum(sum_netamt-sum_cost) as db, sum(sum_hl) as hl
   st.datefrom, 
   st.dateto,
   st.m_product_id,
