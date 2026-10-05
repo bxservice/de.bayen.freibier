@@ -14,51 +14,53 @@
 	</parameter>
 	<queryString language="SQL">
 		<![CDATA[WITH query AS (
-select
-   $P{C_BPartner_ID} AS lief_id,
-  $P{months}  as months
+ select
+  $P{C_BPartner_ID}::numeric AS lief_id,
+  $P{months} AS months,
+  (current_date - interval '1 month' * $P{months})::date AS von
 )
 ,
-abfrage as (
-SELECT
- p.value as p_value,
- p.name as p_name,
- kd.value as kd_value,
- kd.name as kd_name,
- trunc(sum(stat.stueck)) as stueck,
- lief.value as lief_value,
- lief.name as lief_name,
- query.months as query_months
-FROM m_product p
-cross join query
---JOIN c_bpartner_product bpp ON (bpp.m_product_id = p.m_product_id)
-JOIN m_product_po ppo ON (ppo.m_product_id = p.m_product_id)
-join c_bpartner lief ON (ppo.c_bpartner_id = lief.c_bpartner_id and ppo.isactive='Y' AND lief.c_bpartner_id=query.lief_id)
-join m_product_category pcat on (pcat.m_product_category_id = p.m_product_category_id)
-left join (
-       select stat.* 
-       from bay_umsatzstatistik stat
-       cross join query
-       join bay_statistikperiode sper on (stat.bay_statistikperiode_id = sper.bay_statistikperiode_id 
-								and sper.statistiktyp = 'MD' and sper.startdate > now() - interval '1 months' * query.months)
-       join c_bpartner kd on (kd.c_bpartner_id = stat.c_bpartner_id
-                            and kd.isactive='Y' and kd.iscustomer='Y')
-       ) stat on (stat.m_product_id = p.m_product_id)
-left join c_bpartner kd on (kd.c_bpartner_id = stat.c_bpartner_id)
-WHERE p.ad_client_id=1000000
-  and p.isactive='Y'
-  and not pcat.value in ('18')  -- Gläser
-group by
- p.value,
- p.name,
- kd.value,
- kd.name,
- lief.value,
- lief.name,
- query_months
-order by
-  p.value,
-  kd.value
+artikel AS (
+ SELECT DISTINCT p.m_product_id, p.value, p.name, p.isactive, lief.value AS lief_value, lief.name AS lief_name
+ FROM m_product p
+ cross join query
+ JOIN m_product_po ppo ON (ppo.m_product_id = p.m_product_id AND ppo.isactive='Y')
+ JOIN c_bpartner lief ON (lief.c_bpartner_id = ppo.c_bpartner_id AND lief.c_bpartner_id = query.lief_id)
+ JOIN m_product_category pcat ON (pcat.m_product_category_id = p.m_product_category_id)
+ WHERE p.ad_client_id=1000000
+   AND pcat.value <> '18'  -- Gläser
+)
+,
+umsatz AS (
+ -- Kunde und Datum vom Lieferschein (bei Zentralregulierung steht auf der Rechnung der Regulierer)
+ SELECT il.m_product_id, coalesce(o.c_bpartner_id, i.c_bpartner_id) AS c_bpartner_id, sum(il.qtyinvoiced) AS stueck
+ FROM c_invoiceline il
+ cross join query
+ JOIN c_invoice i ON (i.c_invoice_id = il.c_invoice_id)
+ LEFT JOIN c_orderline ol ON (ol.c_orderline_id = il.c_orderline_id)
+ LEFT JOIN c_order o ON (o.c_order_id = ol.c_order_id)
+ WHERE i.ad_client_id=1000000
+   AND i.issotrx='Y'
+   AND i.docstatus IN ('CO','CL')
+   AND il.m_product_id IN (select m_product_id from artikel)
+   AND coalesce(o.dateordered, i.dateinvoiced) >= query.von
+ GROUP BY 1, 2
+ HAVING sum(il.qtyinvoiced) <> 0  -- Lieferung und Rückgabe heben sich auf
+)
+,
+abfrage AS (
+ SELECT
+  a.value AS p_value,
+  a.name AS p_name,
+  kd.value AS kd_value,
+  kd.name AS kd_name,
+  u.stueck,
+  a.lief_value,
+  a.lief_name
+ FROM artikel a
+ LEFT JOIN umsatz u ON (u.m_product_id = a.m_product_id)
+ LEFT JOIN c_bpartner kd ON (kd.c_bpartner_id = u.c_bpartner_id)
+ WHERE a.isactive='Y' OR u.stueck IS NOT NULL  -- inaktive Artikel nur, wenn sie noch verkauft wurden
 )
 select
  p_value,
@@ -69,10 +71,13 @@ select
  sum(stueck) over (partition by p_value) as stuecksumme,
  lief_value,
  lief_name,
- query_months
+ query.months as query_months,
+ query.von::timestamp as query_von
 from abfrage
-order by 
-  p_value, 
+cross join query
+order by
+  p_value,
+  stueck desc nulls last,
   kd_value
 ]]>
 	</queryString>
@@ -103,6 +108,9 @@ order by
 	<field name="query_months" class="java.math.BigDecimal">
 		<property name="com.jaspersoft.studio.field.label" value="query_months"/>
 	</field>
+	<field name="query_von" class="java.sql.Timestamp">
+		<property name="com.jaspersoft.studio.field.label" value="query_von"/>
+	</field>
 	<variable name="p_value1" class="java.lang.Integer" resetType="Group" resetGroup="p_value" calculation="Count">
 		<variableExpression><![CDATA[$F{p_value}]]></variableExpression>
 	</variable>
@@ -119,7 +127,7 @@ order by
 						<property name="com.jaspersoft.studio.unit.height" value="px"/>
 					</reportElement>
 					<textElement>
-						<font isBold="true"/>
+						<font size="8" isBold="true"/>
 					</textElement>
 					<textFieldExpression><![CDATA[$F{p_name}]]></textFieldExpression>
 				</textField>
@@ -131,11 +139,11 @@ order by
 						<property name="com.jaspersoft.studio.unit.height" value="px"/>
 					</reportElement>
 					<textElement>
-						<font isBold="true"/>
+						<font size="8" isBold="true"/>
 					</textElement>
 					<textFieldExpression><![CDATA[$F{p_value}]]></textFieldExpression>
 				</textField>
-				<textField isBlankWhenNull="true">
+				<textField isBlankWhenNull="true" pattern="#,##0.##">
 					<reportElement x="220" y="0" width="50" height="12" isRemoveLineWhenBlank="true" uuid="5119cfe9-ff30-41eb-8454-84687d0becb4">
 						<property name="com.jaspersoft.studio.unit.x" value="px"/>
 						<property name="com.jaspersoft.studio.unit.width" value="px"/>
@@ -143,7 +151,7 @@ order by
 						<property name="com.jaspersoft.studio.unit.height" value="px"/>
 					</reportElement>
 					<textElement textAlignment="Right">
-						<font isBold="true"/>
+						<font size="8" isBold="true"/>
 					</textElement>
 					<textFieldExpression><![CDATA[$F{stuecksumme}]]></textFieldExpression>
 				</textField>
@@ -170,7 +178,7 @@ order by
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
 				<textElement markup="html"/>
-				<textFieldExpression><![CDATA["Umsätze für Artikel der letzten " + $F{query_months} + " Monate, die wir bei <b>" + $F{lief_value} + " " + $F{lief_name} + " </b> beziehen können."]]></textFieldExpression>
+				<textFieldExpression><![CDATA["Verkaufte Mengen der letzten " + $F{query_months} + " Monate (seit " + new java.text.SimpleDateFormat("dd.MM.yyyy").format($F{query_von}) + ") für Artikel, die wir bei <b>" + $F{lief_value} + " " + $F{lief_name} + " </b> beziehen können."]]></textFieldExpression>
 			</textField>
 			<line>
 				<reportElement x="0" y="55" width="550" height="1" uuid="3f99e610-6261-4530-a689-03a43b4dd580">
@@ -189,6 +197,9 @@ order by
 					<property name="com.jaspersoft.studio.unit.y" value="px"/>
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
+				<textElement>
+					<font size="8"/>
+				</textElement>
 				<textFieldExpression><![CDATA[$F{kd_value}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
@@ -199,9 +210,12 @@ order by
 					<property name="com.jaspersoft.studio.unit.y" value="px"/>
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
+				<textElement>
+					<font size="8"/>
+				</textElement>
 				<textFieldExpression><![CDATA[$F{kd_name}]]></textFieldExpression>
 			</textField>
-			<textField isBlankWhenNull="true">
+			<textField isBlankWhenNull="true" pattern="#,##0.##">
 				<reportElement x="180" y="0" width="50" height="12" isRemoveLineWhenBlank="true" uuid="b7af4891-e841-4905-9587-ff395b9170f9">
 					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="1ef2cbec-ff80-474a-9b52-0bb215d77fe7"/>
 					<property name="com.jaspersoft.studio.unit.x" value="px"/>
@@ -209,7 +223,9 @@ order by
 					<property name="com.jaspersoft.studio.unit.y" value="px"/>
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
-				<textElement textAlignment="Right"/>
+				<textElement textAlignment="Right">
+					<font size="8"/>
+				</textElement>
 				<textFieldExpression><![CDATA[$F{stueck}]]></textFieldExpression>
 			</textField>
 		</band>
