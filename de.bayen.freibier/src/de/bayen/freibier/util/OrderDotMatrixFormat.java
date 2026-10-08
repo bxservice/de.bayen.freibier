@@ -60,6 +60,8 @@ public class OrderDotMatrixFormat {
 
 	private static int TopMargin = 2;
 	private static int MaxLineDetail = 60;
+	/** width of the right column in the header (contact, phone, delivery time) */
+	private static final int RIGHT_COLUMN_WIDTH = 37;
 
 	public String print(Properties ctx, int orderID, String trxName) {
 		MOrder order = new MOrder(ctx, orderID, trxName);
@@ -427,6 +429,9 @@ public class OrderDotMatrixFormat {
 		pageControl.Line = 1;
 		pageControl.Page = 1;
 
+		// FooterLine assumes one line for each text block of the footer; the
+		// delivery time is printed in the header (right column), so the bottom
+		// of the page has one empty line more than until 1.1.0 (41/36)
 		if (isRechnung) {
 			FooterLine = 36;
 		} else {
@@ -435,9 +440,11 @@ public class OrderDotMatrixFormat {
 		if (isRechnung) {
 			evaluateFooterLines(headerData.PaymentTermNote);
 		}
-		evaluateFooterLines(headerData.DeliveryConstraintDescription);
 		evaluateFooterLines(headerData.BPGroupSODescription);
 		evaluateFooterLines(headerData.Description);
+		// the description is printed above the empties block, followed by an empty line
+		if (!Util.isEmpty(headerData.Description, true))
+			FooterLine = FooterLine - 1;
 		evaluateFooterLines(headerData.TargetDocumentTypeNote);
 
 		if (isRechnung) {
@@ -566,17 +573,33 @@ public class OrderDotMatrixFormat {
 			}
 
 			// print footer rechnung
+			// the footer starts at line FooterLine+1, so the last page always
+			// has the same number of lines
 			// verify the position and skip page if not enough
-			if (pageControl.Line > FooterLine) {
+			if (pageControl.Line > FooterLine + 1) {
 				// skip page - reprint header and position in footer line
 				formFeed(bw);
 				printHeader(bw, DocumentTitle);
 			}
-			if (pageControl.Line < FooterLine) {
+			if (pageControl.Line < FooterLine + 1) {
 				// fill lines until footer margin
 				int start = pageControl.Line;
 				for (int i = start; i < FooterLine+1; i++)
 					lineFeed(bw);
+			}
+			// order description (copy of SO_Description) above the empties block,
+			// bold, indented by two characters (keeps it off the punched holes of
+			// the form), followed by an empty line. No condensed font: on the Oki
+			// ML3390 it only works from a wider pitch, and neither DC2 nor the
+			// master select at the top of the document ("!C") reliably restores
+			// the normal pitch afterwards (test prints 07.10.2026, #673).
+			if (! Util.isEmpty(headerData.Description, true)) {
+				boldOn(bw);
+				bw.write("  ");
+				bw.write(headerData.Description.replace("\r\n", "\r\n  "));
+				boldOff(bw);
+				carriageReturn(bw); lineFeed(bw);
+				lineFeed(bw);
 			}
 			if (isRechnung) {
 				bw.write("LEERGUTR\u00dcCKGABE:        ANZAHL:                     ");
@@ -773,19 +796,9 @@ public class OrderDotMatrixFormat {
 					carriageReturn(bw);
 				}
 			}
-			if (! Util.isEmpty(headerData.DeliveryConstraintDescription, true)) {
-				lineFeed(bw);
-				bw.write(headerData.DeliveryConstraintDescription);
-				carriageReturn(bw);
-			}
 			if (!Util.isEmpty(headerData.BPGroupSODescription, true)) {
 				lineFeed(bw);
 				bw.write(headerData.BPGroupSODescription);
-				carriageReturn(bw);
-			}
-			if (! Util.isEmpty(headerData.Description, true)) {
-				lineFeed(bw);
-				bw.write(headerData.Description);
 				carriageReturn(bw);
 			}
 			if (! Util.isEmpty(headerData.TargetDocumentTypeNote, true)) {
@@ -889,13 +902,19 @@ public class OrderDotMatrixFormat {
 		bw.write("      ");
 		bw.write(headerData.Address1);
 		carriageReturn(bw); lineFeed(bw);
+		// right column below contact and phone: an empty line, then the
+		// delivery time (BAY_DeliveryConstraint.Description), at most two lines
+		String[] deliveryTime = getDeliveryTimeLines();
 		bw.write("      ");
 		bw.write(headerData.Address2);
+		if (deliveryTime.length > 0)
+			printUserDataWithSpaces(bw, deliveryTime[0], headerData.Address2.length());
 		carriageReturn(bw); lineFeed(bw);
 		bw.write("      ");
-		bw.write(headerData.Postal);
-		bw.write(" ");
-		bw.write(headerData.City);
+		String postalCity = headerData.Postal + " " + headerData.City;
+		bw.write(postalCity);
+		if (deliveryTime.length > 1)
+			printUserDataWithSpaces(bw, deliveryTime[1], postalCity.length());
 		carriageReturn(bw); lineFeed(bw);
 		lineFeed(bw);
 		lineFeed(bw);
@@ -931,6 +950,20 @@ public class OrderDotMatrixFormat {
 		carriageReturn(bw); lineFeed(bw);
 	}
 	
+	/** delivery time for the header: at most two lines, cut to the column width */
+	private String[] getDeliveryTimeLines() {
+		if (Util.isEmpty(headerData.DeliveryConstraintDescription, true))
+			return new String[0];
+		String[] lines = headerData.DeliveryConstraintDescription.trim().split("\r?\n|\r");
+		int count = Math.min(lines.length, 2);
+		String[] result = new String[count];
+		for (int i = 0; i < count; i++) {
+			String line = lines[i].trim();
+			result[i] = line.length() > RIGHT_COLUMN_WIDTH ? line.substring(0, RIGHT_COLUMN_WIDTH) : line;
+		}
+		return result;
+	}
+
 	private void printUserDataWithSpaces(BufferedWriter bw, String data, int previousDataLength) throws IOException {
 		int col = 44;
 		StringBuilder shipUserData = new StringBuilder();
